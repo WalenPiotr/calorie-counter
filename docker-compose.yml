@@ -24,4 +24,4 @@ services:
       PG_DB: testdb
       PG_PASS: password
       PG_USER: user
-      TOKEN_PASS: abcdef
+      TOKEN_PASS: abcdefasdfasdfasdf

@@ -25,6 +25,6 @@ func NewConnection() (*gorm.DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "While opening connection to db")
 	}
-	db.Debug().AutoMigrate(&Account{})
+	db.Debug().AutoMigrate(&Account{}, &Product{})
 	return db, nil
 }

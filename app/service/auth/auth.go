@@ -16,9 +16,9 @@ import (
 
 type Data struct{}
 type ResponseObject struct {
-	Status int
-	Error  string
-	Data   Data
+	Status int    `json:"email"`
+	Error  string `json:"error"`
+	Data   Data   `json:"data"`
 }
 
 func (res *ResponseObject) Send(w http.ResponseWriter) {
@@ -38,7 +38,6 @@ func JwtAuthentication(next http.Handler) http.Handler {
 
 		//check if request does not need authentication, serve the request if it doesn't need it
 		for _, value := range notAuth {
-
 			if value == requestPath {
 				next.ServeHTTP(w, r)
 				return
@@ -95,10 +94,16 @@ func JwtAuthentication(next http.Handler) http.Handler {
 			return
 		}
 		//Everything went well, proceed with the request and set the caller to the user retrieved from the parsed token
-		fmt.Sprintf("User %", tk.UserId) //Useful for monitoring
+		fmt.Println("User %", tk.UserID) //Useful for monitoring
 
-		ctx := context.WithValue(r.Context(), "user", tk.UserId)
+		ctx := context.WithValue(r.Context(), UserID, tk.UserID)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r) //proceed in the middleware chain!
 	})
 }
+
+type key int
+
+const (
+	UserID key = iota
+)

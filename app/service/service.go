@@ -27,6 +27,8 @@ func NewService() error {
 	router := mux.NewRouter()
 	router.HandleFunc("/api/user/new", controllers.CreateAccount(db, logger)).Methods("POST")
 	router.HandleFunc("/api/user/login", controllers.Authenticate(db, logger)).Methods("POST")
+	router.HandleFunc("/api/product", controllers.CreateProduct(db, logger)).Methods("POST")
+	router.HandleFunc("/api/product/get", controllers.GetProducts(db, logger)).Methods("POST")
 	router.Use(auth.JwtAuthentication)
 
 	port := os.Getenv("PORT")
