@@ -3,7 +3,6 @@ package service
 import (
 	"app/service/auth"
 	"app/service/controllers"
-	"app/service/models"
 	"net/http"
 	"os"
 
@@ -14,7 +13,7 @@ import (
 
 func NewService() error {
 	logger := logrus.New()
-	db, err := models.NewConnection()
+	db, err := NewDBConnection()
 	if err != nil {
 		return err
 	}
@@ -25,11 +24,16 @@ func NewService() error {
 	}
 
 	router := mux.NewRouter()
-	router.HandleFunc("/api/user/new", controllers.CreateAccount(db, logger)).Methods("POST")
-	router.HandleFunc("/api/user/login", controllers.Authenticate(db, logger)).Methods("POST")
-	router.HandleFunc("/api/product", controllers.CreateProduct(db, logger)).Methods("POST")
-	router.HandleFunc("/api/product/get", controllers.GetProducts(db, logger)).Methods("POST")
-	router.Use(auth.JwtAuthentication)
+
+	router.Handle("/api/user/new", auth.WithAuth(controllers.CreateAccount(db, logger), auth.Default)).Methods("POST")
+	router.Handle("/api/user/login", auth.WithAuth(controllers.Authenticate(db, logger), auth.Default)).Methods("POST")
+	router.Handle("/api/user/update", auth.WithAuth(controllers.UpdateUser(db, logger), auth.Admin)).Methods("POST")
+	router.Handle("/api/user/delete", auth.WithAuth(controllers.DeleteUser(db, logger), auth.Admin)).Methods("POST")
+
+	router.Handle("/api/product/create", auth.WithAuth(controllers.CreateProduct(db, logger), auth.User)).Methods("POST")
+	router.Handle("/api/product/get", auth.WithAuth(controllers.GetProducts(db, logger), auth.User)).Methods("POST")
+	router.Handle("/api/product/delete", auth.WithAuth(controllers.DeleteProduct(db, logger), auth.Moderator)).Methods("POST")
+	router.Handle("/api/product/update", auth.WithAuth(controllers.GetProducts(db, logger), auth.Moderator)).Methods("POST")
 
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -8,6 +8,7 @@ import (
 
 type Data struct {
 	Account  *models.Account   `json:"account,omitempty"`
+	Accounts *[]models.Account `json:"accounts,omitempty"`
 	Product  *models.Product   `json:"product,omitempty"`
 	Products *[]models.Product `json:"products,omitempty"`
 }

@@ -1,20 +1,15 @@
 package models
 
 import (
+	"app/service/auth"
 	"os"
 	"strings"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type Token struct {
-	UserID uint
-	jwt.StandardClaims
-}
 
 // Model struct is used to override gorm.Model tags
 type Model struct {
@@ -27,63 +22,46 @@ type Model struct {
 // Account struct is used to represent user account
 type Account struct {
 	Model
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Token    string `json:"token";sql:"-"`
+	Email       string           `json:"email"`
+	Password    string           `json:"password"`
+	Token       string           `json:"token" sql:"-"`
+	AccessLevel auth.AccessLevel `json:"-"`
 }
 
-func (account *Account) Create(db *gorm.DB) error {
+func (account *Account) Validate() error {
 	if !strings.Contains(account.Email, "@") {
 		return errors.New("Invalid email format")
 	}
 	if len(account.Password) < 8 {
 		return errors.New("Password is too short")
 	}
-	//Email must be unique
-	var users []Account
-	err := db.Where("email = ?", account.Email).Find(&users).Error
-	if err != nil {
-		return errors.Wrap(err, "While searching for account")
-	}
-	if len(users) > 0 {
-		return errors.New("Email address already in use")
-	}
+	return nil
+}
 
+func (account *Account) HashPassword() error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return errors.Wrap(err, "While hashing password")
 	}
 	account.Password = string(hashedPassword)
-	db.Create(account)
-	account.signToken()
 	return nil
 }
 
-func (account *Account) Login(db *gorm.DB) error {
-	password := account.Password
-	email := account.Email
-	err := db.Where("email = ?", email).First(account).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return errors.Wrap(err, "Email adress not found")
-		}
-		return err
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
+func (account *Account) ComparePassword(password string) error {
+	err := bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil { //Password does not match!
 		if err == bcrypt.ErrMismatchedHashAndPassword {
 			return errors.Wrap(err, "Invalid login credentials. Please try again")
 		}
 		return errors.Wrap(err, "While comparing hash and password")
 	}
-	account.signToken()
 	return nil
 }
 
-func (account *Account) signToken() error {
+func (account *Account) SignToken() error {
 	tokenPassword := os.Getenv("TOKEN_PASS")
-	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), &Token{UserID: account.ID})
+	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"),
+		&auth.Token{UserID: account.ID, AccessLevel: account.AccessLevel})
 	tokenString, err := token.SignedString([]byte(tokenPassword))
 	if err != nil {
 		return errors.Wrap(err, "While signing token")
