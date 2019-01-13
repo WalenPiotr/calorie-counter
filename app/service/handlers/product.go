@@ -1,7 +1,8 @@
-package product
+package handlers
 
 import (
 	"app/service/auth"
+	"app/service/models"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -12,12 +13,12 @@ import (
 )
 
 type InputObject struct {
-	Product Product `'json:"product,omitempty"'`
+	Product models.Product `'json:"product,omitempty"'`
 }
 
 type Data struct {
-	Product  Product   `json:"product,omitempty"`
-	Products []Product `json:"products,omitempty"`
+	Product  models.Product   `json:"product,omitempty"`
+	Products []models.Product `json:"products,omitempty"`
 }
 type ResponseObject struct {
 	Status int    `json:"status"`
@@ -44,7 +45,7 @@ func CreateProduct(db *gorm.DB, logger *logrus.Logger) http.Handler {
 
 		userID := r.Context().Value(auth.UserID).(uint)
 		log.Println(userID)
-		product.AccountID = userID
+		product.Creator = userID
 
 		err = db.Create(product).Error
 		if err != nil {
@@ -72,7 +73,7 @@ func GetProducts(db *gorm.DB, logger *logrus.Logger) http.Handler {
 		}
 		product := in.Product
 
-		foundProducts := &[]Product{}
+		foundProducts := &[]models.Product{}
 		err = db.Where(product).Find(foundProducts).Error
 		if err != nil {
 			err := errors.Wrap(err, "While querying products")
@@ -100,7 +101,7 @@ func DeleteProduct(db *gorm.DB, logger *logrus.Logger) http.Handler {
 		product := in.Product
 
 		db.Delete(product)
-		foundProducts := &[]Product{}
+		foundProducts := &[]models.Product{}
 		err = db.Where(product).Find(foundProducts).Error
 		if err != nil {
 			err := errors.Wrap(err, "While querying products")
@@ -129,7 +130,7 @@ func UpdateProduct(db *gorm.DB, logger *logrus.Logger) http.Handler {
 
 		db.Update(product)
 
-		foundProduct := &Product{}
+		foundProduct := &models.Product{}
 		err = db.Where(product).First(foundProduct).Error
 		if err != nil {
 			err := errors.Wrap(err, "While querying products")

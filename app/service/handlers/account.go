@@ -1,7 +1,8 @@
-package account
+package handlers
 
 import (
 	"app/service/auth"
+	"app/service/models"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -77,10 +78,10 @@ func Create(db *gorm.DB, logger *logrus.Logger) http.Handler {
 			return
 		}
 
-		acc := &Account{Email: cred.Email, Password: string(hashed)}
+		acc := &models.Account{Email: cred.Email, Password: string(hashed)}
 
 		var count int
-		db.Model(&Account{}).Count(&count)
+		db.Model(&models.Account{}).Count(&count)
 		if count == 0 {
 			log.Println("CREATING ADMIN USER!")
 			acc.AccessLevel = auth.Admin
@@ -89,7 +90,7 @@ func Create(db *gorm.DB, logger *logrus.Logger) http.Handler {
 		}
 
 		//Email must be unique
-		var users []Account
+		var users []models.Account
 		err = db.Where("email = ?", acc.Email).Find(&users).Error
 		if err != nil {
 			err := errors.Wrap(err, "While searching for acc")
@@ -167,7 +168,7 @@ func Authenticate(db *gorm.DB, logger *logrus.Logger) http.Handler {
 		password := cred.Password
 		email := cred.Email
 
-		acc := &Account{}
+		acc := &models.Account{}
 		err = db.Where("email = ?", email).First(acc).Error
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
@@ -214,6 +215,9 @@ func GetUsers(db *gorm.DB, logger *logrus.Logger) http.Handler {
 		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
 	}
 	type RequestObject struct {
+		ID          uint             `json:"id,omitempty"`
+		Email       string           `json:"email,omitempty"`
+		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
 	}
 	type ResponseObject struct {
 		Status int    `json:"status,omitempty"`
@@ -238,8 +242,10 @@ func GetUsers(db *gorm.DB, logger *logrus.Logger) http.Handler {
 			Send(res, w)
 			return
 		}
-		accs := &[]Account{}
-		err = db.Find(accs).Error
+		searched := &models.Account{Email: in.Email, AccessLevel: in.AccessLevel}
+		searched.ID = in.ID
+		accs := &[]models.Account{}
+		err = db.Where(searched).Find(accs).Error
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				err = errors.Wrap(err, "User with that id not found")
@@ -294,7 +300,7 @@ func SetAccessLevel(db *gorm.DB, logger *logrus.Logger) http.Handler {
 			Send(res, w)
 			return
 		}
-		acc := &Account{}
+		acc := &models.Account{}
 		err = db.Where("id = ?", in.ID).First(acc).Error
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
@@ -348,7 +354,7 @@ func Ban(db *gorm.DB, logger *logrus.Logger) http.Handler {
 			Send(res, w)
 			return
 		}
-		acc := &Account{}
+		acc := &models.Account{}
 		err = db.Where("id = ?", in.ID).First(acc).Error
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
@@ -402,7 +408,7 @@ func Unban(db *gorm.DB, logger *logrus.Logger) http.Handler {
 			Send(res, w)
 			return
 		}
-		acc := &Account{}
+		acc := &models.Account{}
 		err = db.Where("id = ?", in.ID).First(acc).Error
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
