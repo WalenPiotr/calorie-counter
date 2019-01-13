@@ -20,11 +20,9 @@ type Token struct {
 	jwt.StandardClaims
 }
 
-type Data struct{}
 type ResponseObject struct {
 	Status int    `json:"status"`
 	Error  string `json:"error"`
-	Data   Data   `json:"data"`
 }
 
 func (res *ResponseObject) Send(w http.ResponseWriter) {
