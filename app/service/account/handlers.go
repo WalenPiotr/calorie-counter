@@ -21,11 +21,6 @@ type Credentials struct {
 	Email    string `json:"email,omitempty"`
 }
 
-type User struct {
-	ID          uint             `json:"id,omitempty"`
-	AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
-}
-
 func (cred *Credentials) Validate() error {
 	if !strings.Contains(cred.Email, "@") {
 		return errors.New("Invalid email format")
@@ -36,50 +31,50 @@ func (cred *Credentials) Validate() error {
 	return nil
 }
 
-type InputObject struct {
-	Credentials Credentials `json:"cred,omitempty"`
-	User        User        `json:"user,omitempty"`
-}
+func Create(db *gorm.DB, logger *logrus.Logger) http.Handler {
+	type RequestObject struct {
+		Credentials Credentials `json:"cred,omitempty"`
+	}
+	type ResponseObject struct {
+		Status int    `json:"status,omitempty"`
+		Error  string `json:"error,omitempty"`
+		Token  string `json:"token,omitempty"`
+	}
+	Send := func(res *ResponseObject, w http.ResponseWriter) {
+		if res.Error != "" {
+			logger.Error(res.Error)
+		}
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(res.Status)
+		json.NewEncoder(w).Encode(*res)
+	}
 
-type ResponseObject struct {
-	Status int    `json:"status,omitempty"`
-	Error  string `json:"error,omitempty"`
-	Token  string `json:"token,omitempty"`
-}
-
-func (res *ResponseObject) Send(w http.ResponseWriter) {
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(res.Status)
-	json.NewEncoder(w).Encode(*res)
-}
-
-func CreateAccount(db *gorm.DB, logger *logrus.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		in := &InputObject{}
+		in := &RequestObject{}
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			logger.Error(err)
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
+			return
 		}
 		cred := in.Credentials
 
 		err = cred.Validate()
 		if err != nil {
 			err = errors.Wrap(err, "While validating acc data")
-			logger.Error(err)
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
+			return
 		}
 
 		hashed, err := bcrypt.GenerateFromPassword([]byte(cred.Password), bcrypt.DefaultCost)
 
 		if err != nil {
 			err = errors.Wrap(err, "While generating hash")
-			logger.Error(err)
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
+			return
 		}
 
 		acc := &Account{Email: cred.Email, Password: string(hashed)}
@@ -98,25 +93,22 @@ func CreateAccount(db *gorm.DB, logger *logrus.Logger) http.Handler {
 		err = db.Where("email = ?", acc.Email).Find(&users).Error
 		if err != nil {
 			err := errors.Wrap(err, "While searching for acc")
-			logger.Error(err)
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
 			return
 		}
 		if len(users) > 0 {
 			err := errors.New("Email address already in use")
-			logger.Error(err)
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
 			return
 		}
 
 		err = db.Create(acc).Error
 		if err != nil {
 			err := errors.Wrap(err, "While creating user")
-			logger.Error(err)
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
 			return
 		}
 
@@ -126,36 +118,49 @@ func CreateAccount(db *gorm.DB, logger *logrus.Logger) http.Handler {
 		tokenString, err := token.SignedString([]byte(tokenPassword))
 		if err != nil {
 			err := errors.Wrap(err, "While signing token")
-			logger.Error(err)
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
 			return
 		}
-
 		res := &ResponseObject{Status: http.StatusOK, Token: tokenString}
-		res.Send(w)
+		Send(res, w)
 		return
 	})
 }
 
 func Authenticate(db *gorm.DB, logger *logrus.Logger) http.Handler {
+	type RequestObject struct {
+		Credentials Credentials `json:"cred,omitempty"`
+	}
+	type ResponseObject struct {
+		Status int    `json:"status,omitempty"`
+		Error  string `json:"error,omitempty"`
+		Token  string `json:"token,omitempty"`
+	}
+	Send := func(res *ResponseObject, w http.ResponseWriter) {
+		if res.Error != "" {
+			logger.Error(res.Error)
+		}
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(res.Status)
+		json.NewEncoder(w).Encode(*res)
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		in := &InputObject{}
+		in := &RequestObject{}
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			logger.Error(err)
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
 			return
 		}
 		cred := in.Credentials
 		err = cred.Validate()
 		if err != nil {
 			err = errors.Wrap(err, "Invalid acc data")
-			logger.Error(err)
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
 			return
 		}
 
@@ -167,30 +172,27 @@ func Authenticate(db *gorm.DB, logger *logrus.Logger) http.Handler {
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				err = errors.Wrap(err, "Email adress not found")
-				logger.Error(err)
 				res := &ResponseObject{Error: err.Error()}
-				res.Send(w)
+				Send(res, w)
 				return
 			}
-			logger.Error(err)
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
 			return
 		}
 
 		err = bcrypt.CompareHashAndPassword([]byte(acc.Password), []byte(password))
 		if err != nil { //Password does not match!
 			if err == bcrypt.ErrMismatchedHashAndPassword {
-				err = errors.Wrap(err, "Email adress not found")
-				logger.Error(err)
-				res := &ResponseObject{Error: err.Error()}
-				res.Send(w)
 				errors.Wrap(err, "Invalid login cred. Please try again")
+				res := &ResponseObject{Error: err.Error()}
+				Send(res, w)
+				return
 			}
 			err = errors.Wrap(err, "While comparing hash and password")
-			logger.Error(err)
 			res := &ResponseObject{Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
+			return
 		}
 
 		tokenPassword := os.Getenv("TOKEN_PASS")
@@ -200,7 +202,115 @@ func Authenticate(db *gorm.DB, logger *logrus.Logger) http.Handler {
 		err = errors.Wrap(err, "While signing token")
 
 		res := &ResponseObject{Status: http.StatusBadRequest, Token: tokenString}
-		res.Send(w)
+		Send(res, w)
+		return
+	})
+}
+
+func GetUser(db *gorm.DB, logger *logrus.Logger) http.Handler {
+	type User struct {
+		Email       string
+		AccessLevel auth.AccessLevel
+	}
+	type RequestObject struct {
+		ID uint
+	}
+	type ResponseObject struct {
+		Status int    `json:"status,omitempty"`
+		Error  string `json:"error,omitempty"`
+		User   User   `json:"users,omitempty"`
+	}
+	Send := func(res *ResponseObject, w http.ResponseWriter) {
+		if res.Error != "" {
+			logger.Error(res.Error)
+		}
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(res.Status)
+		json.NewEncoder(w).Encode(*res)
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := &RequestObject{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			err = errors.Wrap(err, "While decoding request body")
+			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(res, w)
+			return
+		}
+		acc := &Account{}
+		err = db.Where("id = ?", in.ID).First(acc).Error
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				err = errors.Wrap(err, "User with that id not found")
+				res := &ResponseObject{Error: err.Error()}
+				Send(res, w)
+				return
+			}
+			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(res, w)
+			return
+		}
+		user := User{Email: acc.Email, AccessLevel: acc.AccessLevel}
+		res := &ResponseObject{Status: http.StatusOK, User: user}
+		Send(res, w)
+		return
+
+	})
+}
+
+func SetAccessLevel(db *gorm.DB, logger *logrus.Logger) http.Handler {
+	type RequestObject struct {
+		ID          uint             `json:"id,omitempty"`
+		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
+	}
+	type ResponseObject struct {
+		Status      int              `json:"status,omitempty"`
+		Error       string           `json:"error,omitempty"`
+		ID          uint             `json:"id,omitempty"`
+		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
+	}
+	Send := func(res *ResponseObject, w http.ResponseWriter) {
+		if res.Error != "" {
+			logger.Error(res.Error)
+		}
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(res.Status)
+		json.NewEncoder(w).Encode(*res)
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := &RequestObject{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			err = errors.Wrap(err, "While decoding request body")
+			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(res, w)
+			return
+		}
+		acc := &Account{}
+		err = db.Where("id = ?", in.ID).First(acc).Error
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				err = errors.Wrap(err, "User with that id not found")
+				res := &ResponseObject{Error: err.Error()}
+				Send(res, w)
+				return
+			}
+			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(res, w)
+			return
+		}
+		acc.AccessLevel = in.AccessLevel
+		err = db.Update(acc).Error
+		if err != nil {
+			err = errors.Wrap(err, "While updating user")
+			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(res, w)
+			return
+		}
+		res := &ResponseObject{Status: http.StatusOK, ID: in.ID, AccessLevel: in.AccessLevel}
+		Send(res, w)
 		return
 	})
 }

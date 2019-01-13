@@ -36,7 +36,8 @@ func (res *ResponseObject) Send(w http.ResponseWriter) {
 type AccessLevel int
 
 const (
-	Default AccessLevel = iota
+	Banned AccessLevel = iota - 1
+	Default
 	User
 	Moderator
 	Admin
@@ -50,6 +51,7 @@ func WithAuth(next http.Handler, accessLevel AccessLevel) http.Handler {
 		//check if request does not need authentication, serve the request if it doesn't need it
 		// requestPath := r.URL.Path //current request path
 		// accessLevel, _ := RouteToAccessLevel[requestPath]
+
 		if accessLevel == Default {
 			next.ServeHTTP(w, r)
 			return
@@ -65,6 +67,16 @@ func WithAuth(next http.Handler, accessLevel AccessLevel) http.Handler {
 			return
 		}
 
+		if token.AccessLevel < 0 {
+			err = errors.New("You accound have been banished")
+			w.WriteHeader(http.StatusForbidden)
+			resObj := ResponseObject{
+				Status: http.StatusForbidden,
+				Error:  err.Error(),
+			}
+			resObj.Send(w)
+		}
+
 		//Everything went well, proceed with the request and set the caller to the user retrieved from the parsed token
 		fmt.Println("User %", token.UserID) //Useful for monitoring
 
@@ -76,8 +88,6 @@ func WithAuth(next http.Handler, accessLevel AccessLevel) http.Handler {
 		}
 
 		err = errors.New("Access denied")
-		log.Println("ACCESS DENIED")
-
 		w.WriteHeader(http.StatusForbidden)
 		resObj := ResponseObject{
 			Status: http.StatusForbidden,
