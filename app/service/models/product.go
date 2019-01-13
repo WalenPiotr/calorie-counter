@@ -1,7 +1,6 @@
 package models
 
 import (
-
 	"github.com/jinzhu/gorm"
 )
 
@@ -12,9 +11,9 @@ type Product struct {
 	Unit        string  `json:"unit"`
 	Calories    float64 `json:"calories"`
 	Creator     uint
-	AddedBy     []*Account `gorm:"many2many:user_languages;"`
-	UpvotedBy   []*Account `gorm:"many2many:user_languages;"`
-	DownvotedBy []*Account `gorm:"many2many:user_languages;"`
+	AddedBy     []*Account `gorm:"many2many:added;"`
+	UpvotedBy   []*Account `gorm:"many2many:upvoted;"`
+	DownvotedBy []*Account `gorm:"many2many:downvoted;"`
 }
 
 func (product *Product) Validate() bool {

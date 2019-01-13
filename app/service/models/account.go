@@ -12,8 +12,8 @@ type Account struct {
 	Email       string           `json:"email"`
 	Password    string           `json:"password"`
 	AccessLevel auth.AccessLevel `json:"-"`
-	Created     []Product        `gorm:"foreignkey:Creator"`
-	Added       []Product        `gorm:"many2many:Added;"`
-	Upvoted     []Product        `gorm:"many2many:Upvoted;"`
-	Downvoted   []Product        `gorm:"many2many:Downvoted;"`
+	Created     []*Product        `gorm:"foreignkey:Creator"`
+	Added       []*Product        `gorm:"many2many:added;"`
+	Upvoted     []*Product        `gorm:"many2many:upvoted;"`
+	Downvoted   []*Product        `gorm:"many2many:downvoted;"`
 }

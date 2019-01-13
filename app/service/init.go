@@ -1,8 +1,7 @@
 package service
 
 import (
-	"app/service/account"
-	"app/service/product"
+	"app/service/models"
 	"fmt"
 	"log"
 	"os"
@@ -27,6 +26,6 @@ func NewDBConnection() (*gorm.DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "While opening connection to db")
 	}
-	db.Debug().AutoMigrate(&account.Account{}, &product.Product{})
+	db.Debug().AutoMigrate(&models.Account{}, &models.Product{})
 	return db, nil
 }

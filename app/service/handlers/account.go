@@ -32,7 +32,7 @@ func (cred *Credentials) Validate() error {
 	return nil
 }
 
-func Create(db *gorm.DB, logger *logrus.Logger) http.Handler {
+func CreateAccount(db *gorm.DB, logger *logrus.Logger) http.Handler {
 	type RequestObject struct {
 		Credentials Credentials `json:"cred,omitempty"`
 	}
@@ -213,6 +213,7 @@ func GetUsers(db *gorm.DB, logger *logrus.Logger) http.Handler {
 		ID          uint             `json:"id,omitempty"`
 		Email       string           `json:"email,omitempty"`
 		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
+		Created     []*models.Product
 	}
 	type RequestObject struct {
 		ID          uint             `json:"id,omitempty"`
@@ -260,7 +261,7 @@ func GetUsers(db *gorm.DB, logger *logrus.Logger) http.Handler {
 
 		users := []User{}
 		for _, acc := range *accs {
-			user := User{ID: acc.ID, Email: acc.Email, AccessLevel: acc.AccessLevel}
+			user := User{ID: acc.ID, Email: acc.Email, AccessLevel: acc.AccessLevel, Created: acc.Created}
 			users = append(users, user)
 		}
 

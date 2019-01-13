@@ -4,7 +4,6 @@ import (
 	"app/service/auth"
 	"app/service/models"
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/jinzhu/gorm"
@@ -44,10 +43,11 @@ func CreateProduct(db *gorm.DB, logger *logrus.Logger) http.Handler {
 		product := in.Product
 
 		userID := r.Context().Value(auth.UserID).(uint)
-		log.Println(userID)
-		product.Creator = userID
 
-		err = db.Create(product).Error
+		acc := models.Account{}
+		acc.ID = userID
+
+		err = db.Create(&product).Related(&acc).Error
 		if err != nil {
 			err := errors.Wrap(err, "While creating product")
 			logger.Error(err)
@@ -55,7 +55,7 @@ func CreateProduct(db *gorm.DB, logger *logrus.Logger) http.Handler {
 			res.Send(w)
 			return
 		}
-		res := &ResponseObject{Data: Data{Product: product}}
+		res := &ResponseObject{Status: http.StatusOK, Data: Data{Product: product}}
 		res.Send(w)
 		return
 	})
@@ -82,7 +82,7 @@ func GetProducts(db *gorm.DB, logger *logrus.Logger) http.Handler {
 			res.Send(w)
 			return
 		}
-		res := &ResponseObject{Data: Data{Products: *foundProducts}}
+		res := &ResponseObject{Status: http.StatusOK, Data: Data{Products: *foundProducts}}
 		res.Send(w)
 		return
 	})
@@ -110,7 +110,7 @@ func DeleteProduct(db *gorm.DB, logger *logrus.Logger) http.Handler {
 			res.Send(w)
 			return
 		}
-		res := &ResponseObject{Data: Data{Products: *foundProducts}}
+		res := &ResponseObject{Status: http.StatusOK, Data: Data{Products: *foundProducts}}
 		res.Send(w)
 		return
 	})
@@ -140,7 +140,7 @@ func UpdateProduct(db *gorm.DB, logger *logrus.Logger) http.Handler {
 			return
 		}
 
-		res := &ResponseObject{Data: Data{Product: *foundProduct}}
+		res := &ResponseObject{Status: http.StatusOK, Data: Data{Product: *foundProduct}}
 		res.Send(w)
 		return
 	})
