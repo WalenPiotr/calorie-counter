@@ -207,18 +207,18 @@ func Authenticate(db *gorm.DB, logger *logrus.Logger) http.Handler {
 	})
 }
 
-func GetUser(db *gorm.DB, logger *logrus.Logger) http.Handler {
+func GetUsers(db *gorm.DB, logger *logrus.Logger) http.Handler {
 	type User struct {
-		Email       string
-		AccessLevel auth.AccessLevel
+		ID          uint             `json:"id,omitempty"`
+		Email       string           `json:"email,omitempty"`
+		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
 	}
 	type RequestObject struct {
-		ID uint
 	}
 	type ResponseObject struct {
 		Status int    `json:"status,omitempty"`
 		Error  string `json:"error,omitempty"`
-		User   User   `json:"users,omitempty"`
+		Users  []User `json:"users,omitempty"`
 	}
 	Send := func(res *ResponseObject, w http.ResponseWriter) {
 		if res.Error != "" {
@@ -238,8 +238,8 @@ func GetUser(db *gorm.DB, logger *logrus.Logger) http.Handler {
 			Send(res, w)
 			return
 		}
-		acc := &Account{}
-		err = db.Where("id = ?", in.ID).First(acc).Error
+		accs := &[]Account{}
+		err = db.Find(accs).Error
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				err = errors.Wrap(err, "User with that id not found")
@@ -251,8 +251,14 @@ func GetUser(db *gorm.DB, logger *logrus.Logger) http.Handler {
 			Send(res, w)
 			return
 		}
-		user := User{Email: acc.Email, AccessLevel: acc.AccessLevel}
-		res := &ResponseObject{Status: http.StatusOK, User: user}
+
+		users := []User{}
+		for _, acc := range *accs {
+			user := User{ID: acc.ID, Email: acc.Email, AccessLevel: acc.AccessLevel}
+			users = append(users, user)
+		}
+
+		res := &ResponseObject{Status: http.StatusOK, Users: users}
 		Send(res, w)
 		return
 
@@ -310,6 +316,114 @@ func SetAccessLevel(db *gorm.DB, logger *logrus.Logger) http.Handler {
 			return
 		}
 		res := &ResponseObject{Status: http.StatusOK, ID: in.ID, AccessLevel: in.AccessLevel}
+		Send(res, w)
+		return
+	})
+}
+
+func Ban(db *gorm.DB, logger *logrus.Logger) http.Handler {
+	type RequestObject struct {
+		ID uint `json:"id,omitempty"`
+	}
+	type ResponseObject struct {
+		Status int    `json:"status,omitempty"`
+		Error  string `json:"error,omitempty"`
+		ID     uint   `json:"id,omitempty"`
+	}
+	Send := func(res *ResponseObject, w http.ResponseWriter) {
+		if res.Error != "" {
+			logger.Error(res.Error)
+		}
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(res.Status)
+		json.NewEncoder(w).Encode(*res)
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := &RequestObject{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			err = errors.Wrap(err, "While decoding request body")
+			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(res, w)
+			return
+		}
+		acc := &Account{}
+		err = db.Where("id = ?", in.ID).First(acc).Error
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				err = errors.Wrap(err, "User with that id not found")
+				res := &ResponseObject{Error: err.Error()}
+				Send(res, w)
+				return
+			}
+			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(res, w)
+			return
+		}
+		acc.AccessLevel = auth.Banned
+		err = db.Update(acc).Error
+		if err != nil {
+			err = errors.Wrap(err, "While updating user")
+			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(res, w)
+			return
+		}
+		res := &ResponseObject{Status: http.StatusOK, ID: in.ID}
+		Send(res, w)
+		return
+	})
+}
+
+func Unban(db *gorm.DB, logger *logrus.Logger) http.Handler {
+	type RequestObject struct {
+		ID uint `json:"id,omitempty"`
+	}
+	type ResponseObject struct {
+		Status int    `json:"status,omitempty"`
+		Error  string `json:"error,omitempty"`
+		ID     uint   `json:"id,omitempty"`
+	}
+	Send := func(res *ResponseObject, w http.ResponseWriter) {
+		if res.Error != "" {
+			logger.Error(res.Error)
+		}
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(res.Status)
+		json.NewEncoder(w).Encode(*res)
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := &RequestObject{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			err = errors.Wrap(err, "While decoding request body")
+			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(res, w)
+			return
+		}
+		acc := &Account{}
+		err = db.Where("id = ?", in.ID).First(acc).Error
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				err = errors.Wrap(err, "User with that id not found")
+				res := &ResponseObject{Error: err.Error()}
+				Send(res, w)
+				return
+			}
+			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(res, w)
+			return
+		}
+		acc.AccessLevel = auth.User
+		err = db.Update(acc).Error
+		if err != nil {
+			err = errors.Wrap(err, "While updating user")
+			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(res, w)
+			return
+		}
+		res := &ResponseObject{Status: http.StatusOK, ID: in.ID}
 		Send(res, w)
 		return
 	})

@@ -28,8 +28,12 @@ func NewService() error {
 
 	router := mux.NewRouter()
 
-	router.Handle("/api/user/new", auth.WithAuth(account.CreateAccount(db, logger), auth.Default)).Methods("POST")
+	router.Handle("/api/user/new", auth.WithAuth(account.Create(db, logger), auth.Default)).Methods("POST")
 	router.Handle("/api/user/login", auth.WithAuth(account.Authenticate(db, logger), auth.Default)).Methods("POST")
+	router.Handle("/api/user/all", auth.WithAuth(account.GetUsers(db, logger), auth.Moderator)).Methods("POST")
+	router.Handle("/api/user/ban", auth.WithAuth(account.Ban(db, logger), auth.Moderator)).Methods("POST")
+	router.Handle("/api/user/unban", auth.WithAuth(account.Unban(db, logger), auth.Moderator)).Methods("POST")
+	router.Handle("/api/user/permissions", auth.WithAuth(account.SetAccessLevel(db, logger), auth.Admin)).Methods("POST")
 
 	router.Handle("/api/product/create", auth.WithAuth(product.CreateProduct(db, logger), auth.User)).Methods("POST")
 	router.Handle("/api/product/get", auth.WithAuth(product.GetProducts(db, logger), auth.User)).Methods("POST")
