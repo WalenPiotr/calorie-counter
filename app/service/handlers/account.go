@@ -237,3 +237,52 @@ func GetUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
 
 	})
 }
+
+func GetUsersCreatedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
+	type User struct {
+		ID          int              `json:"id,omitempty"`
+		Email       string           `json:"email,omitempty"`
+		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
+	}
+	type RequestObject struct {
+		ID          uint             `json:"id,omitempty"`
+		Email       string           `json:"email,omitempty"`
+		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
+	}
+	type ResponseObject struct {
+		Status int    `json:"status,omitempty"`
+		Error  string `json:"error,omitempty"`
+		Users  []User `json:"users,omitempty"`
+	}
+	Send := func(out *ResponseObject, w http.ResponseWriter) {
+		if out.Error != "" {
+			logger.Error(out.Error)
+		}
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(out.Status)
+		json.NewEncoder(w).Encode(*out)
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := &RequestObject{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			err = errors.Wrap(err, "While decoding request body")
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
+			return
+		}
+
+		accs, err := models.GetAccounts(db)
+		users := []User{}
+		for _, acc := range *accs {
+			user := User{ID: acc.ID, Email: acc.Email, AccessLevel: acc.AccessLevel}
+			users = append(users, user)
+		}
+
+		out := &ResponseObject{Status: http.StatusOK, Users: users}
+		Send(out, w)
+		return
+
+	})
+}

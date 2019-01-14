@@ -20,15 +20,16 @@ func NewService() error {
 		return errors.Wrap(err, "While connecting to db")
 	}
 	defer db.Close()
-
 	router := mux.NewRouter()
 
 	router.Handle("/api/user/new", auth.WithAuth(handlers.CreateAccount(db, logger), auth.Default)).Methods("POST")
 	router.Handle("/api/user/login", auth.WithAuth(handlers.Authenticate(db, logger), auth.Default)).Methods("POST")
 	router.Handle("/api/user/all", auth.WithAuth(handlers.GetUsers(db, logger), auth.Moderator)).Methods("POST")
+	router.Handle("/api/user/created-products", auth.WithAuth(handlers.GetUsersCreatedProducts(db, logger), auth.Default))
 
-	router.Handle("/api/product/new", auth.WithAuth(handlers.CreateProduct(db, logger), auth.Moderator)).Methods("POST")
-	router.Handle("/api/product/all", auth.WithAuth(handlers.GetProducts(db, logger), auth.Moderator)).Methods("POST")
+	router.Handle("/api/product/new", auth.WithAuth(handlers.CreateProduct(db, logger), auth.Default)).Methods("POST")
+	router.Handle("/api/product/view", auth.WithAuth(handlers.GetProduct(db, logger), auth.Default)).Methods("POST")
+	router.Handle("/api/product/all", auth.WithAuth(handlers.GetProducts(db, logger), auth.Default)).Methods("POST")
 	router.Handle("/api/product/update", auth.WithAuth(handlers.UpdateProduct(db, logger), auth.Moderator)).Methods("POST")
 	router.Handle("/api/product/delete", auth.WithAuth(handlers.DeleteProduct(db, logger), auth.Moderator)).Methods("POST")
 

@@ -121,6 +121,26 @@ func GetProductByName(db *sql.DB, name string) (*Product, error) {
 	return &prods[0], nil
 }
 
+func GetProductsByCreatorID(db *sql.DB, id int) (*[]Product, error) {
+	rows, err := db.Query(`
+		SELECT * FROM products WHERE creator=$1
+	`, id)
+	defer rows.Close()
+	if err != nil {
+		return nil, errors.Wrap(err, "While querying for product by name")
+	}
+	prods := []Product{}
+	for rows.Next() {
+		prod := Product{}
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Quantity, &prod.Unit, &prod.Energy)
+		if err != nil {
+			return nil, err
+		}
+		prods = append(prods, prod)
+	}
+	return &prods, nil
+}
+
 func DeleteProduct(db *sql.DB, id int) error {
 	rows, err := db.Query(`
 		DELETE FROM products WHERE id=$1 
