@@ -40,13 +40,13 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Error  string `json:"error,omitempty"`
 		Token  string `json:"token,omitempty"`
 	}
-	Send := func(res *ResponseObject, w http.ResponseWriter) {
-		if res.Error != "" {
-			logger.Error(res.Error)
+	Send := func(out *ResponseObject, w http.ResponseWriter) {
+		if out.Error != "" {
+			logger.Error(out.Error)
 		}
 		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(res.Status)
-		json.NewEncoder(w).Encode(*res)
+		w.WriteHeader(out.Status)
+		json.NewEncoder(w).Encode(*out)
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -54,8 +54,8 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			Send(res, w)
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
 			return
 		}
 		cred := in.Credentials
@@ -63,8 +63,8 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err = cred.Validate()
 		if err != nil {
 			err = errors.Wrap(err, "While validating acc data")
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			Send(res, w)
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
 			return
 		}
 
@@ -72,8 +72,8 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 
 		if err != nil {
 			err = errors.Wrap(err, "While generating hash")
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			Send(res, w)
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
 			return
 		}
 		acc := &models.Account{Email: cred.Email, Password: string(hashedBytes)}
@@ -81,8 +81,8 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		count, err := models.GetAccountsCount(db)
 		if err != nil {
 			err := errors.Wrap(err, "While fetching account count")
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			Send(res, w)
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
 			return
 		}
 
@@ -96,8 +96,8 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err = models.CreateAccount(db, acc)
 		if err != nil {
 			err := errors.Wrap(err, "While creating user")
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			Send(res, w)
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
 			return
 		}
 
@@ -107,12 +107,12 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		tokenString, err := token.SignedString([]byte(tokenPassword))
 		if err != nil {
 			err := errors.Wrap(err, "While signing token")
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			Send(res, w)
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
 			return
 		}
-		res := &ResponseObject{Status: http.StatusOK, Token: tokenString}
-		Send(res, w)
+		out := &ResponseObject{Status: http.StatusOK, Token: tokenString}
+		Send(out, w)
 		return
 	})
 }
@@ -126,13 +126,13 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Error  string `json:"error,omitempty"`
 		Token  string `json:"token,omitempty"`
 	}
-	Send := func(res *ResponseObject, w http.ResponseWriter) {
-		if res.Error != "" {
-			logger.Error(res.Error)
+	Send := func(out *ResponseObject, w http.ResponseWriter) {
+		if out.Error != "" {
+			logger.Error(out.Error)
 		}
 		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(res.Status)
-		json.NewEncoder(w).Encode(*res)
+		w.WriteHeader(out.Status)
+		json.NewEncoder(w).Encode(*out)
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -140,16 +140,16 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			Send(res, w)
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
 			return
 		}
 		cred := in.Credentials
 		err = cred.Validate()
 		if err != nil {
 			err = errors.Wrap(err, "Invalid acc data")
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			Send(res, w)
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
 			return
 		}
 
@@ -158,8 +158,8 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 
 		acc, err := models.GetAccountByEmail(db, email)
 		if err != nil {
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			Send(res, w)
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
 			return
 		}
 
@@ -167,13 +167,13 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 		if err != nil { //Password does not match!
 			if err == bcrypt.ErrMismatchedHashAndPassword {
 				errors.Wrap(err, "Invalid login cred. Please try again")
-				res := &ResponseObject{Error: err.Error()}
-				Send(res, w)
+				out := &ResponseObject{Error: err.Error()}
+				Send(out, w)
 				return
 			}
 			err = errors.Wrap(err, "While comparing hash and password")
-			res := &ResponseObject{Error: err.Error()}
-			Send(res, w)
+			out := &ResponseObject{Error: err.Error()}
+			Send(out, w)
 			return
 		}
 
@@ -183,8 +183,8 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 		tokenString, err := token.SignedString([]byte(tokenPassword))
 		err = errors.Wrap(err, "While signing token")
 
-		res := &ResponseObject{Status: http.StatusBadRequest, Token: tokenString}
-		Send(res, w)
+		out := &ResponseObject{Status: http.StatusBadRequest, Token: tokenString}
+		Send(out, w)
 		return
 	})
 }
@@ -205,13 +205,13 @@ func GetUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Error  string `json:"error,omitempty"`
 		Users  []User `json:"users,omitempty"`
 	}
-	Send := func(res *ResponseObject, w http.ResponseWriter) {
-		if res.Error != "" {
-			logger.Error(res.Error)
+	Send := func(out *ResponseObject, w http.ResponseWriter) {
+		if out.Error != "" {
+			logger.Error(out.Error)
 		}
 		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(res.Status)
-		json.NewEncoder(w).Encode(*res)
+		w.WriteHeader(out.Status)
+		json.NewEncoder(w).Encode(*out)
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -219,8 +219,8 @@ func GetUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			Send(res, w)
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
 			return
 		}
 
@@ -231,8 +231,8 @@ func GetUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
 			users = append(users, user)
 		}
 
-		res := &ResponseObject{Status: http.StatusOK, Users: users}
-		Send(res, w)
+		out := &ResponseObject{Status: http.StatusOK, Users: users}
+		Send(out, w)
 		return
 
 	})

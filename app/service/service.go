@@ -17,13 +17,9 @@ func NewService() error {
 	logger := logrus.New()
 	db, err := NewDBConnection()
 	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	if err != nil {
 		return errors.Wrap(err, "While connecting to db")
 	}
+	defer db.Close()
 
 	router := mux.NewRouter()
 
@@ -33,6 +29,8 @@ func NewService() error {
 
 	router.Handle("/api/product/new", auth.WithAuth(handlers.CreateProduct(db, logger), auth.Moderator)).Methods("POST")
 	router.Handle("/api/product/all", auth.WithAuth(handlers.GetProducts(db, logger), auth.Moderator)).Methods("POST")
+	router.Handle("/api/product/update", auth.WithAuth(handlers.UpdateProduct(db, logger), auth.Moderator)).Methods("POST")
+	router.Handle("/api/product/delete", auth.WithAuth(handlers.DeleteProduct(db, logger), auth.Moderator)).Methods("POST")
 
 	port := os.Getenv("PORT")
 	if port == "" {
