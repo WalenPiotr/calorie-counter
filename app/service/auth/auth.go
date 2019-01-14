@@ -69,11 +69,11 @@ func WithAuth(next http.Handler, accessLevel AccessLevel) http.Handler {
 				Error:  err.Error(),
 			}
 			resObj.Send(w)
+			return
 		}
 
 		//Everything went well, proceed with the request and set the caller to the user retrieved from the parsed token
 		fmt.Println("User %", token.UserID) //Useful for monitoring
-
 		if token.AccessLevel >= accessLevel {
 			ctx := context.WithValue(r.Context(), UserID, token.UserID)
 			r = r.WithContext(ctx)

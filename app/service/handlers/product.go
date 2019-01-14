@@ -39,7 +39,15 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		product := in.Product
 
-		userID := r.Context().Value(auth.UserID).(int)
+		userID, ok := r.Context().Value(auth.UserID).(int)
+		if !ok {
+			logger.Errorf("Invalid UserID %v", userID)
+			err = errors.Wrap(err, "While getting UserID from request context")
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
+			return
+		}
+
 		product.Creator = userID
 		models.CreateProduct(db, product)
 
