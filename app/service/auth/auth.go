@@ -15,7 +15,7 @@ import (
 )
 
 type Token struct {
-	UserID      uint
+	UserID      int
 	AccessLevel AccessLevel
 	jwt.StandardClaims
 }
@@ -45,13 +45,7 @@ const (
 
 func WithAuth(next http.Handler, accessLevel AccessLevel) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		header := r.Header
-
-		//check if request does not need authentication, serve the request if it doesn't need it
-		// requestPath := r.URL.Path //current request path
-		// accessLevel, _ := RouteToAccessLevel[requestPath]
-
 		if accessLevel == Default {
 			next.ServeHTTP(w, r)
 			return

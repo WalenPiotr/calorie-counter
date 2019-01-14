@@ -3,145 +3,84 @@ package handlers
 import (
 	"app/service/auth"
 	"app/service/models"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
-	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
-type InputObject struct {
-	Product models.Product `'json:"product,omitempty"'`
-}
+func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
+	type RequestObject struct {
+		Product models.Product
+	}
+	type ResponseObject struct {
+		Status  int    `json:"status,omitempty"`
+		Error   string `json:"error,omitempty"`
+		Product models.Product
+	}
+	Send := func(res *ResponseObject, w http.ResponseWriter) {
+		if res.Error != "" {
+			logger.Error(res.Error)
+		}
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(res.Status)
+		json.NewEncoder(w).Encode(*res)
+	}
 
-type Data struct {
-	Product  models.Product   `json:"product,omitempty"`
-	Products []models.Product `json:"products,omitempty"`
-}
-type ResponseObject struct {
-	Status int    `json:"status"`
-	Error  string `json:"error,omitempty"`
-	Data   Data   `json:"data,omitempty"`
-}
-
-func (res *ResponseObject) Send(w http.ResponseWriter) {
-	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(*res)
-}
-
-func CreateProduct(db *gorm.DB, logger *logrus.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		in := &InputObject{}
+		in := &RequestObject{}
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			logger.Error(err)
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
 		}
 		product := in.Product
 
-		userID := r.Context().Value(auth.UserID).(uint)
+		userID := r.Context().Value(auth.UserID).(int)
+		product.Creator = userID
+		models.CreateProduct(db, product)
 
-		acc := models.Account{}
-		acc.ID = userID
-
-		err = db.Create(&product).Related(&acc).Error
-		if err != nil {
-			err := errors.Wrap(err, "While creating product")
-			logger.Error(err)
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
-			return
-		}
-		res := &ResponseObject{Status: http.StatusOK, Data: Data{Product: product}}
-		res.Send(w)
+		res := &ResponseObject{Status: http.StatusOK, Product: product}
+		Send(res, w)
 		return
 	})
 }
 
-func GetProducts(db *gorm.DB, logger *logrus.Logger) http.Handler {
+func GetProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
+	type RequestObject struct {
+	}
+	type ResponseObject struct {
+		Status   int    `json:"status,omitempty"`
+		Error    string `json:"error,omitempty"`
+		Products *[]models.Product
+	}
+	Send := func(res *ResponseObject, w http.ResponseWriter) {
+		if res.Error != "" {
+			logger.Error(res.Error)
+		}
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(res.Status)
+		json.NewEncoder(w).Encode(*res)
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		in := &InputObject{}
+		in := &RequestObject{}
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			logger.Error(err)
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
+			Send(res, w)
 		}
-		product := in.Product
-
-		foundProducts := &[]models.Product{}
-		err = db.Where(product).Find(foundProducts).Error
+		products, err := models.GetProducts(db)
 		if err != nil {
-			err := errors.Wrap(err, "While querying products")
-			logger.Error(err)
+			err = errors.Wrap(err, "While fetching products")
 			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
-			return
+			Send(res, w)
 		}
-		res := &ResponseObject{Status: http.StatusOK, Data: Data{Products: *foundProducts}}
-		res.Send(w)
-		return
-	})
-}
-
-func DeleteProduct(db *gorm.DB, logger *logrus.Logger) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		in := &InputObject{}
-		err := json.NewDecoder(r.Body).Decode(in)
-		if err != nil {
-			err = errors.Wrap(err, "While decoding request body")
-			logger.Error(err)
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
-		}
-		product := in.Product
-
-		db.Delete(product)
-		foundProducts := &[]models.Product{}
-		err = db.Where(product).Find(foundProducts).Error
-		if err != nil {
-			err := errors.Wrap(err, "While querying products")
-			logger.Error(err)
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
-			return
-		}
-		res := &ResponseObject{Status: http.StatusOK, Data: Data{Products: *foundProducts}}
-		res.Send(w)
-		return
-	})
-}
-
-func UpdateProduct(db *gorm.DB, logger *logrus.Logger) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		in := &InputObject{}
-		err := json.NewDecoder(r.Body).Decode(in)
-		if err != nil {
-			err = errors.Wrap(err, "While decoding request body")
-			logger.Error(err)
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
-		}
-		product := in.Product
-
-		db.Update(product)
-
-		foundProduct := &models.Product{}
-		err = db.Where(product).First(foundProduct).Error
-		if err != nil {
-			err := errors.Wrap(err, "While querying products")
-			logger.Error(err)
-			res := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
-			res.Send(w)
-			return
-		}
-
-		res := &ResponseObject{Status: http.StatusOK, Data: Data{Product: *foundProduct}}
-		res.Send(w)
+		res := &ResponseObject{Status: http.StatusOK, Products: products}
+		Send(res, w)
 		return
 	})
 }

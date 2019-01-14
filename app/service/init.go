@@ -7,12 +7,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"database/sql"
+
+	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 )
 
-func NewDBConnection() (*gorm.DB, error) {
+func NewDBConnection() (*sql.DB, error) {
 	host := os.Getenv("PG_HOST")
 	port := os.Getenv("PG_PORT")
 	user := os.Getenv("PG_USER")
@@ -22,10 +23,17 @@ func NewDBConnection() (*gorm.DB, error) {
 	URI := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable ", host, port, user, name, pass)
 	log.Println(URI)
 	time.Sleep(4 * time.Second)
-	db, err := gorm.Open("postgres", URI)
+	db, err := sql.Open("postgres", URI)
 	if err != nil {
 		return nil, errors.Wrap(err, "While opening connection to db")
 	}
-	db.Debug().AutoMigrate(&models.Account{}, &models.Product{})
+	err = models.MigrateAccounts(db)
+	if err != nil {
+		return nil, errors.Wrap(err, "While migrating accounts table")
+	}
+	err = models.MigrateProducts(db)
+	if err != nil {
+		return nil, errors.Wrap(err, "While migrating produts table")
+	}
 	return db, nil
 }

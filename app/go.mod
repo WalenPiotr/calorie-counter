@@ -14,11 +14,11 @@ require (
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2
 	github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6 // indirect
-	github.com/jinzhu/gorm v1.9.2
+	github.com/jinzhu/gorm v1.9.2 // indirect
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
 	github.com/jinzhu/now v0.0.0-20181116074157-8ec929ed50c3 // indirect
 	github.com/joho/godotenv v1.3.0 // indirect
-	github.com/lib/pq v1.0.0 // indirect
+	github.com/lib/pq v1.0.0
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
