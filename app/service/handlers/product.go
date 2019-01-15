@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"app/service/auth"
+	"app/service/middleware"
 	"app/service/models"
 	"database/sql"
 	"encoding/json"
@@ -39,7 +39,7 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		product := in.Product
 
-		userID, ok := r.Context().Value(auth.UserID).(int)
+		userID, ok := r.Context().Value(middleware.UserID).(int)
 		if !ok {
 			logger.Errorf("Invalid UserID %v", userID)
 			err = errors.Wrap(err, "While getting UserID from request context")
