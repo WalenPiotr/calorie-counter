@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -32,7 +33,7 @@ func CreateProduct(db *sql.DB, product Product) (*Product, error) {
 		INSERT INTO products (creator, name)
 		VALUES ($1, $2)
 		RETURNING *;
-	`, product.Creator, product.Name)
+	`, product.Creator, strings.ToLower(product.Name))
 	if err != nil {
 		return nil, errors.Wrap(err, "While inserting to products table")
 	}
@@ -96,10 +97,10 @@ func GetProductById(db *sql.DB, id int) (*Product, error) {
 	return &prods[0], nil
 }
 
-func GetProductByName(db *sql.DB, name string) (*Product, error) {
+func GetProductsByName(db *sql.DB, name string) (*[]Product, error) {
 	rows, err := db.Query(`
-		SELECT * FROM products WHERE name LIKE $1;
-	`, "%"+name+"%")
+		SELECT * FROM products WHERE name LIKE %$1%;
+	`, strings.ToLower(name))
 	if err != nil {
 		return nil, errors.Wrap(err, "While querying for product by name")
 	}
@@ -113,10 +114,7 @@ func GetProductByName(db *sql.DB, name string) (*Product, error) {
 		}
 		prods = append(prods, prod)
 	}
-	if len(prods) != 1 {
-		return nil, errors.New("Duplicate products with same name in db")
-	}
-	return &prods[0], nil
+	return &prods, nil
 }
 
 func GetProductsByCreatorID(db *sql.DB, id int) (*[]Product, error) {

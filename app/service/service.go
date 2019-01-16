@@ -44,6 +44,8 @@ func NewService() error {
 		handlers.CreateProduct(db, logger), auth.User)).Methods("POST")
 	router.Handle("/api/product/view", middleware.WithAuth(
 		handlers.GetProduct(db, logger), auth.User)).Methods("POST")
+	router.Handle("/api/product/search", middleware.WithAuth(
+		handlers.SearchProduct(db, logger), auth.User)).Methods("POST")
 	router.Handle("/api/product/all", middleware.WithAuth(
 		handlers.GetProducts(db, logger), auth.User)).Methods("POST")
 	router.Handle("/api/product/delete", middleware.WithAuth(
