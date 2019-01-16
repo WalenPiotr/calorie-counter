@@ -49,20 +49,24 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		if in.Product == nil {
 			err = errors.Wrap(err, "No product provided")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		if in.Portions == nil {
 			err = errors.Wrap(err, "No portions provided")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		product := in.Product
 		userID, ok := r.Context().Value(middleware.UserID).(int)
 		if !ok {
 			err = errors.Wrap(err, "While getting UserID from request context")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		product.Creator = userID
 		dbProduct, err := models.CreateProduct(db, *product)
@@ -121,11 +125,13 @@ func GetProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		products, err := models.GetProducts(db)
 		if err != nil {
 			err = errors.Wrap(err, "While fetching products")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		sendData(w, http.StatusOK, *products)
 		return
@@ -143,7 +149,7 @@ func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Portions []*models.Portion `json:"portions,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
-		err = errors.Wrap(err, "While creating account")
+		err = errors.Wrap(err, "While getting product")
 		logger.Error(err)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
@@ -169,16 +175,19 @@ func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		product, err := models.GetProductById(db, in.ID)
 		if err != nil {
 			err = errors.Wrap(err, "While fetching products")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		portions, err := models.GetProductsPortions(db, in.ID)
 		if err != nil {
 			err = errors.Wrap(err, "While fetching products portions")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		sendData(w, http.StatusOK, product, portions)
 		return
@@ -196,7 +205,7 @@ func UpdateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Product *models.Product `json:"product"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
-		err = errors.Wrap(err, "While creating account")
+		err = errors.Wrap(err, "While updating product")
 		logger.Error(err)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
@@ -221,11 +230,13 @@ func UpdateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		product, err := models.UpdateProduct(db, in.ID, in.NewProduct)
 		if err != nil {
 			err = errors.Wrap(err, "While updating products")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		sendData(w, http.StatusOK, product)
 		return
@@ -242,7 +253,7 @@ func DeleteProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Product *models.Product
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
-		err = errors.Wrap(err, "While creating account")
+		err = errors.Wrap(err, "While deleting product")
 		logger.Error(err)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
@@ -267,11 +278,13 @@ func DeleteProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		err = models.DeleteProduct(db, in.ID)
 		if err != nil {
 			err = errors.Wrap(err, "While updating products")
 			sendError(w, http.StatusBadRequest, err)
+			return
 		}
 		sendData(w, http.StatusOK, &models.Product{ID: in.ID})
 		return

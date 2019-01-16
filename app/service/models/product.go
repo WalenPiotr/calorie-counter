@@ -54,7 +54,7 @@ func CreateProduct(db *sql.DB, product Product) (*Product, error) {
 
 func GetProducts(db *sql.DB) (*[]Product, error) {
 	rows, err := db.Query(`
-		SELECT * FROM products WHERE id=$1;
+		SELECT * FROM products;
 	`)
 	if err != nil {
 		return nil, errors.Wrap(err, "While querying for product by name")

@@ -22,6 +22,9 @@ func MigratePortions(db *sql.DB) error {
 			energy decimal NOT NULL
 		);
 	`)
+	if err != nil {
+		return err
+	}
 	defer rows.Close()
 	return err
 }
@@ -71,10 +74,10 @@ func GetPortion(db *sql.DB, id int) (*Portion, error) {
 	return portions[0], err
 }
 
-func GetProductsPortions(db *sql.DB, userID int) ([]*Portion, error) {
+func GetProductsPortions(db *sql.DB, productID int) ([]*Portion, error) {
 	rows, err := db.Query(`
-		SELECT * FROM portions WHERE user_id=$1 
-	`, userID)
+		SELECT * FROM portions WHERE product_id=$1 
+	`, productID)
 	if err != nil {
 		return nil, err
 	}
@@ -82,20 +85,22 @@ func GetProductsPortions(db *sql.DB, userID int) ([]*Portion, error) {
 	portions := []*Portion{}
 	for rows.Next() {
 		portion := &Portion{}
-		rows.Scan(&portion.ID, &portion.ProductID, &portion.Unit, &portion.Energy)
+		err := rows.Scan(&portion.ID, &portion.ProductID, &portion.Unit, &portion.Energy)
+		if err != nil {
+			return nil, err
+		}
 		portions = append(portions, portion)
 	}
 	return portions, err
-
 }
 
 func DeletePortion(db *sql.DB, id int) error {
 	rows, err := db.Query(`
 		DELETE FROM portions WHERE id=$1 
 	`, id)
-	defer rows.Close()
 	if err != nil {
 		return errors.Wrap(err, "While deleting portion")
 	}
+	defer rows.Close()
 	return nil
 }

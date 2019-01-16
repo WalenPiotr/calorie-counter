@@ -35,7 +35,6 @@ func WithAuth(next http.Handler, accessLevel auth.AccessLevel) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-
 		token, err := authenticateUser(header)
 		if err != nil {
 			resObj := ResponseObject{
@@ -45,7 +44,6 @@ func WithAuth(next http.Handler, accessLevel auth.AccessLevel) http.Handler {
 			resObj.Send(w)
 			return
 		}
-
 		if token.AccessLevel < 0 {
 			err = errors.New("You accound have been banished")
 			w.WriteHeader(http.StatusForbidden)
@@ -56,7 +54,6 @@ func WithAuth(next http.Handler, accessLevel auth.AccessLevel) http.Handler {
 			resObj.Send(w)
 			return
 		}
-
 		//Everything went well, proceed with the request and set the caller to the user retrieved from the parsed token
 		fmt.Println("User %", token.UserID) //Useful for monitoring
 		if token.AccessLevel >= accessLevel {
@@ -65,7 +62,6 @@ func WithAuth(next http.Handler, accessLevel auth.AccessLevel) http.Handler {
 			next.ServeHTTP(w, r) //proceed in the middleware chain!
 			return
 		}
-
 		err = errors.New("Access denied")
 		w.WriteHeader(http.StatusForbidden)
 		resObj := ResponseObject{
