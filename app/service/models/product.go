@@ -7,16 +7,15 @@ import (
 )
 
 type Product struct {
-	ID       int
-	Name     string  `json:"name"`
-	Quantity float64 `json:"quantity"`
-	Unit     string  `json:"unit"`
-	Energy   float64 `json:"calories"`
-	Creator  int
+	ID      int
+	Name    string  `json:"name"`
+	Unit    string  `json:"unit"`
+	Energy  float64 `json:"calories"`
+	Creator int
 }
 
 func (product *Product) Validate() bool {
-	if product.Quantity <= 0 || product.Energy <= 0 {
+	if product.Energy <= 0 {
 		return false
 	}
 	return true
@@ -25,12 +24,9 @@ func (product *Product) Validate() bool {
 func MigrateProducts(db *sql.DB) error {
 	rows, err := db.Query(`
 		CREATE TABLE IF NOT EXISTS products (
-			id serial primary key,
-			creator integer references accounts(id),
-			name text unique, 
-			quantity decimal, 
-			unit text, 
-			energy decimal
+			id serial PRIMARY KEY,
+			creator integer REFERENCES accounts(id),
+			name text UNIQUE NOT NULL, 
 		);
 	`)
 	defer rows.Close()
@@ -44,7 +40,7 @@ func CreateProduct(db *sql.DB, product Product) error {
 	rows, err := db.Query(`
 		INSERT INTO products (creator, name, quantity, unit, energy)
 		VALUES ($1, $2, $3, $4, $5);
-	`, product.Creator, product.Name, product.Quantity, product.Unit, product.Energy)
+	`, product.Creator, product.Name, product.Unit, product.Energy)
 	defer rows.Close()
 	if err != nil {
 		return errors.Wrap(err, "While inserting to products table")
@@ -63,7 +59,7 @@ func GetProducts(db *sql.DB) (*[]Product, error) {
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Quantity, &prod.Unit, &prod.Energy)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Unit, &prod.Energy)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +81,7 @@ func GetProductById(db *sql.DB, id int) (*Product, error) {
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Quantity, &prod.Unit, &prod.Energy)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Unit, &prod.Energy)
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +105,7 @@ func GetProductByName(db *sql.DB, name string) (*Product, error) {
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Quantity, &prod.Unit, &prod.Energy)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Unit, &prod.Energy)
 		if err != nil {
 			return nil, err
 		}
@@ -132,7 +128,7 @@ func GetProductsByCreatorID(db *sql.DB, id int) (*[]Product, error) {
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Quantity, &prod.Unit, &prod.Energy)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Unit, &prod.Energy)
 		if err != nil {
 			return nil, err
 		}
@@ -155,10 +151,10 @@ func DeleteProduct(db *sql.DB, id int) error {
 func UpdateProduct(db *sql.DB, id int, new Product) error {
 	rows, err := db.Query(`
 		UPDATE products SET name=$2, quantity=$3, unit=$4, energy=$5 WHERE id=$1;
-	`, id, new.Name, new.Quantity, new.Unit, new.Energy)
+	`, id, new.Name, new.Unit, new.Energy)
 	defer rows.Close()
 	if err != nil {
-		return errors.Wrap(err, "While deleting product")
+		return errors.Wrap(err, "While updating product")
 	}
 	return nil
 }
