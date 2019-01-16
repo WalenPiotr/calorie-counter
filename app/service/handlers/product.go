@@ -5,6 +5,7 @@ import (
 	"app/service/models"
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -13,21 +14,16 @@ import (
 
 func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 	type RequestObject struct {
-		Product models.Product
+		Product  *models.Product `json:"product"`
+		Portions *[]models.Portion
 	}
 	type ResponseObject struct {
-		Status  int    `json:"status,omitempty"`
-		Error   string `json:"error,omitempty"`
-		Product models.Product
+		Status   int              `json:"status,omitempty"`
+		Error    string           `json:"error,omitempty"`
+		Product  models.Product   `json:"product,omitempty"`
+		Portions []models.Portion `json:"portions,omitempty"`
 	}
-	Send := func(out *ResponseObject, w http.ResponseWriter) {
-		if out.Error != "" {
-			logger.Error(out.Error)
-		}
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(out.Status)
-		json.NewEncoder(w).Encode(*out)
-	}
+	SendError
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		in := &RequestObject{}
@@ -37,8 +33,17 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
 			Send(out, w)
 		}
+		if in.Product == nil {
+			err = errors.Wrap(err, "No product provided")
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
+		}
+		if in.Portions == nil {
+			err = errors.Wrap(err, "No portions provided")
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
+		}
 		product := in.Product
-
 		userID, ok := r.Context().Value(middleware.UserID).(int)
 		if !ok {
 			logger.Errorf("Invalid UserID %v", userID)
@@ -47,11 +52,28 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			Send(out, w)
 			return
 		}
-
 		product.Creator = userID
-		models.CreateProduct(db, product)
-
-		out := &ResponseObject{Status: http.StatusOK, Product: product}
+		dbProduct, err := models.CreateProduct(db, *product)
+		if err != nil {
+			err = errors.Wrap(err, "While creating prodcut")
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
+			return
+		}
+		dbPortions := []models.Portion{}
+		log.Println(*in.Portions)
+		for _, portion := range *in.Portions {
+			portion.ProductID = dbProduct.ID
+			dbPortion, err := models.CreatePortion(db, portion)
+			if err != nil {
+				err = errors.Wrap(err, "While creating portion for product")
+				out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+				Send(out, w)
+				return
+			}
+			dbPortions = append(dbPortions, *dbPortion)
+		}
+		out := &ResponseObject{Status: http.StatusOK, Product: *dbProduct, Portions: dbPortions}
 		Send(out, w)
 		return
 	})
@@ -98,9 +120,10 @@ func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		ID int `json:"id"`
 	}
 	type ResponseObject struct {
-		Status  int    `json:"status,omitempty"`
-		Error   string `json:"error,omitempty"`
-		Product *models.Product
+		Status   int    `json:"status,omitempty"`
+		Error    string `json:"error,omitempty"`
+		Product  *models.Product
+		Portions []*models.Portion `json:"portions,omitempty"`
 	}
 	Send := func(out *ResponseObject, w http.ResponseWriter) {
 		if out.Error != "" {
@@ -124,7 +147,14 @@ func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
 			Send(out, w)
 		}
-		out := &ResponseObject{Status: http.StatusOK, Product: product}
+		portions, err := models.GetProductsPortions(db, in.ID)
+		if err != nil {
+			err = errors.Wrap(err, "While fetching products portions")
+			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
+			Send(out, w)
+		}
+
+		out := &ResponseObject{Status: http.StatusOK, Product: product, Portions: portions}
 		Send(out, w)
 		return
 	})
@@ -132,13 +162,15 @@ func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 
 func UpdateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 	type RequestObject struct {
-		ID         int            `json:"id"`
-		NewProduct models.Product `json:"newProduct"`
+		ID         int               `json:"id"`
+		NewProduct models.Product    `json:"product"`
+		Portions   *[]models.Portion `json:"portions"`
 	}
 	type ResponseObject struct {
-		Status  int    `json:"status,omitempty"`
-		Error   string `json:"error,omitempty"`
-		Product *models.Product
+		Status   int               `json:"status,omitempty"`
+		Error    string            `json:"error,omitempty"`
+		Product  *models.Product   `json:"product"`
+		Portions *[]models.Portion `json:"portions"`
 	}
 	Send := func(out *ResponseObject, w http.ResponseWriter) {
 		if out.Error != "" {
@@ -156,13 +188,13 @@ func UpdateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
 			Send(out, w)
 		}
-		err = models.UpdateProduct(db, in.ID, in.NewProduct)
+		product, err := models.UpdateProduct(db, in.ID, in.NewProduct)
 		if err != nil {
 			err = errors.Wrap(err, "While updating products")
 			out := &ResponseObject{Status: http.StatusBadRequest, Error: err.Error()}
 			Send(out, w)
 		}
-		out := &ResponseObject{Status: http.StatusOK}
+		out := &ResponseObject{Status: http.StatusOK, Product: product}
 		Send(out, w)
 		return
 	})

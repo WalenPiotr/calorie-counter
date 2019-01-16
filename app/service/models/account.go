@@ -25,8 +25,11 @@ func MigrateAccounts(db *sql.DB) error {
 			access_level integer
 		);
 	`)
+	if err != nil {
+		return errors.Wrap(err, "While creating accounts table")
+	}
 	defer rows.Close()
-	return err
+	return nil
 }
 
 func CreateAccount(db *sql.DB, acc *Account) error {
@@ -34,18 +37,21 @@ func CreateAccount(db *sql.DB, acc *Account) error {
 		INSERT INTO accounts (email, password, access_level)
 		VALUES($1, $2, $3);
 	`, acc.Email, acc.Password, acc.AccessLevel)
+	if err != nil {
+		return errors.Wrap(err, "While creating account")
+	}
 	defer rows.Close()
-	return err
+	return nil
 }
 
 func GetAccountById(db *sql.DB, id int) (*Account, error) {
 	rows, err := db.Query(`
 		SELECT * FROM accounts WHERE id=$1;
 	`, id)
-	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	accs := []Account{}
 	for rows.Next() {
 		acc := Account{}
@@ -54,6 +60,9 @@ func GetAccountById(db *sql.DB, id int) (*Account, error) {
 			return nil, err
 		}
 		accs = append(accs, acc)
+	}
+	if len(accs) == 0 {
+		return nil, errors.New("Account not found")
 	}
 	if len(accs) != 1 {
 		return nil, errors.New("Duplicate accounts with same id in db")
@@ -77,6 +86,9 @@ func GetAccountByEmail(db *sql.DB, email string) (*Account, error) {
 			return nil, err
 		}
 		accs = append(accs, acc)
+	}
+	if len(accs) == 0 {
+		return nil, errors.New("Account not found")
 	}
 	if len(accs) != 1 {
 		return nil, errors.New("Duplicate account with same emails in db")

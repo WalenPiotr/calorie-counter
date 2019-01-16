@@ -9,10 +9,10 @@ import (
 
 // Account struct is used to represent user acc
 type Entry struct {
-	ID        int
-	UserID    int
-	ProductID int
-	Quantity  float64
+	ID        int     `json:"id"`
+	UserID    int     `json:"userID"`
+	ProductID int     `json:"productID"`
+	Quantity  float64 `json:"quantity"`
 }
 
 func MigrateEntries(db *sql.DB) error {

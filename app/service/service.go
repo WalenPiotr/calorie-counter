@@ -29,8 +29,18 @@ func NewService() error {
 		handlers.Authenticate(db, logger), auth.Default)).Methods("POST")
 	router.Handle("/api/user/all", middleware.WithAuth(
 		handlers.GetUsers(db, logger), auth.Moderator)).Methods("POST")
-	router.Handle("/api/user/created-products", middleware.WithAuth(
+	router.Handle("/api/user/created", middleware.WithAuth(
 		handlers.GetUsersCreatedProducts(db, logger), auth.Default)).Methods("POST")
+	
+	router.Handle("/api/user/entries/create", middleware.WithAuth(
+		handlers.CreateEntry(db, logger), auth.Default)).Methods("POST")
+	))
+	router.Handle("/api/user/entries/view", middleware.WithAuth(
+		handlers.CreateEntry(db, logger), auth.Default)).Methods("POST")
+	))
+	router.Handle("/api/user/entries/delete", middleware.WithAuth(
+		handlers.CreateEntry(db, logger), auth.Default)).Methods("POST")
+	))
 
 	router.Handle("/api/product/new", middleware.WithAuth(
 		handlers.CreateProduct(db, logger), auth.User)).Methods("POST")
@@ -38,8 +48,6 @@ func NewService() error {
 		handlers.GetProduct(db, logger), auth.User)).Methods("POST")
 	router.Handle("/api/product/all", middleware.WithAuth(
 		handlers.GetProducts(db, logger), auth.User)).Methods("POST")
-	router.Handle("/api/product/update", middleware.WithAuth(
-		handlers.UpdateProduct(db, logger), auth.Moderator)).Methods("POST")
 	router.Handle("/api/product/delete", middleware.WithAuth(
 		handlers.DeleteProduct(db, logger), auth.Moderator)).Methods("POST")
 

@@ -7,18 +7,9 @@ import (
 )
 
 type Product struct {
-	ID      int
-	Name    string  `json:"name"`
-	Unit    string  `json:"unit"`
-	Energy  float64 `json:"calories"`
-	Creator int
-}
-
-func (product *Product) Validate() bool {
-	if product.Energy <= 0 {
-		return false
-	}
-	return true
+	ID      int    `json:"id"`
+	Name    string `json:"name"`
+	Creator int    `json:"creator"`
 }
 
 func MigrateProducts(db *sql.DB) error {
@@ -26,40 +17,53 @@ func MigrateProducts(db *sql.DB) error {
 		CREATE TABLE IF NOT EXISTS products (
 			id serial PRIMARY KEY,
 			creator integer REFERENCES accounts(id),
-			name text UNIQUE NOT NULL, 
+			name text UNIQUE NOT NULL
 		);
 	`)
-	defer rows.Close()
 	if err != nil {
 		return errors.Wrap(err, "While creating products table")
 	}
+	defer rows.Close()
 	return nil
 }
 
-func CreateProduct(db *sql.DB, product Product) error {
+func CreateProduct(db *sql.DB, product Product) (*Product, error) {
 	rows, err := db.Query(`
-		INSERT INTO products (creator, name, quantity, unit, energy)
-		VALUES ($1, $2, $3, $4, $5);
-	`, product.Creator, product.Name, product.Unit, product.Energy)
-	defer rows.Close()
+		INSERT INTO products (creator, name)
+		VALUES ($1, $2)
+		RETURNING *;
+	`, product.Creator, product.Name)
 	if err != nil {
-		return errors.Wrap(err, "While inserting to products table")
+		return nil, errors.Wrap(err, "While inserting to products table")
 	}
-	return nil
+	defer rows.Close()
+	prods := []Product{}
+	for rows.Next() {
+		prod := Product{}
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name)
+		if err != nil {
+			return nil, err
+		}
+		prods = append(prods, prod)
+	}
+	if len(prods) != 1 {
+		return nil, errors.Wrap(err, "Invalid return of insert operation")
+	}
+	return &prods[0], nil
 }
 
 func GetProducts(db *sql.DB) (*[]Product, error) {
 	rows, err := db.Query(`
 		SELECT * FROM products WHERE id=$1;
 	`)
-	defer rows.Close()
 	if err != nil {
 		return nil, errors.Wrap(err, "While querying for product by name")
 	}
+	defer rows.Close()
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Unit, &prod.Energy)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -73,15 +77,14 @@ func GetProductById(db *sql.DB, id int) (*Product, error) {
 	rows, err := db.Query(`
 		SELECT * FROM products WHERE id=$1;
 	`, id)
-	defer rows.Close()
 	if err != nil {
 		return nil, errors.Wrap(err, "While querying for product by name")
 	}
-
+	defer rows.Close()
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Unit, &prod.Energy)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -97,15 +100,14 @@ func GetProductByName(db *sql.DB, name string) (*Product, error) {
 	rows, err := db.Query(`
 		SELECT * FROM products WHERE name LIKE $1;
 	`, "%"+name+"%")
-	defer rows.Close()
 	if err != nil {
 		return nil, errors.Wrap(err, "While querying for product by name")
 	}
-
+	defer rows.Close()
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Unit, &prod.Energy)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -121,14 +123,14 @@ func GetProductsByCreatorID(db *sql.DB, id int) (*[]Product, error) {
 	rows, err := db.Query(`
 		SELECT * FROM products WHERE creator=$1
 	`, id)
-	defer rows.Close()
 	if err != nil {
 		return nil, errors.Wrap(err, "While querying for product by name")
 	}
+	defer rows.Close()
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Unit, &prod.Energy)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -141,20 +143,32 @@ func DeleteProduct(db *sql.DB, id int) error {
 	rows, err := db.Query(`
 		DELETE FROM products WHERE id=$1 
 	`, id)
-	defer rows.Close()
 	if err != nil {
 		return errors.Wrap(err, "While deleting product")
 	}
+	defer rows.Close()
 	return nil
 }
 
-func UpdateProduct(db *sql.DB, id int, new Product) error {
+func UpdateProduct(db *sql.DB, id int, new Product) (*Product, error) {
 	rows, err := db.Query(`
-		UPDATE products SET name=$2, quantity=$3, unit=$4, energy=$5 WHERE id=$1;
-	`, id, new.Name, new.Unit, new.Energy)
-	defer rows.Close()
+		UPDATE products SET name=$2 WHERE id=$1 RETURNING *;;
+	`, id, new.Name)
 	if err != nil {
-		return errors.Wrap(err, "While updating product")
+		return nil, errors.Wrap(err, "While updating product")
 	}
-	return nil
+	defer rows.Close()
+	prods := []Product{}
+	for rows.Next() {
+		prod := Product{}
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name)
+		if err != nil {
+			return nil, err
+		}
+		prods = append(prods, prod)
+	}
+	if len(prods) != 1 {
+		return nil, errors.New("Duplicate products with same name in db")
+	}
+	return &prods[0], nil
 }
