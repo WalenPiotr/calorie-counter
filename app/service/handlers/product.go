@@ -338,3 +338,62 @@ func DeleteProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		return
 	})
 }
+
+func RateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
+	type RequestObject struct {
+		ID   int `json:"id"`
+		Vote models.Vote
+	}
+	type ResponseObject struct {
+		Status int    `json:"status,omitempty"`
+		Error  string `json:"error,omitempty"`
+	}
+	sendError := func(w http.ResponseWriter, status int, err error) {
+		err = errors.Wrap(err, "While rating product")
+		logger.Error(err)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{
+			Status: status,
+			Error:  err.Error(),
+		}
+		json.NewEncoder(w).Encode(out)
+	}
+	sendData := func(w http.ResponseWriter, status int) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{
+			Status: status,
+		}
+		json.NewEncoder(w).Encode(out)
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := &RequestObject{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			err = errors.Wrap(err, "While decoding request body")
+			sendError(w, http.StatusBadRequest, err)
+			return
+		}
+		if in.Vote == models.UpVote || in.Vote == models.DownVote || in.Vote == models.None {
+			userID, ok := r.Context().Value(middleware.UserID).(int)
+			if !ok {
+				err = errors.Wrap(err, "While getting UserID from request context")
+				sendError(w, http.StatusBadRequest, err)
+				return
+			}
+			err = models.RateProduct(db, userID, in.ID, in.Vote)
+			if err != nil {
+				sendError(w, http.StatusBadRequest, err)
+				return
+			}
+			sendData(w, http.StatusOK)
+			return
+		} else {
+			err = errors.New("Invalid vote value")
+			sendError(w, http.StatusBadRequest, err)
+			return
+		}
+		return
+	})
+}

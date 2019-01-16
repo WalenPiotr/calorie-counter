@@ -70,7 +70,6 @@ func GetProducts(db *sql.DB) (*[]Product, error) {
 		}
 		prods = append(prods, prod)
 	}
-
 	return &prods, nil
 }
 
@@ -99,8 +98,8 @@ func GetProductById(db *sql.DB, id int) (*Product, error) {
 
 func GetProductsByName(db *sql.DB, name string) (*[]Product, error) {
 	rows, err := db.Query(`
-		SELECT * FROM products WHERE name LIKE %$1%;
-	`, strings.ToLower(name))
+		SELECT * FROM products WHERE name LIKE $1;
+	`, "%"+strings.ToLower(name)+"%")
 	if err != nil {
 		return nil, errors.Wrap(err, "While querying for product by name")
 	}
