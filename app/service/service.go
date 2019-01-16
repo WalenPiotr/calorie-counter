@@ -32,15 +32,15 @@ func NewService() error {
 	router.Handle("/api/user/created", middleware.WithAuth(
 		handlers.GetUsersCreatedProducts(db, logger), auth.Default)).Methods("POST")
 	
-	router.Handle("/api/user/entries/create", middleware.WithAuth(
-		handlers.CreateEntry(db, logger), auth.Default)).Methods("POST")
-	))
-	router.Handle("/api/user/entries/view", middleware.WithAuth(
-		handlers.CreateEntry(db, logger), auth.Default)).Methods("POST")
-	))
-	router.Handle("/api/user/entries/delete", middleware.WithAuth(
-		handlers.CreateEntry(db, logger), auth.Default)).Methods("POST")
-	))
+	// router.Handle("/api/user/entries/create", middleware.WithAuth(
+	// 	handlers.CreateEntry(db, logger), auth.Default)).Methods("POST")
+	// ))
+	// router.Handle("/api/user/entries/view", middleware.WithAuth(
+	// 	handlers.CreateEntry(db, logger), auth.Default)).Methods("POST")
+	// ))
+	// router.Handle("/api/user/entries/delete", middleware.WithAuth(
+	// 	handlers.CreateEntry(db, logger), auth.Default)).Methods("POST")
+	// ))
 
 	router.Handle("/api/product/new", middleware.WithAuth(
 		handlers.CreateProduct(db, logger), auth.User)).Methods("POST")

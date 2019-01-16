@@ -13,10 +13,6 @@ type Portion struct {
 	Energy    float64 `json:"energy"`
 }
 
-func (portion *Portion) scanRows(rows *sql.Rows) error {
-	return rows.Scan(&portion.ID, &portion.ProductID, &portion.Unit, &portion.Energy)
-}
-
 func MigratePortions(db *sql.DB) error {
 	rows, err := db.Query(`
 		CREATE TABLE IF NOT EXISTS portions (
@@ -43,7 +39,7 @@ func CreatePortion(db *sql.DB, portion Portion) (*Portion, error) {
 	portions := []Portion{}
 	for rows.Next() {
 		portion := Portion{}
-		portion.scanRows(rows)
+		rows.Scan(&portion.ID, &portion.ProductID, &portion.Unit, &portion.Energy)
 		if err != nil {
 			return nil, err
 		}
@@ -66,7 +62,7 @@ func GetPortion(db *sql.DB, id int) (*Portion, error) {
 	portions := []*Portion{}
 	for rows.Next() {
 		portion := &Portion{}
-		portion.scanRows(rows)
+		rows.Scan(&portion.ID, &portion.ProductID, &portion.Unit, &portion.Energy)
 		portions = append(portions, portion)
 	}
 	if len(portions) > 1 {
@@ -86,7 +82,7 @@ func GetProductsPortions(db *sql.DB, userID int) ([]*Portion, error) {
 	portions := []*Portion{}
 	for rows.Next() {
 		portion := &Portion{}
-		portion.scanRows(rows)
+		rows.Scan(&portion.ID, &portion.ProductID, &portion.Unit, &portion.Energy)
 		portions = append(portions, portion)
 	}
 	return portions, err
@@ -103,4 +99,3 @@ func DeletePortion(db *sql.DB, id int) error {
 	}
 	return nil
 }
-

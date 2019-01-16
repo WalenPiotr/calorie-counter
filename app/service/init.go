@@ -25,7 +25,7 @@ func NewDBConnection() (*sql.DB, error) {
 
 	//STARTUP DELAY FOR DB
 	time.Sleep(4 * time.Second)
-	
+
 	db, err := sql.Open("postgres", URI)
 	if err != nil {
 		return nil, errors.Wrap(err, "While opening connection to db")
@@ -40,7 +40,11 @@ func NewDBConnection() (*sql.DB, error) {
 	}
 	err = models.MigratePortions(db)
 	if err != nil {
-		return nil, errors.Wrap(err, "While migration portions table")
+		return nil, errors.Wrap(err, "While migrating portions table")
+	}
+	err = models.MigrateEntries(db)
+	if err != nil {
+		return nil, errors.Wrap(err, "While migrating entries table")
 	}
 
 	return db, nil
