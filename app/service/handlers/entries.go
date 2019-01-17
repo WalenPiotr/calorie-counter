@@ -130,7 +130,7 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 
 func DeleteEntry(db *sql.DB, logger *logrus.Logger) http.Handler {
 	type RequestObject struct {
-		ID int
+		ID int `json:"id"`
 	}
 	type ResponseObject struct {
 		Status int    `json:"status,omitempty"`

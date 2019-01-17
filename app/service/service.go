@@ -50,6 +50,8 @@ func NewService() error {
 		handlers.GetProducts(db, logger), auth.User)).Methods("POST")
 	router.Handle("/api/product/delete", middleware.WithAuth(
 		handlers.DeleteProduct(db, logger), auth.Moderator)).Methods("POST")
+	router.Handle("/api/product/rate", middleware.WithAuth(
+		handlers.RateProduct(db, logger), auth.Moderator)).Methods("POST")
 
 	router.Use(middleware.WithTracing)
 
