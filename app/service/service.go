@@ -29,29 +29,31 @@ func NewService() error {
 	router.Handle("/api/user/login", middleware.WithAuth(
 		handlers.Authenticate(db, logger), auth.Default)).Methods("POST")
 	router.Handle("/api/user/all", middleware.WithAuth(
-		handlers.GetUsers(db, logger), auth.Moderator)).Methods("POST")
+		handlers.GetUsers(db, logger), auth.Moderator)).Methods("GET")
 	router.Handle("/api/user/created", middleware.WithAuth(
-		handlers.GetUsersCreatedProducts(db, logger), auth.Default)).Methods("POST")
+		handlers.GetUsersCreatedProducts(db, logger), auth.Default)).Methods("GET")
 
 	router.Handle("/api/user/entries/create", middleware.WithAuth(
 		handlers.CreateEntry(db, logger), auth.User)).Methods("POST")
 	router.Handle("/api/user/entries/view", middleware.WithAuth(
-		handlers.GetUsersEntries(db, logger), auth.User)).Methods("POST")
+		handlers.GetUsersEntries(db, logger), auth.User)).Methods("GET")
 	router.Handle("/api/user/entries/delete", middleware.WithAuth(
-		handlers.DeleteEntry(db, logger), auth.User)).Methods("POST")
+		handlers.DeleteEntry(db, logger), auth.User)).Methods("DELETE")
+	router.Handle("/api/user/entries/update", middleware.WithAuth(
+		handlers.UpdateEntry(db, logger), auth.User)).Methods("PUT")
 
 	router.Handle("/api/product/new", middleware.WithAuth(
 		handlers.CreateProduct(db, logger), auth.User)).Methods("POST")
 	router.Handle("/api/product/view", middleware.WithAuth(
-		handlers.GetProduct(db, logger), auth.User)).Methods("POST")
+		handlers.GetProduct(db, logger), auth.User)).Methods("GET")
 	router.Handle("/api/product/search", middleware.WithAuth(
-		handlers.SearchProduct(db, logger), auth.User)).Methods("POST")
+		handlers.SearchProduct(db, logger), auth.User)).Methods("GET")
 	router.Handle("/api/product/all", middleware.WithAuth(
-		handlers.GetProducts(db, logger), auth.User)).Methods("POST")
+		handlers.GetProducts(db, logger), auth.User)).Methods("GET")
 	router.Handle("/api/product/delete", middleware.WithAuth(
-		handlers.DeleteProduct(db, logger), auth.Moderator)).Methods("POST")
+		handlers.DeleteProduct(db, logger), auth.Moderator)).Methods("DELETE")
 	router.Handle("/api/product/rate", middleware.WithAuth(
-		handlers.RateProduct(db, logger), auth.Moderator)).Methods("POST")
+		handlers.RateProduct(db, logger), auth.User)).Methods("POST")
 
 	router.Use(middleware.WithTracing)
 
