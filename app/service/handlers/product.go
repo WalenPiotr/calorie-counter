@@ -5,6 +5,7 @@ import (
 	"app/service/models"
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -61,6 +62,7 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err)
 			return
 		}
+		log.Printf("%+v", in)
 		product := in.Product
 		userID, ok := r.Context().Value(middleware.UserID).(int)
 		if !ok {
@@ -292,13 +294,18 @@ func DeleteProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 }
 
 func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
+	type BundledProduct struct {
+		Product  models.Product   `json:"product"`
+		Portions []*models.Portion `json:"portions"`
+	}
+
 	type RequestObject struct {
 		Name string `json:"name"`
 	}
 	type ResponseObject struct {
-		Status   int               `json:"status,omitempty"`
-		Error    string            `json:"error,omitempty"`
-		Products *[]models.Product `json:"products,omitempty"`
+		Status   int              `json:"status,omitempty"`
+		Error    string           `json:"error,omitempty"`
+		Products []BundledProduct `json:"products,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While getting product")
@@ -311,7 +318,7 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, products *[]models.Product) {
+	sendData := func(w http.ResponseWriter, status int, products []BundledProduct) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
@@ -334,7 +341,23 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err)
 			return
 		}
-		sendData(w, http.StatusOK, products)
+		log.Printf("%+v", products)
+		bundledProducts := []BundledProduct{}
+		for _, product := range *products {
+			portions, err := models.GetProductsPortions(db, product.ID)
+			if err != nil {
+				err = errors.Wrap(err, "While products portions")
+				sendError(w, http.StatusBadRequest, err)
+				return
+			}
+			bundledProduct := BundledProduct{
+				Product:  product,
+				Portions: portions,
+			}
+			bundledProducts = append(bundledProducts, bundledProduct)
+		}
+		log.Printf("%+v", bundledProducts)
+		sendData(w, http.StatusOK, bundledProducts)
 		return
 	})
 }

@@ -24,38 +24,39 @@ func NewService() error {
 	defer db.Close()
 	router := mux.NewRouter()
 
+	router.Use(middleware.WithCors)
+	router.Use(middleware.WithTracing)
+
 	router.Handle("/api/user/new", middleware.WithAuth(
-		handlers.CreateAccount(db, logger), auth.Default)).Methods("POST")
+		handlers.CreateAccount(db, logger), auth.Default))
 	router.Handle("/api/user/login", middleware.WithAuth(
-		handlers.Authenticate(db, logger), auth.Default)).Methods("POST")
+		handlers.Authenticate(db, logger), auth.Default))
 	router.Handle("/api/user/all", middleware.WithAuth(
-		handlers.GetUsers(db, logger), auth.Moderator)).Methods("GET")
+		handlers.GetUsers(db, logger), auth.Moderator))
 	router.Handle("/api/user/created", middleware.WithAuth(
-		handlers.GetUsersCreatedProducts(db, logger), auth.Default)).Methods("GET")
+		handlers.GetUsersCreatedProducts(db, logger), auth.Default))
 
 	router.Handle("/api/user/entries/create", middleware.WithAuth(
-		handlers.CreateEntry(db, logger), auth.User)).Methods("POST")
+		handlers.CreateEntry(db, logger), auth.User))
 	router.Handle("/api/user/entries/view", middleware.WithAuth(
-		handlers.GetUsersEntries(db, logger), auth.User)).Methods("GET")
+		handlers.GetUsersEntries(db, logger), auth.User))
 	router.Handle("/api/user/entries/delete", middleware.WithAuth(
-		handlers.DeleteEntry(db, logger), auth.User)).Methods("DELETE")
+		handlers.DeleteEntry(db, logger), auth.User))
 	router.Handle("/api/user/entries/update", middleware.WithAuth(
-		handlers.UpdateEntry(db, logger), auth.User)).Methods("PUT")
+		handlers.UpdateEntry(db, logger), auth.User))
 
 	router.Handle("/api/product/new", middleware.WithAuth(
-		handlers.CreateProduct(db, logger), auth.User)).Methods("POST")
+		handlers.CreateProduct(db, logger), auth.User))
 	router.Handle("/api/product/view", middleware.WithAuth(
-		handlers.GetProduct(db, logger), auth.User)).Methods("GET")
+		handlers.GetProduct(db, logger), auth.User))
 	router.Handle("/api/product/search", middleware.WithAuth(
-		handlers.SearchProduct(db, logger), auth.User)).Methods("GET")
+		handlers.SearchProduct(db, logger), auth.User))
 	router.Handle("/api/product/all", middleware.WithAuth(
-		handlers.GetProducts(db, logger), auth.User)).Methods("GET")
+		handlers.GetProducts(db, logger), auth.User))
 	router.Handle("/api/product/delete", middleware.WithAuth(
-		handlers.DeleteProduct(db, logger), auth.Moderator)).Methods("DELETE")
+		handlers.DeleteProduct(db, logger), auth.Moderator))
 	router.Handle("/api/product/rate", middleware.WithAuth(
-		handlers.RateProduct(db, logger), auth.User)).Methods("POST")
-
-	router.Use(middleware.WithTracing)
+		handlers.RateProduct(db, logger), auth.User))
 
 	port := os.Getenv("PORT")
 	if port == "" {
