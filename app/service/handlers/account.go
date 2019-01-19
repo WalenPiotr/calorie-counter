@@ -36,9 +36,8 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Credentials
 	}
 	type ResponseObject struct {
-		Status int    `json:"status,omitempty"`
-		Error  string `json:"error,omitempty"`
-		Token  string `json:"token,omitempty"`
+		Error string `json:"error,omitempty"`
+		Token string `json:"token,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While creating account")
@@ -46,8 +45,7 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -55,8 +53,7 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Token:  token,
+			Token: token,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -125,9 +122,8 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Credentials
 	}
 	type ResponseObject struct {
-		Status int    `json:"status,omitempty"`
-		Error  string `json:"error,omitempty"`
-		Token  string `json:"token,omitempty"`
+		Error string `json:"error,omitempty"`
+		Token string `json:"token,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While Authenticate")
@@ -135,8 +131,7 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -144,8 +139,7 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Token:  token,
+			Token: token,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -209,9 +203,8 @@ func GetUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
 		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
 	}
 	type ResponseObject struct {
-		Status int    `json:"status,omitempty"`
-		Error  string `json:"error,omitempty"`
-		Users  []User `json:"users,omitempty"`
+		Error string `json:"error,omitempty"`
+		Users []User `json:"users,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While Authenticate")
@@ -219,8 +212,7 @@ func GetUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -228,8 +220,7 @@ func GetUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Users:  users,
+			Users: users,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -269,9 +260,8 @@ func GetUsersCreatedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
 	}
 	type ResponseObject struct {
-		Status int    `json:"status,omitempty"`
-		Error  string `json:"error,omitempty"`
-		Users  []User `json:"users,omitempty"`
+		Error string `json:"error,omitempty"`
+		Users []User `json:"users,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While Authenticate")
@@ -279,8 +269,7 @@ func GetUsersCreatedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -288,8 +277,7 @@ func GetUsersCreatedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Users:  users,
+			Users: users,
 		}
 		json.NewEncoder(w).Encode(out)
 	}

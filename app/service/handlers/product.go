@@ -13,15 +13,16 @@ import (
 )
 
 func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
-	type RequestObject struct {
-		Product  *models.Product   `json:"product"`
+	type Product struct {
+		*models.Product
 		Portions *[]models.Portion `json:"portions"`
 	}
+	type RequestObject struct {
+		Product *Product `json:"product"`
+	}
 	type ResponseObject struct {
-		Status   int              `json:"status,omitempty"`
-		Error    string           `json:"error,omitempty"`
-		Product  models.Product   `json:"product,omitempty"`
-		Portions []models.Portion `json:"portions,omitempty"`
+		Error   string  `json:"error,omitempty"`
+		Product Product `json:"product,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While creating product")
@@ -29,18 +30,15 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, product models.Product, portions []models.Portion) {
+	sendData := func(w http.ResponseWriter, status int, product Product) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status:   status,
-			Product:  product,
-			Portions: portions,
+			Product: product,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -57,28 +55,30 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err)
 			return
 		}
-		if in.Portions == nil {
+		if in.Product.Portions == nil {
 			err = errors.Wrap(err, "No portions provided")
 			sendError(w, http.StatusBadRequest, err)
 			return
 		}
-		log.Printf("%+v", in)
-		product := in.Product
 		userID, ok := r.Context().Value(middleware.UserID).(int)
 		if !ok {
 			err = errors.Wrap(err, "While getting UserID from request context")
 			sendError(w, http.StatusBadRequest, err)
 			return
 		}
-		product.Creator = userID
-		dbProduct, err := models.CreateProduct(db, *product)
+		newProduct := models.Product{
+			ID:      in.Product.ID,
+			Creator: userID,
+			Name:    in.Product.Name,
+		}
+		dbProduct, err := models.CreateProduct(db, newProduct)
 		if err != nil {
 			err = errors.Wrap(err, "While creating prodcut")
 			sendError(w, http.StatusBadRequest, err)
 			return
 		}
 		dbPortions := []models.Portion{}
-		for _, portion := range *in.Portions {
+		for _, portion := range *in.Product.Portions {
 			portion.ProductID = dbProduct.ID
 			dbPortion, err := models.CreatePortion(db, portion)
 			if err != nil {
@@ -88,67 +88,26 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			}
 			dbPortions = append(dbPortions, *dbPortion)
 		}
-		sendData(w, http.StatusOK, *dbProduct, dbPortions)
-		return
-	})
-}
-
-func GetProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
-	type RequestObject struct {
-	}
-	type ResponseObject struct {
-		Status   int              `json:"status,omitempty"`
-		Error    string           `json:"error,omitempty"`
-		Products []models.Product `json:"products,omitempty"`
-	}
-	sendError := func(w http.ResponseWriter, status int, err error) {
-		err = errors.Wrap(err, "While get products")
-		logger.Error(err)
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(status)
-		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+		createdProduct := Product{
+			Product:  dbProduct,
+			Portions: &dbPortions,
 		}
-		json.NewEncoder(w).Encode(out)
-	}
-	sendData := func(w http.ResponseWriter, status int, products []models.Product) {
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(status)
-		out := ResponseObject{
-			Status:   status,
-			Products: products,
-		}
-		json.NewEncoder(w).Encode(out)
-	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		in := &RequestObject{}
-		err := json.NewDecoder(r.Body).Decode(in)
-		if err != nil {
-			err = errors.Wrap(err, "While decoding request body")
-			sendError(w, http.StatusBadRequest, err)
-			return
-		}
-		products, err := models.GetProducts(db)
-		if err != nil {
-			err = errors.Wrap(err, "While fetching products")
-			sendError(w, http.StatusBadRequest, err)
-			return
-		}
-		sendData(w, http.StatusOK, *products)
+		sendData(w, http.StatusOK, createdProduct)
 		return
 	})
 }
 
 func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
+	type Product struct {
+		*models.Product
+		Portions []*models.Portion `json:"portions,omitempty"`
+	}
 	type RequestObject struct {
 		ID int `json:"id"`
 	}
 	type ResponseObject struct {
-		Status   int               `json:"status,omitempty"`
-		Error    string            `json:"error,omitempty"`
-		Product  *models.Product   `json:"product,omitempty"`
-		Portions []*models.Portion `json:"portions,omitempty"`
+		Error   string  `json:"error,omitempty"`
+		Product Product `json:"product,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While getting product")
@@ -156,18 +115,15 @@ func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, product *models.Product, portions []*models.Portion) {
+	sendData := func(w http.ResponseWriter, status int, product Product) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status:   status,
-			Product:  product,
-			Portions: portions,
+			Product: product,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -191,7 +147,7 @@ func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err)
 			return
 		}
-		sendData(w, http.StatusOK, product, portions)
+		sendData(w, http.StatusOK, Product{Product: product, Portions: portions})
 		return
 	})
 }
@@ -202,9 +158,7 @@ func UpdateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		NewProduct models.Product `json:"product"`
 	}
 	type ResponseObject struct {
-		Status  int             `json:"status,omitempty"`
-		Error   string          `json:"error,omitempty"`
-		Product *models.Product `json:"product"`
+		Error string `json:"error,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While updating product")
@@ -212,18 +166,14 @@ func UpdateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, product *models.Product) {
+	sendData := func(w http.ResponseWriter, status int) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
-		out := ResponseObject{
-			Status:  status,
-			Product: product,
-		}
+		out := ResponseObject{}
 		json.NewEncoder(w).Encode(out)
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -234,13 +184,13 @@ func UpdateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err)
 			return
 		}
-		product, err := models.UpdateProduct(db, in.ID, in.NewProduct)
+		_, err = models.UpdateProduct(db, in.ID, in.NewProduct)
 		if err != nil {
 			err = errors.Wrap(err, "While updating products")
 			sendError(w, http.StatusBadRequest, err)
 			return
 		}
-		sendData(w, http.StatusOK, product)
+		sendData(w, http.StatusOK)
 		return
 	})
 }
@@ -250,9 +200,7 @@ func DeleteProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		ID int `json:"id"`
 	}
 	type ResponseObject struct {
-		Status  int             `json:"status,omitempty"`
-		Error   string          `json:"error,omitempty"`
-		Product *models.Product `json:"product,omitempty"`
+		Error string `json:"error,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While deleting product")
@@ -260,18 +208,14 @@ func DeleteProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, product *models.Product) {
+	sendData := func(w http.ResponseWriter, status int) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
-		out := ResponseObject{
-			Status:  status,
-			Product: product,
-		}
+		out := ResponseObject{}
 		json.NewEncoder(w).Encode(out)
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -288,24 +232,22 @@ func DeleteProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err)
 			return
 		}
-		sendData(w, http.StatusOK, &models.Product{ID: in.ID})
+		sendData(w, http.StatusOK)
 		return
 	})
 }
-
 func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
-	type BundledProduct struct {
-		Product  models.Product   `json:"product"`
+	type Product struct {
+		models.Product
 		Portions []*models.Portion `json:"portions"`
+		Votes    []*models.Votes   `json:"votes"`
 	}
-
 	type RequestObject struct {
 		Name string `json:"name"`
 	}
 	type ResponseObject struct {
-		Status   int              `json:"status,omitempty"`
-		Error    string           `json:"error,omitempty"`
-		Products []BundledProduct `json:"products,omitempty"`
+		Error    string    `json:"error,omitempty"`
+		Products []Product `json:"products,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While getting product")
@@ -313,16 +255,14 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, products []BundledProduct) {
+	sendData := func(w http.ResponseWriter, status int, products []Product) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status:   status,
 			Products: products,
 		}
 		json.NewEncoder(w).Encode(out)
@@ -342,7 +282,7 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			return
 		}
 		log.Printf("%+v", products)
-		bundledProducts := []BundledProduct{}
+		bundledProducts := []Product{}
 		for _, product := range *products {
 			portions, err := models.GetProductsPortions(db, product.ID)
 			if err != nil {
@@ -350,7 +290,7 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 				sendError(w, http.StatusBadRequest, err)
 				return
 			}
-			bundledProduct := BundledProduct{
+			bundledProduct := Product{
 				Product:  product,
 				Portions: portions,
 			}
@@ -368,8 +308,7 @@ func RateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Vote models.Vote `json:"vote"`
 	}
 	type ResponseObject struct {
-		Status int    `json:"status,omitempty"`
-		Error  string `json:"error,omitempty"`
+		Error string `json:"error,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While rating product")
@@ -377,17 +316,14 @@ func RateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
 	sendData := func(w http.ResponseWriter, status int) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
-		out := ResponseObject{
-			Status: status,
-		}
+		out := ResponseObject{}
 		json.NewEncoder(w).Encode(out)
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

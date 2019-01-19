@@ -52,8 +52,6 @@ func NewService() error {
 	router.Handle("/api/product/search", middleware.WithAuth(
 		handlers.SearchProduct(db, logger), auth.User))
 	router.Handle("/api/product/all", middleware.WithAuth(
-		handlers.GetProducts(db, logger), auth.User))
-	router.Handle("/api/product/delete", middleware.WithAuth(
 		handlers.DeleteProduct(db, logger), auth.Moderator))
 	router.Handle("/api/product/rate", middleware.WithAuth(
 		handlers.RateProduct(db, logger), auth.User))

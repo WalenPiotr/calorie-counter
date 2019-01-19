@@ -16,9 +16,8 @@ func CreateEntry(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Entry *models.Entry `json:"entry"`
 	}
 	type ResponseObject struct {
-		Status int           `json:"status,omitempty"`
-		Error  string        `json:"error,omitempty"`
-		Entry  *models.Entry `json:"entry,omitempty"`
+		Error string        `json:"error,omitempty"`
+		Entry *models.Entry `json:"entry,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While creating entry")
@@ -26,8 +25,7 @@ func CreateEntry(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -35,8 +33,7 @@ func CreateEntry(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Entry:  entry,
+			Entry: entry,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -77,7 +74,6 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 	type RequestObject struct {
 	}
 	type ResponseObject struct {
-		Status  int             `json:"status,omitempty"`
 		Error   string          `json:"error,omitempty"`
 		Entries *[]models.Entry `json:"entry,omitempty"`
 	}
@@ -87,8 +83,7 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -96,7 +91,6 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status:  status,
 			Entries: entries,
 		}
 		json.NewEncoder(w).Encode(out)
@@ -133,8 +127,7 @@ func DeleteEntry(db *sql.DB, logger *logrus.Logger) http.Handler {
 		ID int `json:"id"`
 	}
 	type ResponseObject struct {
-		Status int    `json:"status,omitempty"`
-		Error  string `json:"error,omitempty"`
+		Error string `json:"error,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While creating entry")
@@ -142,17 +135,14 @@ func DeleteEntry(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
 	sendData := func(w http.ResponseWriter, status int) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
-		out := ResponseObject{
-			Status: status,
-		}
+		out := ResponseObject{}
 		json.NewEncoder(w).Encode(out)
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -193,9 +183,7 @@ func UpdateEntry(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Entry *models.Entry `json:"entry"`
 	}
 	type ResponseObject struct {
-		Status int           `json:"status,omitempty"`
-		Error  string        `json:"error,omitempty"`
-		Entry  *models.Entry `json:"entry"`
+		Error string `json:"error,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While updating entry")
@@ -203,17 +191,14 @@ func UpdateEntry(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Status: status,
-			Error:  err.Error(),
+			Error: err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 	}
 	sendData := func(w http.ResponseWriter, status int) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
-		out := ResponseObject{
-			Status: status,
-		}
+		out := ResponseObject{}
 		json.NewEncoder(w).Encode(out)
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
