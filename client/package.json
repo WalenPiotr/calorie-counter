@@ -1,0 +1,41 @@
+{
+    "name": "sample-app",
+    "version": "1.1.0",
+    "description": "Sample App",
+    "main": "index.js",
+    "scripts": {
+        "build": "webpack --mode production",
+        "start": "webpack-dev-server --open --mode development"
+    },
+    "keywords": [
+        "react",
+        "portfolio"
+    ],
+    "author": "Piotr Waleń",
+    "license": "ISC",
+    "dependencies": {
+        "@types/react": "^16.7.20",
+        "@types/react-dom": "^16.0.11",
+        "@types/react-redux": "^7.0.0",
+        "@types/react-router-dom": "^4.3.1",
+        "@types/styled-components": "^4.1.6",
+        "awesome-typescript-loader": "^5.2.1",
+        "css-loader": "^2.1.0",
+        "html-loader": "^0.5.5",
+        "html-webpack-plugin": "^3.2.0",
+        "react": "^16.7.0",
+        "react-dom": "^16.7.0",
+        "react-redux": "^6.0.0",
+        "react-router-dom": "^4.3.1",
+        "redux": "^4.0.1",
+        "style-loader": "^0.23.1",
+        "styled-components": "^4.1.3",
+        "tslint": "^5.12.1",
+        "typescript": "^3.2.2",
+        "typescript-plugin-styled-components": "1.0.0",
+        "webpack": "^4.28.4",
+        "webpack-cli": "^3.2.1",
+        "webpack-dev-server": "^3.1.14"
+    },
+    "proxy": "http://127.0.0.1:5000/"
+}
