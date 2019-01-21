@@ -5,7 +5,6 @@ import (
 	"app/service/models"
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -100,7 +99,7 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 	type Product struct {
 		*models.Product
-		Portions []*models.Portion `json:"portions,omitempty"`
+		Portions []models.Portion `json:"portions,omitempty"`
 	}
 	type RequestObject struct {
 		ID int `json:"id"`
@@ -239,8 +238,8 @@ func DeleteProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 	type Product struct {
 		models.Product
-		Portions []*models.Portion `json:"portions"`
-		Votes    []*models.Votes   `json:"votes"`
+		Portions []models.Portion `json:"portions"`
+		Votes    []*models.Votes  `json:"votes"`
 	}
 	type RequestObject struct {
 		Name string `json:"name"`
@@ -281,7 +280,6 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err)
 			return
 		}
-		log.Printf("%+v", products)
 		bundledProducts := []Product{}
 		for _, product := range *products {
 			portions, err := models.GetProductsPortions(db, product.ID)
@@ -296,7 +294,6 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			}
 			bundledProducts = append(bundledProducts, bundledProduct)
 		}
-		log.Printf("%+v", bundledProducts)
 		sendData(w, http.StatusOK, bundledProducts)
 		return
 	})

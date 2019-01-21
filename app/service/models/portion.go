@@ -74,7 +74,7 @@ func GetPortion(db *sql.DB, id int) (*Portion, error) {
 	return portions[0], err
 }
 
-func GetProductsPortions(db *sql.DB, productID int) ([]*Portion, error) {
+func GetProductsPortions(db *sql.DB, productID int) ([]Portion, error) {
 	rows, err := db.Query(`
 		SELECT * FROM portions WHERE product_id=$1 
 	`, productID)
@@ -82,9 +82,9 @@ func GetProductsPortions(db *sql.DB, productID int) ([]*Portion, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	portions := []*Portion{}
+	portions := []Portion{}
 	for rows.Next() {
-		portion := &Portion{}
+		portion := Portion{}
 		err := rows.Scan(&portion.ID, &portion.ProductID, &portion.Unit, &portion.Energy)
 		if err != nil {
 			return nil, err

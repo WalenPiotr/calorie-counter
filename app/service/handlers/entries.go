@@ -71,11 +71,19 @@ func CreateEntry(db *sql.DB, logger *logrus.Logger) http.Handler {
 }
 
 func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
+	type Product struct {
+		models.Product
+		Portions []models.Portion `json:"portions,omitempty"`
+	}
+	type Entry struct {
+		models.Entry
+		Product Product `json:"product,omitempty"`
+	}
 	type RequestObject struct {
 	}
 	type ResponseObject struct {
-		Error   string          `json:"error,omitempty"`
-		Entries *[]models.Entry `json:"entry,omitempty"`
+		Error   string   `json:"error,omitempty"`
+		Entries *[]Entry `json:"entries,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While creating entry")
@@ -87,7 +95,7 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, entries *[]models.Entry) {
+	sendData := func(w http.ResponseWriter, status int, entries *[]Entry) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
@@ -117,7 +125,32 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err)
 			return
 		}
-		sendData(w, http.StatusOK, entries)
+		popEntries := []Entry{}
+		for _, entry := range *entries {
+			productID := entry.ProductID
+			product, err := models.GetProductById(db, productID)
+			if err != nil {
+				err = errors.Wrap(err, "While getting db product")
+				sendError(w, http.StatusBadRequest, err)
+				return
+			}
+			portions, err := models.GetProductsPortions(db, productID)
+			if err != nil {
+				err = errors.Wrap(err, "While getting db product portion")
+				sendError(w, http.StatusBadRequest, err)
+				return
+			}
+			populated := Product{
+				Product:  *product,
+				Portions: portions,
+			}
+			popEntry := Entry{
+				Entry:   entry,
+				Product: populated,
+			}
+			popEntries = append(popEntries, popEntry)
+		}
+		sendData(w, http.StatusOK, &popEntries)
 		return
 	})
 }
