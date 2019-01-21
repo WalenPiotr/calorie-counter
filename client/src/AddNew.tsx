@@ -1,7 +1,6 @@
 import * as React from "react";
 import styled from "@styled-components";
 import * as storage from "./storage";
-import { string } from "prop-types";
 
 interface AddNewProps {}
 interface AddNewState {
@@ -21,6 +20,8 @@ const MainBox = styled.div`
     align-items: center;
 `;
 const PortionGroup = styled.div`
+    position: relative;
+
     width: 100%;
     align-items: center;
     margin-top: 20px;
@@ -48,8 +49,11 @@ const Button = styled.button`
     margin: 10px auto;
 `;
 const XButton = styled.button`
-    width: 30px;
-    height: 30px;
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 25px;
+    height: 25px;
 `;
 
 interface Payload {
