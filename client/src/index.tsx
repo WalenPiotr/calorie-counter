@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { createGlobalStyle } from "styled-components";
+import { createGlobalStyle, ThemeProvider } from "styled-components";
 import { BrowserRouter, Route, Link, Switch } from "react-router-dom";
 import ProductsView from "./ProductsView";
 import styled from "styled-components";
@@ -86,7 +86,6 @@ class App extends React.Component<AppProps, AppState> {
             console.log(err);
         }
     };
-
     logOut = () => {
         storage.persistToken("");
         this.setState((prevState: AppState) => {

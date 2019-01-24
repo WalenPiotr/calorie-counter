@@ -18,31 +18,31 @@ const MainBox = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin: 10vh auto;
+    padding-top: 40px;
+    width: 95vw;
+    box-shadow: 3px 3px 50px 6px rgba(0, 0, 0, 0.2);
+
+    background-color: white;
 `;
 const PortionGroup = styled.div`
-    position: relative;
-
-    width: 100%;
-    align-items: center;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    border-top: 1px solid grey;
-`;
-const InputGroup = styled.div`
     display: flex;
     justify-content: center;
+    align-items: center;
     flex-direction: column;
-    width: 80%;
-    margin: 0 auto;
+    position: relative;
+    padding-top: 30px;
+    border-top: 1px solid grey;
+    width: 85%;
 `;
-const Label = styled.label`
-    margin-top: 10px;
+const BaseGroup = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 85%;
 `;
-const Input = styled.input`
-    width: 100%;
-    height: 40px;
-    padding-left: 10px;
-`;
+
 const Button = styled.button`
     width: 80%;
     height: 40px;
@@ -50,10 +50,52 @@ const Button = styled.button`
 `;
 const XButton = styled.button`
     position: absolute;
-    top: 5px;
-    left: 5px;
-    width: 25px;
-    height: 25px;
+    top: 15px;
+    left: 15px;
+    width: 30px;
+    height: 30px;
+`;
+
+const Input = styled.input`
+    box-sizing: border-box;
+    text-indent: 10px;
+    font-size: 20px;
+    border: none;
+    box-sizing: border-box;
+    :focus {
+        outline: none;
+    }
+`;
+const InputLabel = styled.div`
+    font-weight: 500;
+    font-size: 14px;
+    text-transform: uppercase;
+    margin-left: 10px;
+    margin-bottom: 8px;
+    color: mediumblue;
+`;
+const InputBox = styled.div`
+    width: 100%;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid grey;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 30px;
+    box-sizing: border-box;
+`;
+
+const Label = styled.div`
+    width: 85%;
+    color: grey;
+    font-size: 24px;
+    text-transform: uppercase;
+    border-bottom: 1px solid grey;
+    box-sizing: border-box;
+    padding: 5px;
+    padding-bottom: 15px;
+    margin-bottom: 30px;
 `;
 
 interface Payload {
@@ -192,23 +234,25 @@ class AddNew extends React.Component<AddNewProps, AddNewState> {
         const renderClose = this.state.product.portions.length > 1;
         return (
             <MainBox>
-                <InputGroup>
-                    <Label>Enter Name</Label>
-                    <Input
-                        placeholder="name"
-                        value={this.state.product.name}
-                        onChange={this.onBaseInputChange("name")}
-                    />
-                </InputGroup>
-                <InputGroup>
-                    <Label>Enter Description</Label>
-                    <Input
-                        placeholder="description"
-                        value={this.state.product.description}
-                        onChange={this.onBaseInputChange("description")}
-                    />
-                </InputGroup>
-
+                <Label>Add new product</Label>
+                <BaseGroup>
+                    <InputBox>
+                        <InputLabel>name</InputLabel>
+                        <Input
+                            placeholder=""
+                            value={this.state.product.name}
+                            onChange={this.onBaseInputChange("name")}
+                        />
+                    </InputBox>
+                    <InputBox>
+                        <InputLabel>description</InputLabel>
+                        <Input
+                            placeholder=""
+                            value={this.state.product.description}
+                            onChange={this.onBaseInputChange("description")}
+                        />
+                    </InputBox>
+                </BaseGroup>
                 {this.state.product.portions.map(
                     (
                         portion: { energy: string; unit: string },
@@ -224,32 +268,28 @@ class AddNew extends React.Component<AddNewProps, AddNewState> {
                             ) : (
                                 <div />
                             )}
-                            <InputGroup>
-                                <Label>Enter energy [kcal]</Label>
+
+                            <InputBox>
+                                <InputLabel>Enter unit</InputLabel>
                                 <Input
-                                    placeholder="energy"
-                                    onChange={this.onPortionInputChange(
-                                        index,
-                                        "energy"
-                                    )}
-                                    value={portion.energy}
+                                    placeholder=""
+                                    value={this.state.product.description}
+                                    onChange={this.onBaseInputChange("unit")}
                                 />
-                            </InputGroup>
-                            <InputGroup>
-                                <Label>Enter unit</Label>
+                            </InputBox>
+                            <InputBox>
+                                <InputLabel>Enter energy [kcal]</InputLabel>
                                 <Input
-                                    placeholder="unit"
-                                    onChange={this.onPortionInputChange(
-                                        index,
-                                        "unit"
-                                    )}
-                                    value={portion.unit}
+                                    placeholder=""
+                                    value={this.state.product.description}
+                                    onChange={this.onBaseInputChange("energy")}
                                 />
-                            </InputGroup>
+                            </InputBox>
                         </PortionGroup>
                     )
                 )}
                 <Button onClick={this.addAnotherUnit}>Add another unit</Button>
+
                 <Button onClick={this.onAddClick}>Add product</Button>
             </MainBox>
         );

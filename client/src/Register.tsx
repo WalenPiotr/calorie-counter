@@ -35,7 +35,7 @@ const InputLabel = styled.div`
     text-transform: uppercase;
     margin-left: 10px;
     margin-bottom: 8px;
-    color: mediumblue;
+    color: rgba(30, 100, 200, 1);
 `;
 const InputBox = styled.div`
     width: 100%;
@@ -43,7 +43,6 @@ const InputBox = styled.div`
     display: flex;
     flex-direction: column;
     border: 1px solid grey;
-    border-radius: 5px;
     padding-top: 10px;
     padding-bottom: 10px;
     margin-bottom: 30px;
@@ -53,11 +52,10 @@ const Button = styled.button`
     width: 85%;
     height: 50px;
     font-size: 24px;
-    background-color: mediumblue;
+    background-color: rgba(30, 100, 200, 1);
     color: white;
     margin-bottom: 30px;
     border: none;
-    border-radius: 5px;
     text-transform: uppercase;
 `;
 const Widget = styled.div`
@@ -67,7 +65,6 @@ const Widget = styled.div`
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    border-radius: 5px;
     box-shadow: 3px 3px 50px 6px rgba(0, 0, 0, 0.2);
     margin: 10vh auto;
 `;
@@ -87,7 +84,7 @@ const Links = styled.div`
     display: flex;
     justify-content: space-between;
     text-decoration: none;
-    color: mediumblue;
+    color: rgba(30, 100, 200, 1);
     width: 80%;
     margin-bottom: 20px;
 `;

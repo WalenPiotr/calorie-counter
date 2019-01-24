@@ -2,6 +2,8 @@ import * as React from "react";
 import styled from "styled-components";
 import * as storage from "./storage";
 import { Redirect } from "react-router-dom";
+import { Search } from "styled-icons/boxicons-regular/Search";
+import { Plus } from "styled-icons/boxicons-regular/Plus";
 
 interface Portion {
     id: number;
@@ -77,20 +79,31 @@ class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
     };
     render() {
         const ProductBox = styled.div`
-            margin: 50px auto;
+            margin: 20px auto;
+            box-shadow: 3px 3px 50px 6px rgba(0, 0, 0, 0.2);
+            width: 95vw;
+            display: flex;
+            justify-content: center;
         `;
+        const Box = styled.div`
+            flex: 100px 1 1;
+            margin: 10px;
+        `;
+
         if (this.state.redirect.newProduct) {
             return <Redirect to="/add-new" />;
         }
         return (
             <ProductBox>
-                <SearchBar
-                    searchInput={this.state.searchInput}
-                    onSearchClick={this.onSearchClick}
-                    onSearchInputChange={this.onSearchInputChange}
-                />
-                <AddNewControls onClick={this.onAddNew} />
-                <Table products={this.state.products} />
+                <Box>
+                    <SearchBar
+                        searchInput={this.state.searchInput}
+                        onSearchClick={this.onSearchClick}
+                        onSearchInputChange={this.onSearchInputChange}
+                    />
+                    <Table products={this.state.products} />
+                    <AddNewControls onClick={this.onAddNew} />
+                </Box>
             </ProductBox>
         );
     }
@@ -118,6 +131,9 @@ class Table extends React.Component<TableProps, TableState> {
     }
 }
 
+const SmallLabel = styled.label`
+    font-size: 12px;
+`;
 interface RowProps {
     product: Product;
 }
@@ -206,6 +222,7 @@ class Row extends React.Component<RowProps, RowState> {
             border: 1px solid black;
             height: 40px;
             padding-left: 5px;
+            margin-top: 10px;
         `;
         const CollapseButton = styled.button`
             height: 40px;
@@ -218,7 +235,7 @@ class Row extends React.Component<RowProps, RowState> {
             flex-direction: column;
             align-items: center;
         `;
-        const Input = styled.input`
+        const AmountInput = styled.input`
             height: 40px;
             width: 90%;
         `;
@@ -246,6 +263,9 @@ class Row extends React.Component<RowProps, RowState> {
             width: 90%;
             height: 40px;
             margin-bottom: 10px;
+            color: white;
+            background-color: mediumblue;
+            border: none;
         `;
         const NutrientDiv = styled.div`
             width: 100px;
@@ -254,19 +274,16 @@ class Row extends React.Component<RowProps, RowState> {
             align-items: center;
             flex-direction: column;
         `;
-        const SmallLabel = styled.label`
-            font-size: 12px;
-        `;
         return (
             <div key={this.props.product.name}>
                 <LineBox>
                     <label>{this.props.product.name}</label>
                     <SmallLabel>
-                        Energy:{" "}
+                        Energy:
                         <label>{this.props.product.portions[0].energy}</label>
                     </SmallLabel>
                     <SmallLabel>
-                        Unit:{" "}
+                        Unit:
                         <label>{this.props.product.portions[0].unit}</label>
                     </SmallLabel>
                     <CollapseButton onClick={this.onCollapseClick}>
@@ -276,7 +293,7 @@ class Row extends React.Component<RowProps, RowState> {
                 <div hidden={this.state.collapsed}>
                     <ControlBox>
                         <Label>Amount</Label>
-                        <Input
+                        <AmountInput
                             value={this.state.quantity}
                             onChange={this.onInputChange}
                         />
@@ -311,15 +328,17 @@ interface SearchBarProps {
     searchInput: string;
 }
 interface SearchBarState {}
+
 class SearchBar extends React.Component<SearchBarProps, SearchBarState> {
     render() {
         const SearchBox = styled.div`
             width: 100%;
             display: flex;
-            margin-bottom: 10px;
+            border: 1px solid mediumblue;
         `;
         const Input = styled.input`
             box-sizing: border-box;
+            border: none;
             flex: 200px 1 1;
             height: 40px;
             padding: 0;
@@ -327,8 +346,20 @@ class SearchBar extends React.Component<SearchBarProps, SearchBarState> {
             padding-left: 10px;
         `;
         const Button = styled.button`
-            flex: 80px 0 1;
+            flex: 40px 0 0;
             height: 40px;
+            color: white;
+            background-color: mediumblue;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        `;
+        const SearchIcon = styled(Search)`
+            margin-left: 3px;
+            margin-top: 3px;
+            width: 30px;
+            height: 30px;
         `;
         return (
             <SearchBox>
@@ -337,7 +368,9 @@ class SearchBar extends React.Component<SearchBarProps, SearchBarState> {
                     value={this.props.searchInput}
                     onChange={this.props.onSearchInputChange}
                 />
-                <Button onClick={this.props.onSearchClick}>FIND</Button>
+                <Button onClick={this.props.onSearchClick}>
+                    <SearchIcon />
+                </Button>
             </SearchBox>
         );
     }
@@ -347,11 +380,41 @@ interface AddNewControlsProps {
 }
 class AddNewControls extends React.Component<AddNewControlsProps, any> {
     render() {
+        const AddNewBox = styled.div`
+            display: flex;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid grey;
+        `;
+        const TextLabel = styled.div`
+            flex: 80% 1 1;
+            font-size: 12px;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 20px;
+        `;
         const Button = styled.button`
-            width: 100%;
+            color: white;
+            background-color: mediumblue;
+            border: none;
+            flex: 45px 0 0;
             height: 40px;
         `;
-        return <Button onClick={this.props.onClick}>Add new product</Button>;
+        const PlusIcon = styled(Plus)`
+            width: 25px;
+            height: 25px;
+        `;
+        return (
+            <AddNewBox>
+                <TextLabel>
+                    Didn't find what you're looking for? <br /> Add new product!
+                </TextLabel>
+                <Button onClick={this.props.onClick}>
+                    {" "}
+                    <PlusIcon />
+                </Button>
+            </AddNewBox>
+        );
     }
 }
 

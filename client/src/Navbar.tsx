@@ -9,17 +9,19 @@ const MyMenu = styled(Menu)`
     width: 30px;
     height: 30px;
 `;
+
 const NavbarBox = styled.div`
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-    background-color: mediumblue;
+    background-color: rgba(30, 100, 200, 1);
     color: white;
     display: flex;
     flex-direction: column;
+`;
+const Spacer = styled.div`
+    height: 50px;
 `;
 const ExpandButton = styled.button`
     height: 50px;
@@ -38,14 +40,22 @@ interface LinkProps {
 const Link = styled.a`
     font-size: 18px;
     height: 45px;
-    width: 100%;
     text-decoration: none;
     display: flex;
-    justify-content: center;
+    justify-content: left;
     align-items: center;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: ${(props: LinkProps) => (props.current ? 500 : 300)};
     border-top: 1px solid grey;
-    background-color: ${(props: LinkProps) =>
-        props.current ? "navy" : "transparent"};
+    :hover {
+        color: rgba(255, 255, 255, 1);
+    }
+`;
+const LinkWrapper = styled.div`
+    height: 100%;
+    padding-left: 20px;
+    padding-right: 20px;
 `;
 
 interface NavbarState {
@@ -58,7 +68,7 @@ interface NavbarProps extends RouteComponentProps {
 
 class Navbar extends React.Component<NavbarProps, NavbarState> {
     state = {
-        collapsed: true
+        collapsed: false
     };
     onExpandClick = () => {
         this.setState((prevState: NavbarState) => {
@@ -83,6 +93,12 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
         const isLoggedIn = !(storage.retrieveToken() == "");
         const authLinks = [
             <Link
+                current={this.props.history.location.pathname == "/"}
+                onClick={this.onLinkClick("/")}
+            >
+                Home
+            </Link>,
+            <Link
                 current={this.props.history.location.pathname == "/register"}
                 onClick={this.onLinkClick("/register")}
             >
@@ -96,6 +112,12 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
             </Link>
         ];
         const links = [
+            <Link
+                current={this.props.history.location.pathname == "/"}
+                onClick={this.onLinkClick("/")}
+            >
+                Home
+            </Link>,
             <Link
                 current={this.props.history.location.pathname == "/products"}
                 onClick={this.onLinkClick("/products")}
@@ -116,22 +138,28 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
             </Link>
         ];
 
-        return (
-            <NavbarBox>
-                <ExpandButton onClick={this.onExpandClick}>
-                    <MyMenu />
-                </ExpandButton>
-                {this.state.collapsed ? (
-                    isLoggedIn ? (
-                        links
+        return [
+            <>
+                <NavbarBox>
+                    <ExpandButton onClick={this.onExpandClick}>
+                        <MyMenu />
+                    </ExpandButton>
+
+                    {this.state.collapsed ? (
+                        isLoggedIn ? (
+                            links.map(link => <LinkWrapper>{link}</LinkWrapper>)
+                        ) : (
+                            authLinks.map(link => (
+                                <LinkWrapper>{link}</LinkWrapper>
+                            ))
+                        )
                     ) : (
-                        authLinks
-                    )
-                ) : (
-                    <div />
-                )}
-            </NavbarBox>
-        );
+                        <div />
+                    )}
+                </NavbarBox>
+                <Spacer />
+            </>
+        ];
     };
 }
 
