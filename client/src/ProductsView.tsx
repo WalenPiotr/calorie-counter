@@ -4,6 +4,9 @@ import * as storage from "./storage";
 import { Redirect } from "react-router-dom";
 import { Search } from "styled-icons/boxicons-regular/Search";
 import { Plus } from "styled-icons/boxicons-regular/Plus";
+import { ChevronDown } from "styled-icons/fa-solid/ChevronDown";
+import { ChevronUp } from "styled-icons/fa-solid/ChevronUp";
+import Widget from "./elements/Widget";
 
 interface Portion {
     id: number;
@@ -88,13 +91,14 @@ class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
         const Box = styled.div`
             flex: 100px 1 1;
             margin: 10px;
+            width: 85%;
         `;
 
         if (this.state.redirect.newProduct) {
             return <Redirect to="/add-new" />;
         }
         return (
-            <ProductBox>
+            <Widget>
                 <Box>
                     <SearchBar
                         searchInput={this.state.searchInput}
@@ -104,7 +108,7 @@ class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
                     <Table products={this.state.products} />
                     <AddNewControls onClick={this.onAddNew} />
                 </Box>
-            </ProductBox>
+            </Widget>
         );
     }
 }
@@ -131,9 +135,6 @@ class Table extends React.Component<TableProps, TableState> {
     }
 }
 
-const SmallLabel = styled.label`
-    font-size: 12px;
-`;
 interface RowProps {
     product: Product;
 }
@@ -219,14 +220,17 @@ class Row extends React.Component<RowProps, RowState> {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border: 1px solid black;
-            height: 40px;
+            border-top: 1px solid grey;
+            height: 50px;
             padding-left: 5px;
-            margin-top: 10px;
         `;
         const CollapseButton = styled.button`
-            height: 40px;
-            width: 80px;
+            border: none;
+            color: rgba(30, 100, 200, 1);
+            background-color: transparent;
+            height: 50px;
+            width: 50px;
+            padding: 10px;
             font-size: 30px;
         `;
         const ControlBox = styled.div`
@@ -237,11 +241,17 @@ class Row extends React.Component<RowProps, RowState> {
         `;
         const AmountInput = styled.input`
             height: 40px;
-            width: 90%;
+            width: calc(90% - 10px);
+            padding-left: 10px;
         `;
         const Select = styled.select`
             height: 40px;
             width: 90%;
+            background-color: white;
+            color: black;
+        `;
+        const Option = styled.option`
+            background-color: white;
         `;
         const Label = styled.label`
             margin-top: 10px;
@@ -264,7 +274,7 @@ class Row extends React.Component<RowProps, RowState> {
             height: 40px;
             margin-bottom: 10px;
             color: white;
-            background-color: mediumblue;
+            background-color: rgba(30, 100, 200, 1);
             border: none;
         `;
         const NutrientDiv = styled.div`
@@ -274,20 +284,35 @@ class Row extends React.Component<RowProps, RowState> {
             align-items: center;
             flex-direction: column;
         `;
+        const SmallLabel = styled.label`
+            font-size: 12px;
+            width: 100px;
+            display: inline-block;
+        `;
         return (
             <div key={this.props.product.name}>
                 <LineBox>
-                    <label>{this.props.product.name}</label>
-                    <SmallLabel>
-                        Energy:
-                        <label>{this.props.product.portions[0].energy}</label>
-                    </SmallLabel>
-                    <SmallLabel>
-                        Unit:
-                        <label>{this.props.product.portions[0].unit}</label>
-                    </SmallLabel>
+                    <div>
+                        <label>{this.props.product.name}</label>
+                        <div>
+                            <SmallLabel>
+                                Energy:{" "}
+                                <label>
+                                    {this.props.product.portions[0].energy}
+                                </label>{" "}
+                                kcal
+                            </SmallLabel>
+                            <SmallLabel>
+                                Unit:
+                                <label>
+                                    {this.props.product.portions[0].unit}
+                                </label>
+                            </SmallLabel>
+                        </div>
+                    </div>
+
                     <CollapseButton onClick={this.onCollapseClick}>
-                        {this.state.collapsed ? "+" : "-"}
+                        {this.state.collapsed ? <ChevronDown /> : <ChevronUp />}
                     </CollapseButton>
                 </LineBox>
                 <div hidden={this.state.collapsed}>
@@ -304,9 +329,9 @@ class Row extends React.Component<RowProps, RowState> {
                         >
                             {this.props.product.portions.map(
                                 (portion: Portion) => (
-                                    <option key={portion.id}>
+                                    <Option key={portion.id}>
                                         {portion.unit}
-                                    </option>
+                                    </Option>
                                 )
                             )}
                         </Select>
@@ -334,7 +359,14 @@ class SearchBar extends React.Component<SearchBarProps, SearchBarState> {
         const SearchBox = styled.div`
             width: 100%;
             display: flex;
-            border: 1px solid mediumblue;
+            border: 1px solid rgba(30, 100, 200, 1);
+            margin-top: 10px;
+            margin-bottom: 20px;
+            height: 40px;
+            border-bottom-right-radius: 20px;
+            border-top-right-radius: 20px;
+            background: white;
+            position: relative;
         `;
         const Input = styled.input`
             box-sizing: border-box;
@@ -346,10 +378,14 @@ class SearchBar extends React.Component<SearchBarProps, SearchBarState> {
             padding-left: 10px;
         `;
         const Button = styled.button`
-            flex: 40px 0 0;
-            height: 40px;
+            position: absolute;
+            right: -2px;
+            top: -5px;
+            width: 50px;
+            height: 50px;
+            border-radius: 30px;
             color: white;
-            background-color: mediumblue;
+            background-color: rgba(30, 100, 200, 1);
             border: none;
             display: flex;
             justify-content: center;
@@ -395,10 +431,11 @@ class AddNewControls extends React.Component<AddNewControlsProps, any> {
         `;
         const Button = styled.button`
             color: white;
-            background-color: mediumblue;
+            background-color: rgba(30, 100, 200, 1);
             border: none;
-            flex: 45px 0 0;
-            height: 40px;
+            flex: 50px 0 0;
+            height: 50px;
+            border-radius: 25px;
         `;
         const PlusIcon = styled(Plus)`
             width: 25px;
