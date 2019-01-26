@@ -1,5 +1,5 @@
 import * as React from "react";
-import styled from "@styled-components";
+import styled from "styled-components";
 import { RouteComponentProps } from "react-router-dom";
 import { withRouter } from "react-router-dom";
 import * as storage from "./storage";

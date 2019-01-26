@@ -4,7 +4,7 @@ import styled from "styled-components";
 const BaseInput = styled.input`
     box-sizing: border-box;
     text-indent: 10px;
-    font-size: 20px;
+    font-size: 16px;
     border: none;
     box-sizing: border-box;
     :focus {
@@ -13,7 +13,7 @@ const BaseInput = styled.input`
 `;
 const InputLabel = styled.div`
     font-weight: 500;
-    font-size: 14px;
+    font-size: 12px;
     text-transform: uppercase;
     margin-left: 10px;
     margin-bottom: 8px;
@@ -21,13 +21,12 @@ const InputLabel = styled.div`
 `;
 const InputBox = styled.div`
     width: 100%;
-    font-size: 16px;
     display: flex;
     flex-direction: column;
     border: 1px solid grey;
     padding-top: 10px;
     padding-bottom: 10px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     box-sizing: border-box;
 `;
 

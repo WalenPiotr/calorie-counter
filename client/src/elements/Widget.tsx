@@ -9,6 +9,8 @@ const Widget = styled.div`
     align-items: center;
     box-shadow: 3px 3px 50px 6px rgba(0, 0, 0, 0.2);
     margin: 10vh auto;
+    padding-top: 20px;
+    padding-bottom: 20px;
 `;
 
 export default Widget;

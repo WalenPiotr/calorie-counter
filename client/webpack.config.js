@@ -15,10 +15,6 @@ module.exports = {
     resolve: {
         extensions: [".js", ".json", ".ts", ".tsx", ".d.ts"],
         alias: {
-            "@styled-components": path.resolve(
-                __dirname,
-                "src/styled-components"
-            ),
             "@interfaces": path.resolve(__dirname, "src/interfaces/"),
             "@components": path.resolve(__dirname, "src/components/"),
             "@helpers": path.resolve(__dirname, "src/helpers/"),

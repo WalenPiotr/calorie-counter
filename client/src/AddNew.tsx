@@ -1,8 +1,8 @@
 import * as React from "react";
-import styled from "@styled-components";
+import styled from "styled-components";
 import * as storage from "./storage";
 import Input from "./blocks/Input";
-
+import BlockButton from "./elements/BlockButton";
 interface AddNewProps {}
 interface AddNewState {
     product: {
@@ -51,14 +51,8 @@ const BaseGroup = styled.div`
     width: 85%;
 `;
 
-const Button = styled.button`
-    background-color: rgba(30, 100, 200, 1);
-    color: white;
-    border: none;
-    font-size: 16px;
+const Button = styled(BlockButton)`
     width: 85%;
-    height: 40px;
-    margin: 5px auto;
 `;
 const XButton = styled.button`
     position: absolute;
@@ -236,7 +230,7 @@ class AddNew extends React.Component<AddNewProps, AddNewState> {
                     />
                     <Input
                         label={"description"}
-                        value={this.state.product.name}
+                        value={this.state.product.description}
                         onChange={this.onBaseInputChange("description")}
                     />
                 </BaseGroup>

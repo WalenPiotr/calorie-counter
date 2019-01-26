@@ -22,7 +22,6 @@ const Label = styled.div`
     padding: 5px;
     padding-bottom: 15px;
     margin-bottom: 30px;
-    margin-top: 30px;
 `;
 const Links = styled.div`
     display: flex;

@@ -2,7 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { createGlobalStyle, ThemeProvider } from "styled-components";
 import { BrowserRouter, Route, Link, Switch } from "react-router-dom";
-import ProductsView from "./ProductsView";
+import ProductsView from "./ProductsView/index";
 import styled from "styled-components";
 import * as storage from "./storage";
 import AddNew from "./AddNew";
