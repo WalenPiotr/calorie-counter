@@ -11,7 +11,6 @@ const Inputs = styled.div`
     align-items: center;
     width: 85%;
 `;
-
 const Label = styled.div`
     width: 85%;
     color: grey;
@@ -31,11 +30,9 @@ const Links = styled.div`
     width: 80%;
     margin-bottom: 20px;
 `;
-
 const Link = styled.a`
     text-decoration: none;
 `;
-
 const Button = styled(BlockButton)`
     width: 85%;
 `;
