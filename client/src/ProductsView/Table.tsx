@@ -22,7 +22,6 @@ class Table extends React.Component<TableProps, TableState> {
     async componentDidMount() {}
 
     render() {
-        console.log(this.state);
         const components = this.props.products.map((product: Product) => {
             return <Row product={product} key={product.id} />;
         });

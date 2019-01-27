@@ -96,18 +96,21 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
             <Link
                 current={this.props.history.location.pathname == "/"}
                 onClick={this.onLinkClick("/")}
+                key={"Home"}
             >
                 Home
             </Link>,
             <Link
                 current={this.props.history.location.pathname == "/register"}
                 onClick={this.onLinkClick("/register")}
+                key={"Register"}
             >
                 Register
             </Link>,
             <Link
                 current={this.props.history.location.pathname == "/login"}
                 onClick={this.onLinkClick("/login")}
+                key={"Login"}
             >
                 Login
             </Link>
@@ -116,31 +119,35 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
             <Link
                 current={this.props.history.location.pathname == "/"}
                 onClick={this.onLinkClick("/")}
+                key={"Home"}
             >
                 Home
             </Link>,
             <Link
                 current={this.props.history.location.pathname == "/products"}
                 onClick={this.onLinkClick("/products")}
+                key={"Products"}
             >
                 Products
             </Link>,
             <Link
                 current={this.props.history.location.pathname == "/entries"}
                 onClick={this.onLinkClick("/entries")}
+                key={"Entries"}
             >
                 Entries
             </Link>,
             <Link
                 current={this.props.history.location.pathname == "/logout"}
                 onClick={this.onLogoutClick}
+                key={"Logout"}
             >
                 Logout
             </Link>
         ];
 
-        return [
-            <>
+        return (
+            <div>
                 <NavbarBox>
                     <ExpandButton onClick={this.onExpandClick}>
                         <MyMenu />
@@ -148,10 +155,20 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
 
                     {this.state.collapsed ? (
                         isLoggedIn ? (
-                            links.map(link => <LinkWrapper>{link}</LinkWrapper>)
+                            links.map(link => (
+                                <LinkWrapper
+                                    key={link.key != null ? link.key : 0}
+                                >
+                                    {link}
+                                </LinkWrapper>
+                            ))
                         ) : (
                             authLinks.map(link => (
-                                <LinkWrapper>{link}</LinkWrapper>
+                                <LinkWrapper
+                                    key={link.key != null ? link.key : 0}
+                                >
+                                    {link}
+                                </LinkWrapper>
                             ))
                         )
                     ) : (
@@ -159,8 +176,8 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
                     )}
                 </NavbarBox>
                 <Spacer />
-            </>
-        ];
+            </div>
+        );
     };
 }
 

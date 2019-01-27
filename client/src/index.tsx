@@ -98,27 +98,29 @@ class App extends React.Component<AppProps, AppState> {
 
     render = () => {
         return (
-            <BrowserRouter>
-                <div>
-                    <GlobalStyle />
-                    <Navbar
-                        isLogged={this.state.isLoggedIn}
-                        logOut={this.logOut}
-                    />
+            <div>
+                {/* <BrowserRouter>
                     <div>
-                        <Route path="/register" component={Register} />
-                        <Route
-                            path="/login"
-                            render={(props: LoginProps) => (
-                                <Login {...props} logIn={this.logIn} />
-                            )}
+                        <GlobalStyle />
+                        <Navbar
+                            isLogged={this.state.isLoggedIn}
+                            logOut={this.logOut}
                         />
-                        <Route path="/add-new" component={AddNew} />
-                        <Route path="/products" component={ProductsView} />
-                        <Route path="/entries" component={Entries} />
+                        <div>
+                            <Route path="/register" component={Register} />
+                            <Route
+                                path="/login"
+                                render={(props: LoginProps) => (
+                                    <Login {...props} logIn={this.logIn} />
+                                )}
+                            />
+                            <Route path="/add-new" component={AddNew} />
+                            <Route path="/products" component={ProductsView} />
+                            <Route path="/entries" component={Entries} />
+                        </div>
                     </div>
-                </div>
-            </BrowserRouter>
+                </BrowserRouter> */}
+            </div>
         );
     };
 }

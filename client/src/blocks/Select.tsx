@@ -98,7 +98,10 @@ class Select extends React.Component<SelectProps, SelectState> {
                 </Styled.Button>
                 <Styled.Collapsable collapse={this.state.collapsed}>
                     {this.props.options.map((option: string) => (
-                        <Styled.Option onClick={this.onSelect(option)}>
+                        <Styled.Option
+                            key={option}
+                            onClick={this.onSelect(option)}
+                        >
                             {option}
                         </Styled.Option>
                     ))}

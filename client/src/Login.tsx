@@ -1,11 +1,8 @@
 import * as React from "react";
-import styled from "styled-components";
-import * as storage from "./storage";
 import { withRouter } from "react-router-dom";
-import { RouteProps, RouteComponentProps } from "react-router";
+import { RouteComponentProps } from "react-router";
 import { Redirect } from "react-router-dom";
-import Input from "./blocks/Input";
-import AuthForm from "./blocks/AuthForm";
+import AuthForm from "./components/AuthForm";
 
 export interface LoginProps extends RouteComponentProps {
     logIn: (email: string, password: string) => void;

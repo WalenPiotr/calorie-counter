@@ -132,8 +132,8 @@ func DeleteEntry(db *sql.DB, id int) error {
 
 func UpdateEntry(db *sql.DB, id int, new *Entry) error {
 	rows, err := db.Query(`
-		UPDATE products SET user_id=$2, product_id=$3, quantity=$4, date=$5 WHERE id=$1;
-	`, id, new.UserID, new.ProductID, new.Quantity, new.Date)
+		UPDATE entries SET product_id=$2, quantity=$3, date=$4 WHERE id=$1;
+	`, id, new.ProductID, new.Quantity, new.Date)
 	if err != nil {
 		return errors.Wrap(err, "While updating entry")
 	}

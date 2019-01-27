@@ -177,7 +177,7 @@ class AddNew extends React.Component<AddNewProps, AddNewState> {
         const value = e.currentTarget.value;
         this.setState((prevState: AddNewState) => {
             const newPortions = [...prevState.product.portions];
-            newPortions[index][field] += value;
+            newPortions[index][field] = value;
             return {
                 ...prevState,
                 product: {

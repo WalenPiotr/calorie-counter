@@ -4,7 +4,7 @@
         "sourceMap": true,
         "module": "commonjs",
         "target": "es5",
-        "lib": ["es6", "dom"],
+        "lib": ["es2017", "dom"],
         "jsx": "react",
         "baseUrl": ".",
         "paths": {
@@ -14,7 +14,6 @@
             "@reducers/*": ["src/reducers/*"],
             "@actions/*": ["src/actions/*"],
             "@helpers/*": ["src/helpers/*"]
-
         },
         "downlevelIteration": true,
         "forceConsistentCasingInFileNames": true,
@@ -22,7 +21,7 @@
         "noImplicitThis": true,
         "noImplicitAny": true,
         "strictNullChecks": true,
-        "suppressImplicitAnyIndexErrors": true,
+        "suppressImplicitAnyIndexErrors": true
     },
     "include": ["./src/**/*"]
 }

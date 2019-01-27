@@ -2,7 +2,7 @@ import * as React from "react";
 import styled from "styled-components";
 import Widget from "../elements/Widget";
 import BlockButton from "../elements/BlockButton";
-import Input from "./Input";
+import Input from "../blocks/Input";
 
 const Inputs = styled.div`
     display: flex;
@@ -74,7 +74,9 @@ const AuthForm = (props: AuthFormProps) => {
             </Inputs>
             <Links>
                 {props.linkParams.map(param => (
-                    <Link onClick={param.onClick}>{param.text}</Link>
+                    <Link key={param.text} onClick={param.onClick}>
+                        {param.text}
+                    </Link>
                 ))}
             </Links>
             <Button onClick={props.buttonParams.onClick}>
