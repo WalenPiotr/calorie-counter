@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -80,6 +81,7 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Product Product `json:"product,omitempty"`
 	}
 	type RequestObject struct {
+		Date time.Time `json:"date,omitempty"`
 	}
 	type ResponseObject struct {
 		Error   string   `json:"error,omitempty"`
@@ -119,7 +121,7 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 			return
 
 		}
-		entries, err := models.GetUsersEntries(db, userID)
+		entries, err := models.GetUsersEntries(db, userID, in.Date)
 		if err != nil {
 			err = errors.Wrap(err, "While getting db users entries")
 			sendError(w, http.StatusBadRequest, err)

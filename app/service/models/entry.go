@@ -98,10 +98,10 @@ func GetEntry(db *sql.DB, id int) (*Entry, error) {
 	return entries[0], err
 }
 
-func GetUsersEntries(db *sql.DB, userID int) (*[]Entry, error) {
+func GetUsersEntries(db *sql.DB, userID int, date time.Time) (*[]Entry, error) {
 	rows, err := db.Query(`
-		SELECT * FROM entries WHERE user_id=$1
-	`, userID)
+		SELECT * FROM entries WHERE user_id=$1 AND date=$2
+	`, userID, date)
 	if err != nil {
 		return nil, err
 	}
