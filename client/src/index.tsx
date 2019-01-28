@@ -3,8 +3,8 @@ import * as ReactDOM from "react-dom";
 import { createGlobalStyle, ThemeProvider } from "styled-components";
 import { BrowserRouter, Route, Link, Switch } from "react-router-dom";
 import ProductsView from "./ProductsView/index";
-import styled from "styled-components";
 import * as storage from "./storage";
+
 import AddNew from "./AddNew";
 import Login, { LoginProps } from "./Login";
 import Entries from "./Entries";
@@ -32,13 +32,6 @@ const GlobalStyle = createGlobalStyle`
         font-family: 'Roboto', sans-serif;
         border: 1px solid black;
     }
-`;
-
-const theme = {};
-
-const Links = styled.div`
-    display: flex;
-    flex-direction: column;
 `;
 
 // MOCK FOR TESTS!
@@ -99,7 +92,7 @@ class App extends React.Component<AppProps, AppState> {
     render = () => {
         return (
             <div>
-                {/* <BrowserRouter>
+                <BrowserRouter>
                     <div>
                         <GlobalStyle />
                         <Navbar
@@ -119,7 +112,7 @@ class App extends React.Component<AppProps, AppState> {
                             <Route path="/entries" component={Entries} />
                         </div>
                     </div>
-                </BrowserRouter> */}
+                </BrowserRouter>
             </div>
         );
     };

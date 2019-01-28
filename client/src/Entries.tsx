@@ -4,10 +4,10 @@ import styled from "styled-components";
 import Widget from "./elements/Widget";
 import { ChevronDown } from "styled-icons/fa-solid/ChevronDown";
 import { ChevronUp } from "styled-icons/fa-solid/ChevronUp";
-import { TrashAlt } from "styled-icons/boxicons-regular/TrashAlt";
 import Input from "./blocks/Input";
 import BlockButton from "./elements/BlockButton";
 import Select from "./blocks/Select";
+import Calendar from "./blocks/Calendar/Calendar";
 
 interface Entry {
     id: number;
@@ -31,6 +31,11 @@ interface Product {
     portions: Portion[];
 }
 
+const CalendarBox = styled.div`
+    width: 85%;
+    margin-bottom: 10px;
+`;
+
 const Label = styled.div`
     width: 85%;
     color: grey;
@@ -39,23 +44,27 @@ const Label = styled.div`
     border-bottom: 1px solid grey;
     box-sizing: border-box;
     padding: 5px;
-    padding-bottom: 15px;
-    margin-bottom: 15px;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
 `;
 
 interface EntriesState {
     entries: Entry[];
+    date: Date;
 }
 interface EntriesProps {}
 
 class Entries extends React.Component<EntriesProps, EntriesState> {
     state = {
-        entries: []
+        entries: [],
+        date: new Date()
     };
     fetchData = async () => {
         const token = storage.retrieveToken();
         const request = {
-            body: JSON.stringify({}),
+            body: JSON.stringify({
+                date: this.state.date.toISOString()
+            }),
             headers: {
                 Accept: "application/json",
                 "Content-Type": "application/json",
@@ -64,6 +73,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
             method: "POST",
             type: "cors"
         };
+        console.log(request);
         try {
             const response = await fetch(
                 "http://localhost:8080/api/user/entries/view",
@@ -79,15 +89,32 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
             console.log(err);
         }
     };
-
     componentDidMount = () => {
         this.fetchData();
     };
-
+    onDateChange = (date: Date) => {
+        console.log(date.toISOString());
+        this.setState(
+            (prevState: EntriesState) => ({
+                ...prevState,
+                date
+            }),
+            () => {
+                this.fetchData();
+            }
+        );
+    };
     render() {
         return (
             <Widget>
                 <Label>Entries</Label>
+                <CalendarBox>
+                    <Calendar
+                        date={this.state.date}
+                        logged={[new Date()]}
+                        onDateChange={this.onDateChange}
+                    />
+                </CalendarBox>
                 {this.state.entries
                     .sort((a: Entry, b: Entry) => a.id - b.id)
                     .map((entry: Entry) => {

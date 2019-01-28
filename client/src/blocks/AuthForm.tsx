@@ -2,7 +2,7 @@ import * as React from "react";
 import styled from "styled-components";
 import Widget from "../elements/Widget";
 import BlockButton from "../elements/BlockButton";
-import Input from "../blocks/Input";
+import Input from "./Input";
 
 const Inputs = styled.div`
     display: flex;

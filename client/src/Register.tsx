@@ -4,7 +4,7 @@ import * as storage from "./storage";
 import { withRouter } from "react-router-dom";
 import { RouteProps, RouteComponentProps } from "react-router";
 import { Redirect } from "react-router-dom";
-import AuthForm from "./components/AuthForm";
+import AuthForm from "./blocks/AuthForm";
 
 interface LoginWidgetProps extends RouteComponentProps {}
 interface LoginWidgetState {

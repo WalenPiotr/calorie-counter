@@ -134,7 +134,8 @@ class Row extends React.Component<RowProps, RowState> {
                 entry: {
                     productID: this.props.product.id,
                     portionID: portionID,
-                    quantity: parseInt(this.state.quantity)
+                    quantity: parseInt(this.state.quantity),
+                    date: new Date().toISOString()
                 }
             }),
             headers: {

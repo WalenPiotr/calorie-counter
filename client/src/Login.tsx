@@ -2,7 +2,7 @@ import * as React from "react";
 import { withRouter } from "react-router-dom";
 import { RouteComponentProps } from "react-router";
 import { Redirect } from "react-router-dom";
-import AuthForm from "./components/AuthForm";
+import AuthForm from "./blocks/AuthForm";
 
 export interface LoginProps extends RouteComponentProps {
     logIn: (email: string, password: string) => void;
