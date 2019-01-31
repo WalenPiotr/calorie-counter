@@ -1,102 +1,14 @@
 import * as React from "react";
-import styled from "styled-components";
-import { ChevronDown } from "styled-icons/fa-solid/ChevronDown";
-import { ChevronUp } from "styled-icons/fa-solid/ChevronUp";
-import { Product, Portion } from "..";
-
+import { Product, Portion } from "../../";
+import * as Styled from "./styled";
 import * as storage from "@storage";
+
 import Input from "@components/Input";
 import BlockButton from "@elements/BlockButton";
 import Select from "@components/Select";
 import Calendar from "@components/Calendar";
 import { ShoppingBasket } from "styled-icons/material/ShoppingBasket";
-
-interface TableProps {
-    products: Product[];
-}
-interface TableState {
-    collapsed: boolean;
-}
-class Table extends React.Component<TableProps, TableState> {
-    constructor(props: TableProps) {
-        super(props);
-        this.state = { collapsed: true };
-    }
-    async componentDidMount() {}
-
-    render() {
-        const components = this.props.products.map((product: Product) => {
-            return <Row product={product} key={product.id} />;
-        });
-        return <div>{components}</div>;
-    }
-}
-
-const LineBox = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid grey;
-    height: 50px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-
-    padding-left: 5px;
-`;
-const CollapseButton = styled.button`
-    border: none;
-    color: rgba(30, 100, 200, 1);
-    background-color: transparent;
-    height: 50px;
-    width: 50px;
-    padding: 10px;
-    font-size: 30px;
-`;
-
-interface ControlBoxProps {
-    hidden: boolean;
-}
-const ControlBox = styled.div`
-    display: ${(props: ControlBoxProps) => (props.hidden ? "none" : "flex")};
-    width: 90%;
-    margin: 20px auto;
-    justify-content: center;
-    flex-direction: column;
-    align-items: center;
-`;
-
-const NutrientLabel = styled.label`
-    margin-top: 10px;
-    font-size: 16px;
-    font-weight: 500;
-`;
-const NutrientValue = styled.label`
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 5px;
-`;
-
-const NutrientDiv = styled.div`
-    width: 100px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-`;
-
-const BigLabel = styled.label`
-    font-size: 24px;
-`;
-const SmallLabel = styled.label`
-    font-size: 12px;
-    width: 100px;
-    display: inline-block;
-`;
-const CalendarBox = styled.div`
-    width: 100%;
-    margin-bottom: 20px;
-    border: 1px solid grey;
-`;
+import { ChevronUp } from "styled-icons/boxicons-regular/ChevronUp";
 
 interface RowProps {
     product: Product;
@@ -107,6 +19,7 @@ interface RowState {
     unit: string;
     date: Date;
 }
+
 class Row extends React.Component<RowProps, RowState> {
     state = {
         collapsed: true,
@@ -191,42 +104,44 @@ class Row extends React.Component<RowProps, RowState> {
     render() {
         return (
             <div key={this.props.product.name}>
-                <LineBox>
+                <Styled.LineBox>
                     <div>
-                        <BigLabel>{this.props.product.name}</BigLabel>
+                        <Styled.BigLabel>
+                            {this.props.product.name}
+                        </Styled.BigLabel>
                         <div>
-                            <SmallLabel>
+                            <Styled.SmallLabel>
                                 Energy:{" "}
                                 <label>
                                     {this.props.product.portions[0].energy.toFixed()}
                                 </label>{" "}
                                 kcal
-                            </SmallLabel>
-                            <SmallLabel>
+                            </Styled.SmallLabel>
+                            <Styled.SmallLabel>
                                 Unit:
                                 <label>
                                     {this.props.product.portions[0].unit}
                                 </label>
-                            </SmallLabel>
+                            </Styled.SmallLabel>
                         </div>
                     </div>
 
-                    <CollapseButton onClick={this.onCollapseClick}>
+                    <Styled.CollapseButton onClick={this.onCollapseClick}>
                         {this.state.collapsed ? (
                             <ShoppingBasket />
                         ) : (
                             <ChevronUp />
                         )}
-                    </CollapseButton>
-                </LineBox>
-                <ControlBox hidden={this.state.collapsed}>
-                    <CalendarBox>
+                    </Styled.CollapseButton>
+                </Styled.LineBox>
+                <Styled.ControlBox hidden={this.state.collapsed}>
+                    <Styled.CalendarBox>
                         <Calendar
                             date={this.state.date}
                             logged={[]}
                             onDateChange={this.onDateChange}
                         />
-                    </CalendarBox>
+                    </Styled.CalendarBox>
                     <Input
                         label={"Enter Amount"}
                         value={this.state.quantity}
@@ -240,17 +155,16 @@ class Row extends React.Component<RowProps, RowState> {
                         value={this.state.unit}
                         onSelectChange={this.onSelectChange}
                     />
-                    <NutrientDiv>
-                        <NutrientLabel>Calories</NutrientLabel>
-                        <NutrientValue>
+                    <Styled.NutrientDiv>
+                        <Styled.NutrientLabel>Calories</Styled.NutrientLabel>
+                        <Styled.NutrientValue>
                             {this.getEnergy().toFixed()}
-                        </NutrientValue>
-                    </NutrientDiv>
+                        </Styled.NutrientValue>
+                    </Styled.NutrientDiv>
                     <BlockButton onClick={this.onAddClick}>ADD</BlockButton>
-                </ControlBox>
+                </Styled.ControlBox>
             </div>
         );
     }
 }
-
-export default Table;
+export default Row;

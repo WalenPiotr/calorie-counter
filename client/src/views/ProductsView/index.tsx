@@ -2,9 +2,9 @@ import * as React from "react";
 import styled from "styled-components";
 import { Redirect } from "react-router-dom";
 
-import SearchBar from "./SearchBar/SearchBar";
-import AddNewControls from "./AddNew/AddNew";
-import Table from "./Table/Table";
+import SearchBar from "./SearchBar";
+import AddNewControls from "./AddNew";
+import Table from "./Table";
 
 import * as storage from "@storage";
 import Widget from "@elements/Widget";

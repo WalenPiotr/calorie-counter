@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as helpers from "./helpers";
-import * as Styled from "./styles";
+import * as Styled from "./styled";
 interface CalendarProps {
     logged: Date[];
     date: Date;
