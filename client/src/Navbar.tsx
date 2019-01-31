@@ -4,8 +4,20 @@ import { RouteComponentProps } from "react-router-dom";
 import { withRouter } from "react-router-dom";
 import * as storage from "./storage";
 import { Menu } from "styled-icons/boxicons-regular/Menu";
+import { ShoppingBasket } from "styled-icons/material/ShoppingBasket";
+import { Search } from "styled-icons/boxicons-regular/Search";
 
-const MyMenu = styled(Menu)`
+const MenuIcon = styled(Menu)`
+    width: 30px;
+    height: 30px;
+`;
+
+const ShoppingBasketIcon = styled(ShoppingBasket)`
+    width: 30px;
+    height: 30px;
+`;
+
+const SearchIcon = styled(Search)`
     width: 30px;
     height: 30px;
 `;
@@ -24,7 +36,7 @@ const NavbarBox = styled.div`
 const Spacer = styled.div`
     height: 50px;
 `;
-const ExpandButton = styled.button`
+const IconButton = styled.button`
     height: 50px;
     background: none;
     color: white;
@@ -57,6 +69,13 @@ const LinkWrapper = styled.div`
     height: 100%;
     padding-left: 20px;
     padding-right: 20px;
+`;
+const BarGroup = styled.div`
+    display: flex;
+    justify-content: space-between;
+`;
+const NavGroup = styled.div`
+    display: flex;
 `;
 
 interface NavbarState {
@@ -149,10 +168,27 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
         return (
             <div>
                 <NavbarBox>
-                    <ExpandButton onClick={this.onExpandClick}>
-                        <MyMenu />
-                    </ExpandButton>
-
+                    <BarGroup>
+                        <IconButton onClick={this.onExpandClick}>
+                            <MenuIcon />
+                        </IconButton>
+                        <NavGroup>
+                            <IconButton
+                                onClick={() =>
+                                    this.props.history.push("/entries")
+                                }
+                            >
+                                <ShoppingBasketIcon />
+                            </IconButton>
+                            <IconButton
+                                onClick={() =>
+                                    this.props.history.push("/products")
+                                }
+                            >
+                                <SearchIcon />
+                            </IconButton>
+                        </NavGroup>
+                    </BarGroup>
                     {this.state.collapsed ? (
                         isLoggedIn ? (
                             links.map(link => (
