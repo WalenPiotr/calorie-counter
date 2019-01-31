@@ -64,6 +64,7 @@ interface SelectProps {
     onSelectChange: (value: string) => void;
     options: string[];
     value: string;
+    label: string;
 }
 interface SelectState {
     collapsed: boolean;
@@ -90,7 +91,7 @@ class Select extends React.Component<SelectProps, SelectState> {
         return (
             <Styled.Box>
                 <div>
-                    <Styled.Label>Unit</Styled.Label>
+                    <Styled.Label>{this.props.label}</Styled.Label>
                     <Styled.Value>{this.props.value}</Styled.Value>
                 </div>
                 <Styled.Button onClick={this.onClick}>

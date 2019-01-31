@@ -7,7 +7,8 @@ import * as storage from "../storage";
 import Input from "../blocks/Input";
 import BlockButton from "../elements/BlockButton";
 import Select from "../blocks/Select";
-
+import Calendar from "../blocks/Calendar/Calendar";
+import { ShoppingBasket } from "styled-icons/material/ShoppingBasket";
 interface TableProps {
     products: Product[];
 }
@@ -29,14 +30,6 @@ class Table extends React.Component<TableProps, TableState> {
     }
 }
 
-interface RowProps {
-    product: Product;
-}
-interface RowState {
-    collapsed: boolean;
-    quantity: string;
-    unit: string;
-}
 const LineBox = styled.div`
     display: flex;
     align-items: center;
@@ -97,12 +90,27 @@ const SmallLabel = styled.label`
     width: 100px;
     display: inline-block;
 `;
+const CalendarBox = styled.div`
+    width: 100%;
+    margin-bottom: 20px;
+    border: 1px solid grey;
+`;
 
+interface RowProps {
+    product: Product;
+}
+interface RowState {
+    collapsed: boolean;
+    quantity: string;
+    unit: string;
+    date: Date;
+}
 class Row extends React.Component<RowProps, RowState> {
     state = {
         collapsed: true,
         quantity: "1",
-        unit: this.props.product.portions[0].unit
+        unit: this.props.product.portions[0].unit,
+        date: new Date()
     };
     onInputChange = (e: React.FormEvent<HTMLInputElement>) => {
         const newValue = e.currentTarget.value;
@@ -134,8 +142,8 @@ class Row extends React.Component<RowProps, RowState> {
                 entry: {
                     productID: this.props.product.id,
                     portionID: portionID,
-                    quantity: parseInt(this.state.quantity),
-                    date: new Date().toISOString()
+                    quantity: parseFloat(this.state.quantity),
+                    date: this.state.date.toISOString()
                 }
             }),
             headers: {
@@ -153,6 +161,7 @@ class Row extends React.Component<RowProps, RowState> {
                 request
             );
             const parsed = await response.json();
+            this.setState({ collapsed: true });
             console.log(parsed);
         } catch (err) {
             console.log(err);
@@ -170,6 +179,13 @@ class Row extends React.Component<RowProps, RowState> {
         const quantity = isNaN(parsedQuantity) ? 0 : parsedQuantity;
         return portionEnergy * quantity;
     };
+    onDateChange = async (date: Date) => {
+        console.log(date.toISOString());
+        await this.setState((prevState: RowState) => ({
+            ...prevState,
+            date
+        }));
+    };
     render() {
         return (
             <div key={this.props.product.name}>
@@ -180,7 +196,7 @@ class Row extends React.Component<RowProps, RowState> {
                             <SmallLabel>
                                 Energy:{" "}
                                 <label>
-                                    {this.props.product.portions[0].energy}
+                                    {this.props.product.portions[0].energy.toFixed()}
                                 </label>{" "}
                                 kcal
                             </SmallLabel>
@@ -194,16 +210,28 @@ class Row extends React.Component<RowProps, RowState> {
                     </div>
 
                     <CollapseButton onClick={this.onCollapseClick}>
-                        {this.state.collapsed ? <ChevronDown /> : <ChevronUp />}
+                        {this.state.collapsed ? (
+                            <ShoppingBasket />
+                        ) : (
+                            <ChevronUp />
+                        )}
                     </CollapseButton>
                 </LineBox>
                 <ControlBox hidden={this.state.collapsed}>
+                    <CalendarBox>
+                        <Calendar
+                            date={this.state.date}
+                            logged={[]}
+                            onDateChange={this.onDateChange}
+                        />
+                    </CalendarBox>
                     <Input
-                        label={"Amount"}
+                        label={"Enter Amount"}
                         value={this.state.quantity}
                         onChange={this.onInputChange}
                     />
                     <Select
+                        label={"Select Unit"}
                         options={this.props.product.portions.map(
                             (portion: Portion) => portion.unit
                         )}
@@ -212,7 +240,9 @@ class Row extends React.Component<RowProps, RowState> {
                     />
                     <NutrientDiv>
                         <NutrientLabel>Calories</NutrientLabel>
-                        <NutrientValue>{this.getEnergy()}</NutrientValue>
+                        <NutrientValue>
+                            {this.getEnergy().toFixed()}
+                        </NutrientValue>
                     </NutrientDiv>
                     <BlockButton onClick={this.onAddClick}>ADD</BlockButton>
                 </ControlBox>

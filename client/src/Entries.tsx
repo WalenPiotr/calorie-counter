@@ -2,7 +2,7 @@ import * as React from "react";
 import * as storage from "./storage";
 import styled from "styled-components";
 import Widget from "./elements/Widget";
-import { ChevronDown } from "styled-icons/fa-solid/ChevronDown";
+import { Gear } from "styled-icons/octicons/Gear";
 import { ChevronUp } from "styled-icons/fa-solid/ChevronUp";
 import Input from "./blocks/Input";
 import BlockButton from "./elements/BlockButton";
@@ -34,8 +34,8 @@ interface Product {
 const CalendarBox = styled.div`
     width: 85%;
     margin-bottom: 10px;
+    border: 1px solid grey;
 `;
-
 const Label = styled.div`
     width: 85%;
     color: grey;
@@ -50,6 +50,7 @@ const Label = styled.div`
 
 interface EntriesState {
     entries: Entry[];
+    loggedDates: Date[];
     date: Date;
 }
 interface EntriesProps {}
@@ -57,9 +58,10 @@ interface EntriesProps {}
 class Entries extends React.Component<EntriesProps, EntriesState> {
     state = {
         entries: [],
-        date: new Date()
+        date: new Date(),
+        loggedDates: []
     };
-    fetchData = async () => {
+    fetchEntries = async () => {
         const token = storage.retrieveToken();
         const request = {
             body: JSON.stringify({
@@ -89,20 +91,52 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
             console.log(err);
         }
     };
-    componentDidMount = () => {
-        this.fetchData();
-    };
-    onDateChange = (date: Date) => {
-        console.log(date.toISOString());
-        this.setState(
-            (prevState: EntriesState) => ({
+
+    fetchDates = async () => {
+        const token = storage.retrieveToken();
+        const request = {
+            body: JSON.stringify({}),
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token
+            },
+            method: "POST",
+            type: "cors"
+        };
+        console.log(request);
+        try {
+            const response = await fetch(
+                "http://localhost:8080/api/user/entries/dates",
+                request
+            );
+            const parsed = await response.json();
+            console.log(parsed);
+            const loggedDates = parsed.dates.map((date: string) => {
+                return new Date(date);
+            });
+            this.setState((prevState: EntriesState) => ({
                 ...prevState,
-                date
-            }),
-            () => {
-                this.fetchData();
-            }
-        );
+                loggedDates
+            }));
+        } catch (err) {
+            console.log(err);
+        }
+    };
+    componentDidMount = () => {
+        this.fetchEntries();
+        this.fetchDates();
+    };
+    onDateChange = async (date: Date) => {
+        await this.setState((prevState: EntriesState) => ({
+            ...prevState,
+            date
+        }));
+        await this.fetchEntries();
+    };
+    fetchData = () => {
+        this.fetchEntries();
+        this.fetchDates();
     };
     render() {
         return (
@@ -111,7 +145,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
                 <CalendarBox>
                     <Calendar
                         date={this.state.date}
-                        logged={[new Date()]}
+                        logged={this.state.loggedDates}
                         onDateChange={this.onDateChange}
                     />
                 </CalendarBox>
@@ -121,8 +155,9 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
                         return (
                             <Row
                                 key={entry.id}
-                                fetchData={this.fetchData}
                                 entry={entry}
+                                loggedDates={this.state.loggedDates}
+                                fetchData={this.fetchData}
                             />
                         );
                     })}
@@ -161,14 +196,6 @@ const ExpandButton = styled.button`
     padding: 10px;
     font-size: 20px;
 `;
-
-interface RowProps {
-    fetchData: () => void;
-    entry: Entry;
-}
-interface RowState {
-    collapsed: boolean;
-}
 
 interface ControlBoxProps {
     hidden: boolean;
@@ -214,13 +241,30 @@ const BlockButtonGroup = styled.div`
 const SmallBlockButton = styled(BlockButton)`
     width: 35%;
 `;
+const RowCalendarBox = styled.div`
+    width: 100%;
+    margin-bottom: 20px;
+    border: 1px solid grey;
+`;
+interface RowProps {
+    fetchData: () => void;
+    entry: Entry;
+    loggedDates: Date[];
+}
+interface RowState {
+    collapsed: boolean;
+    quantity: string;
+    unit: string;
+    date: Date;
+}
 class Row extends React.Component<RowProps, RowState> {
     state = {
         collapsed: true,
         quantity: this.props.entry.quantity.toString(),
         unit: this.props.entry.product.portions.filter(
             (portion: Portion) => this.props.entry.portionID == portion.id
-        )[0].unit
+        )[0].unit,
+        date: new Date(this.props.entry.date)
     };
 
     onInputChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -261,7 +305,8 @@ class Row extends React.Component<RowProps, RowState> {
                 entry: {
                     productID: this.props.entry.product.id,
                     portionID: portionID,
-                    quantity: parseInt(this.state.quantity)
+                    quantity: parseFloat(this.state.quantity),
+                    date: this.state.date.toISOString()
                 }
             }),
             headers: {
@@ -316,7 +361,12 @@ class Row extends React.Component<RowProps, RowState> {
             console.log(err);
         }
     };
-
+    onDateChange = (date: Date) => {
+        this.setState((prevState: RowState) => ({
+            ...prevState,
+            date
+        }));
+    };
     getEnergy = (): number => {
         var portionEnergy = 0;
         for (const portion of this.props.entry.product.portions) {
@@ -336,7 +386,6 @@ class Row extends React.Component<RowProps, RowState> {
         const name = entry.product.name;
         const quantity = entry.quantity;
         const portion = findPortion(entry.product.portions, entry.portionID);
-        const energy = portion.energy * quantity;
         const unit = portion.unit;
         return (
             <Box>
@@ -344,18 +393,28 @@ class Row extends React.Component<RowProps, RowState> {
                     <Element width={"35%"}>{name}</Element>
                     <Element width={"15%"}>{quantity}</Element>
                     <Element width={"15%"}>{unit}</Element>
-                    <Element width={"30%"}>{energy} kcal</Element>
+                    <Element width={"30%"}>
+                        {this.getEnergy().toFixed()} kcal
+                    </Element>
                     <ExpandButton onClick={this.onCollapseClick}>
-                        {this.state.collapsed ? <ChevronDown /> : <ChevronUp />}
+                        {this.state.collapsed ? <Gear /> : <ChevronUp />}
                     </ExpandButton>
                 </RowBox>
                 <ControlBox hidden={this.state.collapsed}>
+                    <RowCalendarBox>
+                        <Calendar
+                            date={this.state.date}
+                            logged={this.props.loggedDates}
+                            onDateChange={this.onDateChange}
+                        />
+                    </RowCalendarBox>
                     <Input
-                        label={"Amount"}
+                        label={"Enter Amount"}
                         value={this.state.quantity}
                         onChange={this.onInputChange}
                     />
                     <Select
+                        label={"Select unit"}
                         options={this.props.entry.product.portions.map(
                             (portion: Portion) => portion.unit
                         )}
@@ -364,7 +423,9 @@ class Row extends React.Component<RowProps, RowState> {
                     />
                     <NutrientDiv>
                         <NutrientLabel>Calories</NutrientLabel>
-                        <NutrientValue>{this.getEnergy()}</NutrientValue>
+                        <NutrientValue>
+                            {this.getEnergy().toFixed()}
+                        </NutrientValue>
                     </NutrientDiv>
                     <BlockButtonGroup>
                         <SmallBlockButton onClick={this.onUpdateClick}>

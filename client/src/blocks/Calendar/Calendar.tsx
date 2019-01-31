@@ -20,8 +20,9 @@ class Calendar extends React.Component<CalendarProps, CalendarState> {
         }
         return false;
     }
-    onCellClick = (val: Date) => () => {
-        this.props.onDateChange(val);
+    onCellClick = (val: Date) => async () => {
+        await this.props.onDateChange(val);
+        this.setState({ visible: false });
     };
     changeMonth = (jump: number) => () => {
         const { date } = this.props;
@@ -58,6 +59,7 @@ class Calendar extends React.Component<CalendarProps, CalendarState> {
                         prev={helpers.compareDate(val, curr)}
                         current={helpers.compareMonthYear(val, curr)}
                         logged={this.inLogged(val)}
+                        today={helpers.compareDate(val, new Date())}
                         key={val.toLocaleString("en-GB") + i2}
                         onClick={val ? this.onCellClick(val) : undefined}
                     >
@@ -79,19 +81,20 @@ class Calendar extends React.Component<CalendarProps, CalendarState> {
         const { visible } = this.state;
         return (
             <Styled.Box>
+                <Styled.Label>SELECT DATE</Styled.Label>
                 <Styled.Controls>
                     {visible ? (
                         <Styled.Button onClick={this.changeMonth(-1)}>
                             <Styled.ArrowLeft />
                         </Styled.Button>
                     ) : null}
-                    <Styled.Label onClick={this.onLabelClick}>
+                    <Styled.Date onClick={this.onLabelClick}>
                         {curr.toLocaleString("en-GB", {
                             day: "numeric",
                             month: "long",
                             year: "numeric"
                         })}
-                    </Styled.Label>
+                    </Styled.Date>
                     {visible ? (
                         <Styled.Button onClick={this.changeMonth(1)}>
                             <Styled.ArrowRight />
