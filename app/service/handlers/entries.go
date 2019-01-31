@@ -157,6 +157,56 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 	})
 }
 
+func GetUsersDatesWithEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
+	type RequestObject struct {
+	}
+	type ResponseObject struct {
+		Error string      `json:"error,omitempty"`
+		Dates []time.Time `json:"dates,omitempty"`
+	}
+	sendError := func(w http.ResponseWriter, status int, err error) {
+		err = errors.Wrap(err, "While creating entry")
+		logger.Error(err)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{
+			Error: err.Error(),
+		}
+		json.NewEncoder(w).Encode(out)
+	}
+	sendData := func(w http.ResponseWriter, status int, dates *[]time.Time) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{
+			Dates: *dates,
+		}
+		json.NewEncoder(w).Encode(out)
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := &RequestObject{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			err = errors.Wrap(err, "While decoding request body")
+			sendError(w, http.StatusBadRequest, err)
+			return
+		}
+		userID, ok := r.Context().Value(middleware.UserID).(int)
+		if !ok {
+			err = errors.New("While getting UserID from request context")
+			sendError(w, http.StatusBadRequest, err)
+			return
+		}
+		dates, err := models.GetUsersEntryDates(db, userID)
+		if err != nil {
+			err = errors.Wrap(err, "While fetching dates")
+			sendError(w, http.StatusBadRequest, err)
+			return
+		}
+		sendData(w, http.StatusOK, dates)
+		return
+	})
+}
+
 func DeleteEntry(db *sql.DB, logger *logrus.Logger) http.Handler {
 	type RequestObject struct {
 		ID int `json:"id"`

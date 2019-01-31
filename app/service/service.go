@@ -44,6 +44,8 @@ func NewService() error {
 		handlers.DeleteEntry(db, logger), auth.User))
 	router.Handle("/api/user/entries/update", middleware.WithAuth(
 		handlers.UpdateEntry(db, logger), auth.User))
+	router.Handle("/api/user/entries/dates", middleware.WithAuth(
+		handlers.GetUsersDatesWithEntries(db, logger), auth.User))
 
 	router.Handle("/api/product/new", middleware.WithAuth(
 		handlers.CreateProduct(db, logger), auth.User))

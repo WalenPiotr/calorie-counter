@@ -116,6 +116,26 @@ func GetUsersEntries(db *sql.DB, userID int, date time.Time) (*[]Entry, error) {
 		entries = append(entries, *entry)
 	}
 	return &entries, err
+}
+
+func GetUsersEntryDates(db *sql.DB, userID int) (*[]time.Time, error) {
+	rows, err := db.Query(`
+		SELECT date FROM entries WHERE user_id=$1
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	dates := []time.Time{}
+	for rows.Next() {
+		date := &time.Time{}
+		rows.Scan(&date)
+		if err != nil {
+			return nil, err
+		}
+		dates = append(dates, *date)
+	}
+	return &dates, err
 
 }
 
