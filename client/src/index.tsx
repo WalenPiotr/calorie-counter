@@ -2,14 +2,15 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { createGlobalStyle, ThemeProvider } from "styled-components";
 import { BrowserRouter, Route, Link, Switch } from "react-router-dom";
-import ProductsView from "./ProductsView/index";
-import * as storage from "./storage";
 
-import AddNew from "./AddNew";
-import Login, { LoginProps } from "./Login";
-import Entries from "./Entries";
-import Register from "./Register";
-import Navbar from "./Navbar";
+import AddNew from "@views/AddNew/index";
+import Login, { LoginProps } from "@views/Login";
+import ProductsView from "@views/ProductsView";
+import Entries from "@views/Entries";
+import Register from "@views/Register";
+import Navbar from "@views/Navbar";
+
+import * as storage from "@storage";
 
 const GlobalStyle = createGlobalStyle`
     body {

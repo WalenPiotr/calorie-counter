@@ -2,10 +2,12 @@ import * as React from "react";
 import styled from "styled-components";
 import { RouteComponentProps } from "react-router-dom";
 import { withRouter } from "react-router-dom";
-import * as storage from "./storage";
+
 import { Menu } from "styled-icons/boxicons-regular/Menu";
 import { ShoppingBasket } from "styled-icons/material/ShoppingBasket";
 import { Search } from "styled-icons/boxicons-regular/Search";
+
+import * as storage from "@storage";
 
 const MenuIcon = styled(Menu)`
     width: 30px;

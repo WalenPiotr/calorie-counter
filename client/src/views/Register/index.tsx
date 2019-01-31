@@ -1,10 +1,9 @@
 import * as React from "react";
-import styled from "styled-components";
-import * as storage from "./storage";
+import * as storage from "@storage";
 import { withRouter } from "react-router-dom";
 import { RouteProps, RouteComponentProps } from "react-router";
 import { Redirect } from "react-router-dom";
-import AuthForm from "./blocks/AuthForm";
+import AuthForm from "@components/AuthForm";
 
 interface LoginWidgetProps extends RouteComponentProps {}
 interface LoginWidgetState {

@@ -1,11 +1,14 @@
 import * as React from "react";
 import styled from "styled-components";
-import * as storage from "../storage";
 import { Redirect } from "react-router-dom";
-import SearchBar from "./SearchBar";
-import AddNewControls from "./AddNewControls";
-import Table from "./Table";
-import Widget from "../elements/Widget";
+
+import SearchBar from "./SearchBar/SearchBar";
+import AddNewControls from "./AddNew/AddNew";
+import Table from "./Table/Table";
+
+import * as storage from "@storage";
+import Widget from "@elements/Widget";
+import Label from "@elements/Label";
 
 export interface Portion {
     id: number;
@@ -33,16 +36,6 @@ const Box = styled.div`
     flex: 100px 1 1;
     margin: 10px;
     width: 85%;
-`;
-const Label = styled.div`
-    color: grey;
-    font-size: 24px;
-    text-transform: uppercase;
-    border-bottom: 1px solid grey;
-    box-sizing: border-box;
-    padding: 5px;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
 `;
 class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
     state = {

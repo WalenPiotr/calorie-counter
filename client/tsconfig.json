@@ -8,12 +8,12 @@
         "jsx": "react",
         "baseUrl": ".",
         "paths": {
-            "@styled-components": ["src/styled-components"],
             "@interfaces/*": ["src/interfaces/*"],
             "@components/*": ["src/components/*"],
-            "@reducers/*": ["src/reducers/*"],
-            "@actions/*": ["src/actions/*"],
-            "@helpers/*": ["src/helpers/*"]
+            "@views/*": ["src/views/*"],
+            "@elements/*": ["src/elements/*"],
+            "@storage": ["src/storage.ts"],
+            "@media": ["src/media.ts"]
         },
         "downlevelIteration": true,
         "forceConsistentCasingInFileNames": true,

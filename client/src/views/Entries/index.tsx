@@ -1,13 +1,16 @@
 import * as React from "react";
-import * as storage from "./storage";
 import styled from "styled-components";
-import Widget from "./elements/Widget";
 import { Gear } from "styled-icons/octicons/Gear";
 import { ChevronUp } from "styled-icons/fa-solid/ChevronUp";
-import Input from "./blocks/Input";
-import BlockButton from "./elements/BlockButton";
-import Select from "./blocks/Select";
-import Calendar from "./blocks/Calendar/Calendar";
+
+import Widget from "@elements/Widget";
+import BlockButton from "@elements/BlockButton";
+
+import Input from "@components/Input";
+import Select from "@components/Select";
+import Calendar from "@components/Calendar";
+
+import * as storage from "@storage";
 
 interface Entry {
     id: number;

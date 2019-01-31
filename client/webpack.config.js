@@ -16,9 +16,11 @@ module.exports = {
         extensions: [".js", ".json", ".ts", ".tsx", ".d.ts"],
         alias: {
             "@interfaces": path.resolve(__dirname, "src/interfaces/"),
+            "@views": path.resolve(__dirname, "src/views/"),
             "@components": path.resolve(__dirname, "src/components/"),
-            "@helpers": path.resolve(__dirname, "src/helpers/"),
-            "@atoms": path.resolve(__dirname, "src/atoms/")
+            "@elements": path.resolve(__dirname, "src/elements/"),
+            "@media": path.resolve(__dirname, "src/media.ts"),
+            "@storage": path.resolve(__dirname, "src/storage.ts")
         }
     },
     module: {

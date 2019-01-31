@@ -1,8 +1,8 @@
 import * as React from "react";
 import styled from "styled-components";
-import * as storage from "./storage";
-import Input from "./blocks/Input";
-import BlockButton from "./elements/BlockButton";
+import * as storage from "@storage";
+import Input from "@components/Input";
+import BlockButton from "@elements/BlockButton";
 interface AddNewProps {}
 interface AddNewState {
     product: {

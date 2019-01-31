@@ -31,7 +31,7 @@ const PlusIcon = styled(Plus)`
     width: 25px;
     height: 25px;
 `;
-class AddNewControls extends React.Component<AddNewControlsProps, any> {
+class AddNew extends React.Component<AddNewControlsProps, any> {
     render() {
         return (
             <AddNewBox>
@@ -39,11 +39,10 @@ class AddNewControls extends React.Component<AddNewControlsProps, any> {
                     Didn't find what you're looking for? <br /> Add new product!
                 </TextLabel>
                 <Button onClick={this.props.onClick}>
-                    {" "}
                     <PlusIcon />
                 </Button>
             </AddNewBox>
         );
     }
 }
-export default AddNewControls;
+export default AddNew;

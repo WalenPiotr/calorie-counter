@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { size, minWidth } from "../breakpoints";
+import { size, minWidth } from "@media";
 
 const Widget = styled.div`
     background-color: white;

@@ -2,13 +2,15 @@ import * as React from "react";
 import styled from "styled-components";
 import { ChevronDown } from "styled-icons/fa-solid/ChevronDown";
 import { ChevronUp } from "styled-icons/fa-solid/ChevronUp";
-import { Product, Portion } from ".";
-import * as storage from "../storage";
-import Input from "../blocks/Input";
-import BlockButton from "../elements/BlockButton";
-import Select from "../blocks/Select";
-import Calendar from "../blocks/Calendar/Calendar";
+import { Product, Portion } from "..";
+
+import * as storage from "@storage";
+import Input from "@components/Input";
+import BlockButton from "@elements/BlockButton";
+import Select from "@components/Select";
+import Calendar from "@components/Calendar";
 import { ShoppingBasket } from "styled-icons/material/ShoppingBasket";
+
 interface TableProps {
     products: Product[];
 }
