@@ -1,8 +1,8 @@
 import styled from "styled-components";
+import { size, minWidth } from "../breakpoints";
 
 const Widget = styled.div`
     background-color: white;
-    width: 95vw;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -11,6 +11,20 @@ const Widget = styled.div`
     margin: 10vh auto;
     padding-top: 20px;
     padding-bottom: 20px;
+
+    width: 95vw;
+    @media ${minWidth(size.tablet)} {
+        width: 75vw;
+    }
+    @media ${minWidth(size.laptop)} {
+        width: 55vw;
+    }
+    @media ${minWidth(size.laptopL)} {
+        width: 35vw;
+    }
+    @media ${minWidth(size.desktop)} {
+        width: 35vw;
+    }
 `;
 
 export default Widget;

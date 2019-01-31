@@ -33,7 +33,7 @@ interface Product {
 
 const CalendarBox = styled.div`
     width: 85%;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
     border: 1px solid grey;
 `;
 const Label = styled.div`
@@ -45,7 +45,7 @@ const Label = styled.div`
     box-sizing: border-box;
     padding: 5px;
     padding-bottom: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 `;
 
 interface EntriesState {

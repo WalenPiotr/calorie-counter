@@ -34,6 +34,16 @@ const Box = styled.div`
     margin: 10px;
     width: 85%;
 `;
+const Label = styled.div`
+    color: grey;
+    font-size: 24px;
+    text-transform: uppercase;
+    border-bottom: 1px solid grey;
+    box-sizing: border-box;
+    padding: 5px;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+`;
 class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
     state = {
         searchInput: "",
@@ -92,6 +102,7 @@ class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
         return (
             <Widget>
                 <Box>
+                    <Label>Products</Label>
                     <SearchBar
                         searchInput={this.state.searchInput}
                         onSearchClick={this.onSearchClick}

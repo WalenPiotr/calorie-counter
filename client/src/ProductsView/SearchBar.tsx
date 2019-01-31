@@ -13,7 +13,7 @@ const SearchBox = styled.div`
     width: 100%;
     display: flex;
     border: 1px solid rgba(30, 100, 200, 1);
-    margin-top: 10px;
+    margin-top: 20px;
     margin-bottom: 20px;
     height: 40px;
     border-bottom-right-radius: 20px;
