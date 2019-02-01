@@ -1,7 +1,4 @@
-build-client: 
-	cd client && npm run build 
-copy-static:
-	rm -rf app/static && cp -r client/dist app/static
-compose-up:
-	docker-compose up --build
-run: build-client copy-static compose-up
+compose-devel:
+	docker-compose -f dc-devel.yml up --build
+compose-prod:
+	docker-compose -f dc-prod.yml up

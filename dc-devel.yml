@@ -24,7 +24,4 @@ services:
             PG_PASS: password
             PG_USER: user
             TOKEN_PASS: abcdefasdfasdfasdf
-    client:
-        build: ./client
-        ports:
-            - 8081:8081
+
