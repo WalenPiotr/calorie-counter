@@ -58,6 +58,8 @@ func NewService() error {
 	router.Handle("/api/product/rate", middleware.WithAuth(
 		handlers.RateProduct(db, logger), auth.User))
 
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

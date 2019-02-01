@@ -8,8 +8,8 @@ module.exports = {
     entry: path.resolve(__dirname, "src/index.tsx"),
     output: {
         filename: "[name].bundle.js",
-        path: path.resolve(__dirname, "dist"),
-        publicPath: "/"
+        path: path.resolve(__dirname, "dist")
+        // publicPath: "/"
     },
     devtool: "source-map",
     resolve: {
@@ -20,7 +20,8 @@ module.exports = {
             "@components": path.resolve(__dirname, "src/components/"),
             "@elements": path.resolve(__dirname, "src/elements/"),
             "@media": path.resolve(__dirname, "src/media.ts"),
-            "@storage": path.resolve(__dirname, "src/storage.ts")
+            "@storage": path.resolve(__dirname, "src/storage.ts"),
+            "@requests": path.resolve(__dirname, "src/requests.ts")
         }
     },
     module: {

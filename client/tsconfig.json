@@ -13,7 +13,8 @@
             "@views/*": ["src/views/*"],
             "@elements/*": ["src/elements/*"],
             "@storage": ["src/storage.ts"],
-            "@media": ["src/media.ts"]
+            "@media": ["src/media.ts"],
+            "@requests": ["src/requests.ts"]
         },
         "downlevelIteration": true,
         "forceConsistentCasingInFileNames": true,
