@@ -2,7 +2,9 @@ import * as React from "react";
 import styled from "styled-components";
 import * as storage from "@storage";
 import Input from "@components/Input";
-import BlockButton from "@elements/BlockButton";
+import * as requests from "@requests";
+import * as Styled from "./styled";
+
 interface AddNewProps {}
 interface AddNewState {
     product: {
@@ -15,88 +17,7 @@ interface AddNewState {
     };
 }
 
-const MainBox = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 10vh auto;
-    padding-top: 40px;
-    padding-bottom: 40px;
-
-    width: 95vw;
-    box-shadow: 3px 3px 50px 6px rgba(0, 0, 0, 0.2);
-
-    background-color: white;
-`;
-
-interface PortionGroupProps {
-    single: boolean;
-}
-const PortionGroup = styled.div`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    position: relative;
-    padding-top: ${(props: PortionGroupProps) =>
-        props.single ? "10px" : "40px"};
-    border-top: 1px solid grey;
-    width: 85%;
-`;
-const BaseGroup = styled.div`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    width: 85%;
-`;
-
-const Button = styled(BlockButton)`
-    width: 85%;
-`;
-const XButton = styled.button`
-    position: absolute;
-    background-color: rgba(30, 100, 200, 1);
-    color: white;
-    border: none;
-    top: 5px;
-    left: 0px;
-    width: 60px;
-    height: 30px;
-    font-weight: 500;
-`;
-
-const Label = styled.div`
-    width: 85%;
-    color: grey;
-    font-size: 24px;
-    text-transform: uppercase;
-    border-bottom: 1px solid grey;
-    box-sizing: border-box;
-    padding: 5px;
-    padding-bottom: 15px;
-    margin-bottom: 30px;
-`;
-
-const Spacer = styled.div`
-    border-bottom: 1px solid grey;
-    width: 85%;
-    height: 10px;
-    margin-bottom: 10px;
-`;
-
-interface Payload {
-    product: {
-        name: string;
-        description: string;
-        portions: {
-            energy: number;
-            unit: string;
-        }[];
-    };
-}
-
-class AddNew extends React.Component<AddNewProps, AddNewState> {
+class NewProduct extends React.Component<AddNewProps, AddNewState> {
     state = {
         product: {
             name: "",
@@ -130,33 +51,15 @@ class AddNew extends React.Component<AddNewProps, AddNewState> {
                 }
             }
         );
-        const payload: Payload = {
-            product: {
-                name: this.state.product.name,
-                description: this.state.product.description,
-                portions: parsedPortions
-            }
+        const product = {
+            name: this.state.product.name,
+            description: this.state.product.description,
+            portions: parsedPortions
         };
-        const request = {
-            body: JSON.stringify(payload),
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token
-            },
-            method: "POST",
-            type: "cors"
-        };
-        console.log(request);
         try {
-            const response = await fetch(
-                "http://localhost:8080/api/product/new",
-                request
-            );
-            const parsed = await response.json();
-            console.log(parsed);
-        } catch (err) {
-            console.log(err);
+            await requests.productNew(product);
+        } catch (e) {
+            console.log(e);
         }
     };
     onBaseInputChange = (field: string) => (
@@ -220,9 +123,9 @@ class AddNew extends React.Component<AddNewProps, AddNewState> {
     render() {
         const renderClose = this.state.product.portions.length > 1;
         return (
-            <MainBox>
-                <Label>Add new product</Label>
-                <BaseGroup>
+            <Styled.MainBox>
+                <Styled.Label>Add new product</Styled.Label>
+                <Styled.BaseGroup>
                     <Input
                         label={"name"}
                         value={this.state.product.name}
@@ -233,22 +136,22 @@ class AddNew extends React.Component<AddNewProps, AddNewState> {
                         value={this.state.product.description}
                         onChange={this.onBaseInputChange("description")}
                     />
-                </BaseGroup>
+                </Styled.BaseGroup>
                 {this.state.product.portions.map(
                     (
                         portion: { energy: string; unit: string },
                         index: number
                     ) => (
-                        <PortionGroup
+                        <Styled.PortionGroup
                             key={index}
                             single={this.state.product.portions.length == 1}
                         >
                             {renderClose ? (
-                                <XButton
+                                <Styled.XButton
                                     onClick={this.deleteCurrentPortion(index)}
                                 >
                                     x
-                                </XButton>
+                                </Styled.XButton>
                             ) : (
                                 <div />
                             )}
@@ -269,15 +172,19 @@ class AddNew extends React.Component<AddNewProps, AddNewState> {
                                     "energy"
                                 )}
                             />
-                        </PortionGroup>
+                        </Styled.PortionGroup>
                     )
                 )}
-                <Button onClick={this.addAnotherUnit}>Add another unit</Button>
-                <Spacer />
-                <Button onClick={this.onAddClick}>Add product</Button>
-            </MainBox>
+                <Styled.Button onClick={this.addAnotherUnit}>
+                    Add another unit
+                </Styled.Button>
+                <Styled.Spacer />
+                <Styled.Button onClick={this.onAddClick}>
+                    Add product
+                </Styled.Button>
+            </Styled.MainBox>
         );
     }
 }
 
-export default AddNew;
+export default NewProduct;

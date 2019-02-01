@@ -10,7 +10,8 @@ import Input from "@components/Input";
 import Select from "@components/Select";
 import Calendar from "@components/Calendar";
 
-import * as storage from "@storage";
+import * as requests from "@requests";
+import Spinner from "@elements/Spinner";
 
 interface Entry {
     id: number;
@@ -50,11 +51,18 @@ const Label = styled.div`
     padding-bottom: 10px;
     margin-bottom: 20px;
 `;
+const SpinnerBox = styled.div`
+    width: 50px;
+    height: 50px;
+    color: rgba(30, 100, 200, 1);
+    margin: 10px auto;
+`;
 
 interface EntriesState {
     entries: Entry[];
     loggedDates: Date[];
     date: Date;
+    isLoading: boolean;
 }
 interface EntriesProps {}
 
@@ -62,86 +70,88 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
     state = {
         entries: [],
         date: new Date(),
-        loggedDates: []
-    };
-    fetchEntries = async () => {
-        const token = storage.retrieveToken();
-        const request = {
-            body: JSON.stringify({
-                date: this.state.date.toISOString()
-            }),
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token
-            },
-            method: "POST",
-            type: "cors"
-        };
-        console.log(request);
-        try {
-            const response = await fetch(
-                "http://localhost:8080/api/user/entries/view",
-                request
-            );
-            const parsed = await response.json();
-            console.log(parsed);
-            this.setState((prevState: EntriesState) => ({
-                ...prevState,
-                entries: parsed.entries
-            }));
-        } catch (err) {
-            console.log(err);
-        }
-    };
-
-    fetchDates = async () => {
-        const token = storage.retrieveToken();
-        const request = {
-            body: JSON.stringify({}),
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token
-            },
-            method: "POST",
-            type: "cors"
-        };
-        console.log(request);
-        try {
-            const response = await fetch(
-                "http://localhost:8080/api/user/entries/dates",
-                request
-            );
-            const parsed = await response.json();
-            console.log(parsed);
-            const loggedDates = parsed.dates.map((date: string) => {
-                return new Date(date);
-            });
-            this.setState((prevState: EntriesState) => ({
-                ...prevState,
-                loggedDates
-            }));
-        } catch (err) {
-            console.log(err);
-        }
+        loggedDates: [],
+        isLoading: false
     };
     componentDidMount = () => {
-        this.fetchEntries();
-        this.fetchDates();
+        this.fetchData();
     };
     onDateChange = async (date: Date) => {
         await this.setState((prevState: EntriesState) => ({
             ...prevState,
+            isLoading: true,
             date
         }));
-        await this.fetchEntries();
+        this.fetchData();
     };
-    fetchData = () => {
-        this.fetchEntries();
-        this.fetchDates();
+    fetchData = async () => {
+        await this.setState((prevState: EntriesState) => ({
+            ...prevState,
+            isLoading: true
+        }));
+        const date = this.state.date.toISOString();
+        const entries = await requests.entriesView(date);
+        const loggedDates = await requests.getDates();
+        await this.setState((prevState: EntriesState) => ({
+            ...prevState,
+            entries,
+            loggedDates,
+            isLoading: false
+        }));
+    };
+
+    updateEntry = async (id: number, entry: any) => {
+        await this.setState((prevState: EntriesState) => ({
+            ...prevState,
+            isLoading: true
+        }));
+        await requests.updateEntry(id, entry);
+        const date = this.state.date.toISOString();
+        const entries = await requests.entriesView(date);
+        const loggedDates = await requests.getDates();
+        await this.setState((prevState: EntriesState) => ({
+            ...prevState,
+            entries,
+            loggedDates,
+            isLoading: false
+        }));
+    };
+
+    deleteEntry = async (id: number) => {
+        await this.setState((prevState: EntriesState) => ({
+            ...prevState,
+            isLoading: true
+        }));
+        await requests.deleteEntry(id);
+        const date = this.state.date.toISOString();
+        const entries = await requests.entriesView(date);
+        const loggedDates = await requests.getDates();
+        await this.setState((prevState: EntriesState) => ({
+            ...prevState,
+            entries,
+            loggedDates,
+            isLoading: false
+        }));
     };
     render() {
+        const rows =
+            this.state.entries.length == 0 ? (
+                <div>Nothing found</div>
+            ) : (
+                this.state.entries
+                    .sort((a: Entry, b: Entry) => a.id - b.id)
+                    .map((entry: Entry) => {
+                        return (
+                            <Row
+                                updateEntry={this.updateEntry}
+                                deleteEntry={this.deleteEntry}
+                                key={entry.id}
+                                entry={entry}
+                                loggedDates={this.state.loggedDates}
+                            />
+                        );
+                    })
+            );
         return (
             <Widget>
                 <Label>Entries</Label>
@@ -152,18 +162,14 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
                         onDateChange={this.onDateChange}
                     />
                 </CalendarBox>
-                {this.state.entries
-                    .sort((a: Entry, b: Entry) => a.id - b.id)
-                    .map((entry: Entry) => {
-                        return (
-                            <Row
-                                key={entry.id}
-                                entry={entry}
-                                loggedDates={this.state.loggedDates}
-                                fetchData={this.fetchData}
-                            />
-                        );
-                    })}
+
+                {!this.state.isLoading ? (
+                    rows
+                ) : (
+                    <SpinnerBox>
+                        <Spinner />
+                    </SpinnerBox>
+                )}
             </Widget>
         );
     }
@@ -250,7 +256,8 @@ const RowCalendarBox = styled.div`
     border: 1px solid grey;
 `;
 interface RowProps {
-    fetchData: () => void;
+    updateEntry: (id: number, entry: any) => Promise<void>;
+    deleteEntry: (id: number) => Promise<void>;
     entry: Entry;
     loggedDates: Date[];
 }
@@ -294,75 +301,29 @@ class Row extends React.Component<RowProps, RowState> {
         }));
     };
     onUpdateClick = async () => {
-        var portionID = null;
+        var portionID = -1;
         for (const portion of this.props.entry.product.portions) {
             if (portion.unit == this.state.unit) {
                 portionID = portion.id;
                 break;
             }
         }
-        const token = storage.retrieveToken();
-        const request = {
-            body: JSON.stringify({
-                id: this.props.entry.id,
-                entry: {
-                    productID: this.props.entry.product.id,
-                    portionID: portionID,
-                    quantity: parseFloat(this.state.quantity),
-                    date: this.state.date.toISOString()
-                }
-            }),
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token
-            },
-            method: "POST",
-            type: "cors"
+        const id = this.props.entry.id;
+        const entry = {
+            productID: this.props.entry.product.id,
+            portionID: portionID,
+            quantity: parseFloat(this.state.quantity),
+            date: this.state.date.toISOString()
         };
-        console.log(request);
         try {
-            const response = await fetch(
-                "http://localhost:8080/api/user/entries/update",
-                request
-            );
-            const parsed = await response.json();
-            console.log(parsed);
-            await this.setState((prevState: RowState) => ({
-                ...prevState,
-                collapsed: true
-            }));
-            await this.props.fetchData();
-        } catch (err) {
-            console.log(err);
+            await this.props.updateEntry(id, entry);
+        } catch (e) {
+            console.log(e);
         }
     };
     onDeleteClick = async () => {
-        const token = storage.retrieveToken();
-        const request = {
-            body: JSON.stringify({
-                id: this.props.entry.id
-            }),
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token
-            },
-            method: "POST",
-            type: "cors"
-        };
-        console.log(request);
-        try {
-            const response = await fetch(
-                "http://localhost:8080/api/user/entries/delete",
-                request
-            );
-            const parsed = await response.json();
-            console.log(parsed);
-            await this.props.fetchData();
-        } catch (err) {
-            console.log(err);
-        }
+        const id = this.props.entry.id;
+        await this.props.deleteEntry(id);
     };
     onDateChange = (date: Date) => {
         this.setState((prevState: RowState) => ({
@@ -385,7 +346,6 @@ class Row extends React.Component<RowProps, RowState> {
 
     render() {
         const { entry } = this.props;
-        const id = entry.id;
         const name = entry.product.name;
         const quantity = entry.quantity;
         const portion = findPortion(entry.product.portions, entry.portionID);

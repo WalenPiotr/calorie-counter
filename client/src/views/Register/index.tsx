@@ -5,16 +5,18 @@ import { RouteProps, RouteComponentProps } from "react-router";
 import { Redirect } from "react-router-dom";
 import AuthForm from "@components/AuthForm";
 
-interface LoginWidgetProps extends RouteComponentProps {}
-interface LoginWidgetState {
+export interface RegisterProps extends RouteComponentProps {
+    register: (email: string, password: string) => void;
+}
+interface RegisterState {
     email: string;
     password: string;
     redirect: boolean;
 }
 
 class Register extends React.Component<
-    LoginWidgetProps & RouteProps,
-    LoginWidgetState
+    RegisterProps & RouteProps,
+    RegisterState
 > {
     state = {
         email: "",
@@ -23,46 +25,20 @@ class Register extends React.Component<
     };
     onEmailChange = (e: React.FormEvent<HTMLInputElement>) => {
         const email = e.currentTarget.value;
-        this.setState((prevState: LoginWidgetState) => ({
+        this.setState((prevState: RegisterState) => ({
             ...prevState,
             email
         }));
     };
     onPasswordChange = (e: React.FormEvent<HTMLInputElement>) => {
         const password = e.currentTarget.value;
-        this.setState((prevState: LoginWidgetState) => ({
+        this.setState((prevState: RegisterState) => ({
             ...prevState,
             password
         }));
     };
-    login = async () => {
-        const request = {
-            body: JSON.stringify({
-                email: this.state.email,
-                password: this.state.password
-            }),
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json"
-            },
-            method: "POST",
-            type: "cors"
-        };
-        try {
-            const response = await fetch(
-                "http://localhost:8080/api/user/register",
-                request
-            );
-            const parsed = await response.json();
-            console.log(parsed);
-            storage.persistToken(parsed["token"]);
-            this.setState(prevState => ({
-                ...prevState,
-                redirect: true
-            }));
-        } catch (err) {
-            console.log(err);
-        }
+    register = () => {
+        this.props.register(this.state.email, this.state.password);
     };
     render() {
         if (this.state.redirect) {
@@ -75,12 +51,15 @@ class Register extends React.Component<
                 onEmailChange={this.onEmailChange}
                 passwordValue={this.state.password}
                 onPasswordChange={this.onPasswordChange}
-                buttonParams={{ text: "Register!", onClick: this.login }}
+                buttonParams={{
+                    text: "Register!",
+                    onClick: this.register
+                }}
                 linkParams={[
                     {
                         text: "Already registered?",
                         onClick: () => {
-                            this.props.history.push("/login");
+                            this.props.history.push("/register");
                         }
                     }
                 ]}

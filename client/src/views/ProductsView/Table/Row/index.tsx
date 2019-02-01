@@ -9,6 +9,7 @@ import Select from "@components/Select";
 import Calendar from "@components/Calendar";
 import { ShoppingBasket } from "styled-icons/material/ShoppingBasket";
 import { ChevronUp } from "styled-icons/boxicons-regular/ChevronUp";
+import * as requests from "@requests";
 
 interface RowProps {
     product: Product;
@@ -44,7 +45,7 @@ class Row extends React.Component<RowProps, RowState> {
         this.setState({ collapsed: !this.state.collapsed });
     };
     onAddClick = async () => {
-        var portionID = null;
+        var portionID = -1;
         for (const portion of this.props.product.portions) {
             if (portion.unit == this.state.unit) {
                 portionID = portion.id;
@@ -52,34 +53,17 @@ class Row extends React.Component<RowProps, RowState> {
             }
         }
         const token = storage.retrieveToken();
-        const request = {
-            body: JSON.stringify({
-                entry: {
-                    productID: this.props.product.id,
-                    portionID: portionID,
-                    quantity: parseFloat(this.state.quantity),
-                    date: this.state.date.toISOString()
-                }
-            }),
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token
-            },
-            method: "POST",
-            type: "cors"
+        const entry = {
+            productID: this.props.product.id,
+            portionID: portionID,
+            quantity: parseFloat(this.state.quantity),
+            date: this.state.date.toISOString()
         };
-        console.log(request);
         try {
-            const response = await fetch(
-                "http://localhost:8080/api/user/entries/create",
-                request
-            );
-            const parsed = await response.json();
+            await requests.createEntry(entry);
             this.setState({ collapsed: true });
-            console.log(parsed);
-        } catch (err) {
-            console.log(err);
+        } catch (e) {
+            console.log(e);
         }
     };
     getEnergy = (): number => {

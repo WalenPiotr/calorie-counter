@@ -21,10 +21,13 @@ class Calendar extends React.Component<CalendarProps, CalendarState> {
         return false;
     }
     onCellClick = (val: Date) => async () => {
-        await this.props.onDateChange(val);
         this.setState({ visible: false });
+        await this.props.onDateChange(val);
     };
-    changeMonth = (jump: number) => () => {
+    changeMonth = (jump: number) => (
+        e: React.MouseEvent<HTMLButtonElement>
+    ) => {
+        e.stopPropagation();
         const { date } = this.props;
         date.setMonth(date.getMonth() + jump, 1);
         this.props.onDateChange(date);
@@ -82,13 +85,13 @@ class Calendar extends React.Component<CalendarProps, CalendarState> {
         return (
             <Styled.Box>
                 <Styled.Label>SELECT DATE</Styled.Label>
-                <Styled.Controls>
+                <Styled.Controls onClick={this.onLabelClick}>
                     {visible ? (
                         <Styled.Button onClick={this.changeMonth(-1)}>
                             <Styled.ArrowLeft />
                         </Styled.Button>
                     ) : null}
-                    <Styled.Date onClick={this.onLabelClick}>
+                    <Styled.Date>
                         {curr.toLocaleString("en-GB", {
                             day: "numeric",
                             month: "long",

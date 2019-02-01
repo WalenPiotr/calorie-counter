@@ -21,6 +21,9 @@ interface CellProps {
     today?: boolean;
 }
 export const Cell = styled.div`
+    :hover {
+        background-color: "rgba(30, 100, 200, 0.2);";
+    }
     box-sizing: border-box;
     background-color: ${({ prev, current }: CellProps) =>
         prev ? "rgba(30, 100, 200, 1);" : current ? "white" : "lightgrey"};
@@ -39,6 +42,7 @@ export const Cell = styled.div`
     font-size: 14px;
     border-bottom: ${({ logged }: CellProps) =>
         logged ? "3px solid green" : "none"};
+    cursor: pointer;
 `;
 export const HeaderCell = styled(Cell)`
     background-color: white;
@@ -53,6 +57,7 @@ export const Controls = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
+    cursor: pointer;
 `;
 export const Button = styled.button`
     height: 100%;
@@ -66,6 +71,7 @@ export const Date = styled.label`
     justify-content: center;
     font-size: 16px;
     flex: 100% 1 1;
+    cursor: pointer;
 `;
 
 export const ArrowLeft = styled(ChevronLeft)`

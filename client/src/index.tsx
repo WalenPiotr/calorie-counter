@@ -3,13 +3,14 @@ import * as ReactDOM from "react-dom";
 import { createGlobalStyle, ThemeProvider } from "styled-components";
 import { BrowserRouter, Route, Link, Switch } from "react-router-dom";
 
-import AddNew from "@views/AddNew/index";
+import AddNew from "@views/NewProduct";
 import Login, { LoginProps } from "@views/Login";
 import ProductsView from "@views/ProductsView";
 import Entries from "@views/Entries";
-import Register from "@views/Register";
+import Register, { RegisterProps } from "@views/Register";
 import Navbar from "@views/Navbar";
 
+import * as requests from "@requests";
 import * as storage from "@storage";
 
 const GlobalStyle = createGlobalStyle`
@@ -50,38 +51,20 @@ class App extends React.Component<AppProps, AppState> {
         isLoggedIn: true
     };
     logIn = async (email: string, password: string) => {
-        const request = {
-            body: JSON.stringify({
-                email,
-                password
-            }),
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json"
-            },
-            method: "POST",
-            type: "cors"
-        };
         try {
-            const response = await fetch(
-                "http://localhost:8080/api/user/login",
-                request
-            );
-            const parsed = await response.json();
-            console.log(parsed);
-            storage.persistToken(parsed["token"]);
+            await requests.login(email, password);
             this.setState((prevState: AppState) => {
                 return {
                     ...prevState,
                     isLoggedIn: true
                 };
             });
-        } catch (err) {
-            console.log(err);
+        } catch (e) {
+            console.log(e);
         }
     };
     logOut = () => {
-        storage.persistToken("");
+        storage.invalidateToken();
         this.setState((prevState: AppState) => {
             return {
                 ...prevState,
@@ -89,7 +72,19 @@ class App extends React.Component<AppProps, AppState> {
             };
         });
     };
-
+    register = async (email: string, password: string) => {
+        try {
+            await requests.register(email, password);
+            this.setState((prevState: AppState) => {
+                return {
+                    ...prevState,
+                    isLoggedIn: true
+                };
+            });
+        } catch (e) {
+            console.log(e);
+        }
+    };
     render = () => {
         return (
             <div>
@@ -101,16 +96,32 @@ class App extends React.Component<AppProps, AppState> {
                             logOut={this.logOut}
                         />
                         <div>
-                            <Route path="/register" component={Register} />
-                            <Route
-                                path="/login"
-                                render={(props: LoginProps) => (
-                                    <Login {...props} logIn={this.logIn} />
-                                )}
-                            />
-                            <Route path="/add-new" component={AddNew} />
-                            <Route path="/products" component={ProductsView} />
-                            <Route path="/entries" component={Entries} />
+                            <Switch>
+                                <Route
+                                    path="/register"
+                                    render={(props: RegisterProps) => (
+                                        <Register
+                                            {...props}
+                                            register={this.register}
+                                        />
+                                    )}
+                                />
+                                <Route
+                                    path="/login"
+                                    render={(props: LoginProps) => (
+                                        <Login {...props} logIn={this.logIn} />
+                                    )}
+                                />
+                                <Route
+                                    path="/products/new/"
+                                    component={AddNew}
+                                />
+                                <Route
+                                    path="/products"
+                                    component={ProductsView}
+                                />
+                                <Route path="/entries" component={Entries} />
+                            </Switch>
                         </div>
                     </div>
                 </BrowserRouter>

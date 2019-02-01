@@ -9,6 +9,9 @@ import Table from "./Table";
 import * as storage from "@storage";
 import Widget from "@elements/Widget";
 import Label from "@elements/Label";
+import * as requests from "@requests";
+import { withRouter, RouteComponentProps } from "react-router-dom";
+import Spinner from "@elements/Spinner";
 
 export interface Portion {
     id: number;
@@ -23,13 +26,11 @@ export interface Product {
     portions: Portion[];
 }
 
-interface ProductViewProps {}
+interface ProductViewProps extends RouteComponentProps {}
 interface ProductViewState {
     searchInput: string;
     products: Product[];
-    redirect: {
-        newProduct: boolean;
-    };
+    isLoading: boolean;
 }
 
 const Box = styled.div`
@@ -37,41 +38,36 @@ const Box = styled.div`
     margin: 10px;
     width: 85%;
 `;
+const SpinnerBox = styled.div`
+    width: 50px;
+    height: 50px;
+    color: rgba(30, 100, 200, 1);
+    margin: 10px auto;
+`;
+
 class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
     state = {
         searchInput: "",
         products: [],
-        redirect: {
-            newProduct: false
-        }
+        isLoading: false
     };
     onSearchClick = async () => {
-        const token = storage.retrieveToken();
-        const request = {
-            body: JSON.stringify({
-                name: this.state.searchInput
-            }),
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token
-            },
-            method: "POST",
-            type: "cors"
-        };
         try {
-            const response = await fetch(
-                "http://localhost:8080/api/product/search",
-                request
-            );
-            const parsed = await response.json();
-            console.log(parsed);
             this.setState((prevState: ProductViewState) => ({
                 ...prevState,
-                products: parsed.products
+                products: products,
+                isLoading: true
             }));
-        } catch (err) {
-            console.log(err);
+            const products = await requests.searchProducts(
+                this.state.searchInput
+            );
+            this.setState((prevState: ProductViewState) => ({
+                ...prevState,
+                products: products,
+                isLoading: false
+            }));
+        } catch (e) {
+            console.log(e);
         }
     };
     onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -83,15 +79,9 @@ class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
     };
     onAddNew = () => {
         console.log("redirect to add new");
-        this.setState((prevState: ProductViewState) => ({
-            ...prevState,
-            redirect: { ...prevState.redirect, newProduct: true }
-        }));
+        this.props.history.push("/products/new");
     };
     render() {
-        if (this.state.redirect.newProduct) {
-            return <Redirect to="/add-new" />;
-        }
         return (
             <Widget>
                 <Box>
@@ -101,7 +91,13 @@ class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
                         onSearchClick={this.onSearchClick}
                         onSearchInputChange={this.onSearchInputChange}
                     />
-                    <Table products={this.state.products} />
+                    {this.state.isLoading ? (
+                        <SpinnerBox>
+                            <Spinner />
+                        </SpinnerBox>
+                    ) : (
+                        <Table products={this.state.products} />
+                    )}
                     <AddNewControls onClick={this.onAddNew} />
                 </Box>
             </Widget>
@@ -109,4 +105,4 @@ class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
     }
 }
 
-export default ProductsView;
+export default withRouter(ProductsView);

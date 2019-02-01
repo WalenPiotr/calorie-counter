@@ -10,3 +10,7 @@ export function retrieveToken(): string {
     }
     return "";
 }
+
+export function invalidateToken() {
+    localStorage.setItem(TOKEN_KEY, "");
+}
