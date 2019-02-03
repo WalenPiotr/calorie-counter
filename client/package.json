@@ -42,5 +42,8 @@
         "webpack-cli": "^3.2.1",
         "webpack-dev-server": "^3.1.14"
     },
-    "proxy": "http://127.0.0.1:5000/"
+    "proxy": "http://127.0.0.1:5000/",
+    "devDependencies": {
+        "file-loader": "^3.0.1"
+    }
 }

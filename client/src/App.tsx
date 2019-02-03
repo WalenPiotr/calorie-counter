@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { createGlobalStyle, ThemeProvider } from "styled-components";
-import { BrowserRouter, Route, Link, Switch } from "react-router-dom";
+import { BrowserRouter, Route, Link, Switch, Redirect } from "react-router-dom";
 
 import Login from "@views/Login";
 import Products from "@views/Products";
@@ -39,9 +39,9 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 // MOCK FOR TESTS!
-storage.persistToken(
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySUQiOjEsIkFjY2Vzc0xldmVsIjozfQ.rzug3QU316dXIhIegdJZM8Lj3vw4QH4UU908jZarbN0"
-);
+// storage.persistToken(
+//     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySUQiOjEsIkFjY2Vzc0xldmVsIjozfQ.rzug3QU316dXIhIegdJZM8Lj3vw4QH4UU908jZarbN0"
+// );
 
 interface AppProps extends RouteComponentProps {}
 interface AppState {
@@ -52,7 +52,7 @@ interface AppState {
 
 class App extends React.PureComponent<AppProps, AppState> {
     state = {
-        isLoggedIn: true,
+        isLoggedIn: false,
         status: Status.None,
         message: "TEST MESSAGE"
     };
@@ -144,30 +144,42 @@ class App extends React.PureComponent<AppProps, AppState> {
                             />
                             <Route
                                 path="/products/new/"
-                                render={props => (
-                                    <NewProduct
-                                        {...props}
-                                        setStatus={this.setStatus}
-                                    />
-                                )}
+                                render={props =>
+                                    this.state.isLoggedIn ? (
+                                        <NewProduct
+                                            {...props}
+                                            setStatus={this.setStatus}
+                                        />
+                                    ) : (
+                                        <Redirect to={"/login"} />
+                                    )
+                                }
                             />
                             <Route
                                 path="/products"
-                                render={props => (
-                                    <Products
-                                        {...props}
-                                        setStatus={this.setStatus}
-                                    />
-                                )}
+                                render={props =>
+                                    this.state.isLoggedIn ? (
+                                        <Products
+                                            {...props}
+                                            setStatus={this.setStatus}
+                                        />
+                                    ) : (
+                                        <Redirect to={"/login"} />
+                                    )
+                                }
                             />
                             <Route
                                 path="/entries"
-                                render={props => (
-                                    <Entries
-                                        {...props}
-                                        setStatus={this.setStatus}
-                                    />
-                                )}
+                                render={props =>
+                                    this.state.isLoggedIn ? (
+                                        <Entries
+                                            {...props}
+                                            setStatus={this.setStatus}
+                                        />
+                                    ) : (
+                                        <Redirect to={"/login"} />
+                                    )
+                                }
                             />
                         </Switch>
                     </div>
