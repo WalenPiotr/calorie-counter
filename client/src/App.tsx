@@ -38,11 +38,6 @@ const GlobalStyle = createGlobalStyle`
     }
 `;
 
-// MOCK FOR TESTS!
-// storage.persistToken(
-//     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySUQiOjEsIkFjY2Vzc0xldmVsIjozfQ.rzug3QU316dXIhIegdJZM8Lj3vw4QH4UU908jZarbN0"
-// );
-
 interface AppProps extends RouteComponentProps {}
 interface AppState {
     isLoggedIn: boolean;
@@ -56,6 +51,12 @@ class App extends React.PureComponent<AppProps, AppState> {
         status: Status.None,
         message: ""
     };
+    componentDidMount() {
+        const token = storage.retrieveToken();
+        if (token !== "") {
+            this.setState({ isLoggedIn: true });
+        }
+    }
     logIn = async (email: string, password: string) => {
         const res = await requests.login({ email, password });
         if (res.error) {
