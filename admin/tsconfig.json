@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "sourceMap": true,
+        "module": "commonjs",
+        "target": "es5",
+        "lib": ["es2017", "dom"],
+        "jsx": "react",
+        "baseUrl": ".",
+        "paths": {
+            "@interfaces/*": ["src/interfaces/*"],
+            "@components/*": ["src/components/*"],
+            "@views/*": ["src/views/*"],
+            "@elements/*": ["src/elements/*"],
+            "@storage": ["src/storage.ts"],
+            "@media": ["src/media.ts"],
+            "@requests": ["src/requests.ts"],
+            "@status": ["src/status.ts"]
+        },
+        "downlevelIteration": true,
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "suppressImplicitAnyIndexErrors": true
+    },
+    "include": ["./src/**/*"]
+}
