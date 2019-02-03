@@ -1,84 +1,9 @@
 import * as React from "react";
-import styled from "styled-components";
 import { RouteComponentProps } from "react-router-dom";
 import { withRouter } from "react-router-dom";
-
-import { Menu } from "styled-icons/boxicons-regular/Menu";
-import { ShoppingBasket } from "styled-icons/material/ShoppingBasket";
-import { Search } from "styled-icons/boxicons-regular/Search";
-
+import { Status } from "@status";
 import * as storage from "@storage";
-
-const MenuIcon = styled(Menu)`
-    width: 30px;
-    height: 30px;
-`;
-
-const ShoppingBasketIcon = styled(ShoppingBasket)`
-    width: 30px;
-    height: 30px;
-`;
-
-const SearchIcon = styled(Search)`
-    width: 30px;
-    height: 30px;
-`;
-
-const NavbarBox = styled.div`
-    z-index: 10;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    background-color: rgba(30, 100, 200, 1);
-    color: white;
-    display: flex;
-    flex-direction: column;
-`;
-const Spacer = styled.div`
-    height: 50px;
-`;
-const IconButton = styled.button`
-    height: 50px;
-    background: none;
-    color: white;
-    border: none;
-    :focus {
-        outline: none;
-    }
-    font-size: 18px;
-`;
-
-interface LinkProps {
-    current: boolean;
-}
-const Link = styled.a`
-    font-size: 18px;
-    height: 45px;
-    text-decoration: none;
-    display: flex;
-    justify-content: left;
-    align-items: center;
-    cursor: pointer;
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: ${(props: LinkProps) => (props.current ? 500 : 300)};
-    border-top: 1px solid grey;
-    :hover {
-        color: rgba(255, 255, 255, 1);
-    }
-`;
-const LinkWrapper = styled.div`
-    height: 100%;
-    padding-left: 20px;
-    padding-right: 20px;
-`;
-const BarGroup = styled.div`
-    display: flex;
-    justify-content: space-between;
-`;
-const NavGroup = styled.div`
-    display: flex;
-`;
+import * as Styled from "./styled";
 
 interface NavbarState {
     collapsed: boolean;
@@ -86,9 +11,10 @@ interface NavbarState {
 interface NavbarProps extends RouteComponentProps {
     isLogged: boolean;
     logOut: () => void;
+    setStatus: (status: Status, message: string) => void;
 }
 
-class Navbar extends React.Component<NavbarProps, NavbarState> {
+class Navbar extends React.PureComponent<NavbarProps, NavbarState> {
     state = {
         collapsed: false
     };
@@ -106,114 +32,116 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
             ...prevState,
             collapsed: false
         }));
+        this.props.setStatus(Status.None, "");
     };
     onLogoutClick = () => {
+        this.setState((prevState: NavbarState) => ({
+            ...prevState,
+            collapsed: false
+        }));
         this.props.logOut();
+        this.props.setStatus(Status.Success, "Successfully logged out");
         this.props.history.push("/");
     };
     render = () => {
         const isLoggedIn = !(storage.retrieveToken() == "");
         const authLinks = [
-            <Link
+            <Styled.Link
                 current={this.props.history.location.pathname == "/"}
                 onClick={this.onLinkClick("/")}
                 key={"Home"}
             >
                 Home
-            </Link>,
-            <Link
+            </Styled.Link>,
+            <Styled.Link
                 current={this.props.history.location.pathname == "/register"}
                 onClick={this.onLinkClick("/register")}
                 key={"Register"}
             >
                 Register
-            </Link>,
-            <Link
+            </Styled.Link>,
+            <Styled.Link
                 current={this.props.history.location.pathname == "/login"}
                 onClick={this.onLinkClick("/login")}
                 key={"Login"}
             >
                 Login
-            </Link>
+            </Styled.Link>
         ];
         const links = [
-            <Link
+            <Styled.Link
                 current={this.props.history.location.pathname == "/"}
                 onClick={this.onLinkClick("/")}
                 key={"Home"}
             >
                 Home
-            </Link>,
-            <Link
+            </Styled.Link>,
+            <Styled.Link
                 current={this.props.history.location.pathname == "/products"}
                 onClick={this.onLinkClick("/products")}
                 key={"Products"}
             >
                 Products
-            </Link>,
-            <Link
+            </Styled.Link>,
+            <Styled.Link
                 current={this.props.history.location.pathname == "/entries"}
                 onClick={this.onLinkClick("/entries")}
                 key={"Entries"}
             >
                 Entries
-            </Link>,
-            <Link
+            </Styled.Link>,
+            <Styled.Link
                 current={this.props.history.location.pathname == "/logout"}
                 onClick={this.onLogoutClick}
                 key={"Logout"}
             >
                 Logout
-            </Link>
+            </Styled.Link>
         ];
 
         return (
             <div>
-                <NavbarBox>
-                    <BarGroup>
-                        <IconButton onClick={this.onExpandClick}>
-                            <MenuIcon />
-                        </IconButton>
-                        <NavGroup>
-                            <IconButton
-                                onClick={() =>
-                                    this.props.history.push("/entries")
-                                }
+                <Styled.NavbarBox>
+                    <Styled.BarGroup>
+                        <Styled.IconButton onClick={this.onExpandClick}>
+                            <Styled.MenuIcon />
+                        </Styled.IconButton>
+                        <Styled.NavGroup>
+                            <Styled.IconButton
+                                onClick={this.onLinkClick("/entries")}
                             >
-                                <ShoppingBasketIcon />
-                            </IconButton>
-                            <IconButton
-                                onClick={() =>
-                                    this.props.history.push("/products")
-                                }
+                                <Styled.ShoppingBasketIcon />
+                            </Styled.IconButton>
+                            <Styled.IconButton
+                                onClick={this.onLinkClick("/products")}
                             >
-                                <SearchIcon />
-                            </IconButton>
-                        </NavGroup>
-                    </BarGroup>
+                                <Styled.SearchIcon />
+                            </Styled.IconButton>
+                        </Styled.NavGroup>
+                    </Styled.BarGroup>
                     {this.state.collapsed ? (
                         isLoggedIn ? (
                             links.map(link => (
-                                <LinkWrapper
+                                <Styled.LinkWrapper
                                     key={link.key != null ? link.key : 0}
                                 >
                                     {link}
-                                </LinkWrapper>
+                                </Styled.LinkWrapper>
                             ))
                         ) : (
                             authLinks.map(link => (
-                                <LinkWrapper
+                                <Styled.LinkWrapper
                                     key={link.key != null ? link.key : 0}
                                 >
                                     {link}
-                                </LinkWrapper>
+                                </Styled.LinkWrapper>
                             ))
                         )
                     ) : (
                         <div />
                     )}
-                </NavbarBox>
-                <Spacer />
+                </Styled.NavbarBox>
+                <Styled.Spacer />
             </div>
         );
     };

@@ -13,7 +13,7 @@ interface SelectState {
     collapsed: boolean;
 }
 
-class Select extends React.Component<SelectProps, SelectState> {
+class Select extends React.PureComponent<SelectProps, SelectState> {
     state = {
         collapsed: true
     };

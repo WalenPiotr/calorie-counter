@@ -10,9 +10,11 @@ import Calendar from "@components/Calendar";
 import { ShoppingBasket } from "styled-icons/material/ShoppingBasket";
 import { ChevronUp } from "styled-icons/boxicons-regular/ChevronUp";
 import * as requests from "@requests";
+import { Status } from "@status";
 
 interface RowProps {
     product: Product;
+    setStatus: (status: Status, message: string) => void;
 }
 interface RowState {
     collapsed: boolean;
@@ -21,7 +23,7 @@ interface RowState {
     date: Date;
 }
 
-class Row extends React.Component<RowProps, RowState> {
+class Row extends React.PureComponent<RowProps, RowState> {
     state = {
         collapsed: true,
         quantity: "1",
@@ -34,15 +36,18 @@ class Row extends React.Component<RowProps, RowState> {
             ...prevState,
             quantity: newValue
         }));
+        this.props.setStatus(Status.None, "");
     };
     onSelectChange = (value: string) => {
         this.setState((prevState: RowState) => ({
             ...prevState,
             unit: value
         }));
+        this.props.setStatus(Status.None, "");
     };
     onCollapseClick = () => {
         this.setState({ collapsed: !this.state.collapsed });
+        this.props.setStatus(Status.None, "");
     };
     onAddClick = async () => {
         var portionID = -1;
@@ -52,18 +57,21 @@ class Row extends React.Component<RowProps, RowState> {
                 break;
             }
         }
-        const token = storage.retrieveToken();
         const entry = {
             productID: this.props.product.id,
             portionID: portionID,
             quantity: parseFloat(this.state.quantity),
             date: this.state.date.toISOString()
         };
-        try {
-            await requests.createEntry(entry);
-            this.setState({ collapsed: true });
-        } catch (e) {
-            console.log(e);
+        const res = await requests.createEntry({ entry });
+        this.setState({ collapsed: true });
+        if (res.entry) {
+            this.props.setStatus(Status.Success, "Entry added");
+            return;
+        }
+        if (res.error) {
+            this.props.setStatus(Status.Error, res.error);
+            return;
         }
     };
     getEnergy = (): number => {
@@ -84,6 +92,10 @@ class Row extends React.Component<RowProps, RowState> {
             ...prevState,
             date
         }));
+        this.props.setStatus(Status.None, "");
+    };
+    onCalendarClick = () => {
+        this.props.setStatus(Status.None, "");
     };
     render() {
         return (
@@ -121,6 +133,7 @@ class Row extends React.Component<RowProps, RowState> {
                 <Styled.ControlBox hidden={this.state.collapsed}>
                     <Styled.CalendarBox>
                         <Calendar
+                            onCollapseClick={this.onCalendarClick}
                             date={this.state.date}
                             logged={[]}
                             onDateChange={this.onDateChange}

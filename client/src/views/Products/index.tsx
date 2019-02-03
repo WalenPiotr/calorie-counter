@@ -1,9 +1,8 @@
 import * as React from "react";
 import styled from "styled-components";
-import { Redirect } from "react-router-dom";
 
 import SearchBar from "./SearchBar";
-import AddNewControls from "./AddNew";
+import AddNewControls from "./AddNewControls";
 import Table from "./Table";
 
 import * as storage from "@storage";
@@ -12,7 +11,7 @@ import Label from "@elements/Label";
 import * as requests from "@requests";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 import Spinner from "@elements/Spinner";
-
+import { Status } from "@status";
 export interface Portion {
     id: number;
     productID: number;
@@ -26,8 +25,10 @@ export interface Product {
     portions: Portion[];
 }
 
-interface ProductViewProps extends RouteComponentProps {}
-interface ProductViewState {
+export interface ProductsProps extends RouteComponentProps {
+    setStatus: (status: Status, message: string) => void;
+}
+interface ProductsState {
     searchInput: string;
     products: Product[];
     isLoading: boolean;
@@ -45,40 +46,47 @@ const SpinnerBox = styled.div`
     margin: 10px auto;
 `;
 
-class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
+class Products extends React.PureComponent<ProductsProps, ProductsState> {
     state = {
         searchInput: "",
         products: [],
         isLoading: false
     };
     onSearchClick = async () => {
-        try {
-            this.setState((prevState: ProductViewState) => ({
-                ...prevState,
-                products: products,
-                isLoading: true
-            }));
-            const products = await requests.searchProducts(
-                this.state.searchInput
-            );
-            this.setState((prevState: ProductViewState) => ({
+        this.setState((prevState: ProductsState) => ({
+            ...prevState,
+            isLoading: true
+        }));
+        const res = await requests.searchProducts({
+            name: this.state.searchInput
+        });
+        const products = res.products;
+        if (products) {
+            this.setState((prevState: ProductsState) => ({
                 ...prevState,
                 products: products,
                 isLoading: false
             }));
-        } catch (e) {
-            console.log(e);
+            return;
         }
+        if (res.error) {
+            this.props.setStatus(Status.Error, res.error);
+            this.setState((prevState: ProductsState) => ({
+                ...prevState,
+                isLoading: false
+            }));
+            return;
+        }
+        return;
     };
     onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
         const newValue = e.currentTarget.value;
-        this.setState((prevState: ProductViewState) => ({
+        this.setState((prevState: ProductsState) => ({
             ...prevState,
             searchInput: newValue
         }));
     };
     onAddNew = () => {
-        console.log("redirect to add new");
         this.props.history.push("/products/new");
     };
     render() {
@@ -96,7 +104,10 @@ class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
                             <Spinner />
                         </SpinnerBox>
                     ) : (
-                        <Table products={this.state.products} />
+                        <Table
+                            products={this.state.products}
+                            setStatus={this.props.setStatus}
+                        />
                     )}
                     <AddNewControls onClick={this.onAddNew} />
                 </Box>
@@ -105,4 +116,4 @@ class ProductsView extends React.Component<ProductViewProps, ProductViewState> {
     }
 }
 
-export default withRouter(ProductsView);
+export default withRouter(Products);

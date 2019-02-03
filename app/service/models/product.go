@@ -35,7 +35,7 @@ func CreateProduct(db *sql.DB, product Product) (*Product, error) {
 		RETURNING *;
 	`, product.Creator, strings.ToLower(product.Name))
 	if err != nil {
-		return nil, errors.Wrap(err, "While inserting to products table")
+		return nil, err
 	}
 	defer rows.Close()
 	prods := []Product{}
@@ -46,9 +46,6 @@ func CreateProduct(db *sql.DB, product Product) (*Product, error) {
 			return nil, err
 		}
 		prods = append(prods, prod)
-	}
-	if len(prods) != 1 {
-		return nil, errors.Wrap(err, "Invalid return of insert operation")
 	}
 	return &prods[0], nil
 }
@@ -89,9 +86,6 @@ func GetProductById(db *sql.DB, id int) (*Product, error) {
 			return nil, err
 		}
 		prods = append(prods, prod)
-	}
-	if len(prods) != 1 {
-		return nil, errors.New("Duplicate products with same id in db")
 	}
 	return &prods[0], nil
 }

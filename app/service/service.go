@@ -31,10 +31,6 @@ func NewService() error {
 		handlers.CreateAccount(db, logger), auth.Default))
 	router.Handle("/api/user/login", middleware.WithAuth(
 		handlers.Authenticate(db, logger), auth.Default))
-	router.Handle("/api/user/all", middleware.WithAuth(
-		handlers.GetUsers(db, logger), auth.Moderator))
-	router.Handle("/api/user/created", middleware.WithAuth(
-		handlers.GetUsersCreatedProducts(db, logger), auth.Default))
 
 	router.Handle("/api/user/entries/create", middleware.WithAuth(
 		handlers.CreateEntry(db, logger), auth.User))

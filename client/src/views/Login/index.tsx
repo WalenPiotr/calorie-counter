@@ -3,21 +3,21 @@ import { withRouter } from "react-router-dom";
 import { RouteComponentProps } from "react-router";
 import { Redirect } from "react-router-dom";
 import AuthForm from "@components/AuthForm";
+import { Status } from "@status";
 
 export interface LoginProps extends RouteComponentProps {
     logIn: (email: string, password: string) => void;
+    setStatus: (status: Status, message: string) => void;
 }
 interface LoginState {
     email: string;
     password: string;
-    redirect: boolean;
 }
 
-class Login extends React.Component<LoginProps, LoginState> {
+class Login extends React.PureComponent<LoginProps, LoginState> {
     state = {
         email: "",
-        password: "",
-        redirect: false
+        password: ""
     };
     onEmailChange = (e: React.FormEvent<HTMLInputElement>) => {
         const email = e.currentTarget.value;
@@ -35,15 +35,8 @@ class Login extends React.Component<LoginProps, LoginState> {
     };
     login = async () => {
         this.props.logIn(this.state.email, this.state.password);
-        this.setState(prevState => ({
-            ...prevState,
-            redirect: true
-        }));
     };
     render() {
-        if (this.state.redirect) {
-            return <Redirect to="/products" />;
-        }
         return (
             <AuthForm
                 title={"Login"}
@@ -67,4 +60,4 @@ class Login extends React.Component<LoginProps, LoginState> {
     }
 }
 
-export default withRouter(Login);
+export default Login;

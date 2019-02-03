@@ -14,7 +14,8 @@
             "@elements/*": ["src/elements/*"],
             "@storage": ["src/storage.ts"],
             "@media": ["src/media.ts"],
-            "@requests": ["src/requests.ts"]
+            "@requests": ["src/requests.ts"],
+            "@status": ["src/status.ts"]
         },
         "downlevelIteration": true,
         "forceConsistentCasingInFileNames": true,

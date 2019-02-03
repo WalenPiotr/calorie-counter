@@ -7,11 +7,16 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidData = "Invalid request body"
+	const InternalError = "Internal error"
+	const AlreadyExists = "Product with same name already exists"
+
 	type Product struct {
 		*models.Product
 		Portions *[]models.Portion `json:"portions"`
@@ -23,13 +28,13 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Error   string  `json:"error,omitempty"`
 		Product Product `json:"product,omitempty"`
 	}
-	sendError := func(w http.ResponseWriter, status int, err error) {
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
 		err = errors.Wrap(err, "While creating product")
 		logger.Error(err)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Error: err.Error(),
+			Error: message,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -46,23 +51,23 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
 		if in.Product == nil {
 			err = errors.Wrap(err, "No product provided")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
 		if in.Product.Portions == nil {
 			err = errors.Wrap(err, "No portions provided")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
 		userID, ok := r.Context().Value(middleware.UserID).(int)
 		if !ok {
 			err = errors.Wrap(err, "While getting UserID from request context")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		newProduct := models.Product{
@@ -72,8 +77,14 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		dbProduct, err := models.CreateProduct(db, newProduct)
 		if err != nil {
-			err = errors.Wrap(err, "While creating prodcut")
-			sendError(w, http.StatusBadRequest, err)
+			if pgerr, ok := err.(*pq.Error); ok {
+				if pgerr.Code == "23505" {
+					sendError(w, http.StatusBadRequest, err, AlreadyExists)
+					return
+				}
+			}
+			err = errors.Wrap(err, "While creating product")
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		dbPortions := []models.Portion{}
@@ -82,7 +93,7 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			dbPortion, err := models.CreatePortion(db, portion)
 			if err != nil {
 				err = errors.Wrap(err, "While creating portion for product")
-				sendError(w, http.StatusBadRequest, err)
+				sendError(w, http.StatusBadRequest, err, InternalError)
 				return
 			}
 			dbPortions = append(dbPortions, *dbPortion)
@@ -97,6 +108,8 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 }
 
 func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidData = "Invalid request body"
+	const InternalError = "Internal error"
 	type Product struct {
 		*models.Product
 		Portions []models.Portion `json:"portions,omitempty"`
@@ -108,13 +121,13 @@ func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Error   string  `json:"error,omitempty"`
 		Product Product `json:"product,omitempty"`
 	}
-	sendError := func(w http.ResponseWriter, status int, err error) {
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
 		err = errors.Wrap(err, "While getting product")
 		logger.Error(err)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Error: err.Error(),
+			Error: message,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -131,19 +144,19 @@ func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
 		product, err := models.GetProductById(db, in.ID)
 		if err != nil {
 			err = errors.Wrap(err, "While fetching products")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		portions, err := models.GetProductsPortions(db, in.ID)
 		if err != nil {
 			err = errors.Wrap(err, "While fetching products portions")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		sendData(w, http.StatusOK, Product{Product: product, Portions: portions})
@@ -152,6 +165,8 @@ func GetProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 }
 
 func UpdateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidData = "Invalid request body"
+	const InternalError = "Internal error"
 	type RequestObject struct {
 		ID         int            `json:"id"`
 		NewProduct models.Product `json:"product"`
@@ -159,13 +174,13 @@ func UpdateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 	type ResponseObject struct {
 		Error string `json:"error,omitempty"`
 	}
-	sendError := func(w http.ResponseWriter, status int, err error) {
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
 		err = errors.Wrap(err, "While updating product")
 		logger.Error(err)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Error: err.Error(),
+			Error: message,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -180,13 +195,13 @@ func UpdateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
 		_, err = models.UpdateProduct(db, in.ID, in.NewProduct)
 		if err != nil {
 			err = errors.Wrap(err, "While updating products")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		sendData(w, http.StatusOK)
@@ -195,19 +210,22 @@ func UpdateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 }
 
 func DeleteProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidData = "Invalid request body"
+	const InternalError = "Internal error"
+
 	type RequestObject struct {
 		ID int `json:"id"`
 	}
 	type ResponseObject struct {
 		Error string `json:"error,omitempty"`
 	}
-	sendError := func(w http.ResponseWriter, status int, err error) {
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
 		err = errors.Wrap(err, "While deleting product")
 		logger.Error(err)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Error: err.Error(),
+			Error: message,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -222,13 +240,13 @@ func DeleteProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
 		err = models.DeleteProduct(db, in.ID)
 		if err != nil {
 			err = errors.Wrap(err, "While updating products")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		sendData(w, http.StatusOK)
@@ -236,6 +254,9 @@ func DeleteProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 	})
 }
 func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidData = "Invalid request body"
+	const InternalError = "Internal error"
+
 	type Product struct {
 		models.Product
 		Portions []models.Portion `json:"portions"`
@@ -248,13 +269,13 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Error    string    `json:"error,omitempty"`
 		Products []Product `json:"products,omitempty"`
 	}
-	sendError := func(w http.ResponseWriter, status int, err error) {
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
 		err = errors.Wrap(err, "While getting product")
 		logger.Error(err)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Error: err.Error(),
+			Error: message,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -271,13 +292,13 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
 		products, err := models.GetProductsByName(db, in.Name)
 		if err != nil {
 			err = errors.Wrap(err, "While fetching products")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		bundledProducts := []Product{}
@@ -285,7 +306,7 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			portions, err := models.GetProductsPortions(db, product.ID)
 			if err != nil {
 				err = errors.Wrap(err, "While products portions")
-				sendError(w, http.StatusBadRequest, err)
+				sendError(w, http.StatusBadRequest, err, InternalError)
 				return
 			}
 			bundledProduct := Product{
@@ -300,6 +321,9 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 }
 
 func RateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidData = "Invalid request body"
+	const InternalError = "Internal error"
+
 	type RequestObject struct {
 		ID   int         `json:"id"`
 		Vote models.Vote `json:"vote"`
@@ -307,7 +331,7 @@ func RateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 	type ResponseObject struct {
 		Error string `json:"error,omitempty"`
 	}
-	sendError := func(w http.ResponseWriter, status int, err error) {
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
 		err = errors.Wrap(err, "While rating product")
 		logger.Error(err)
 		w.Header().Add("Content-Type", "application/json")
@@ -328,26 +352,26 @@ func RateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
 		if in.Vote == models.UpVote || in.Vote == models.DownVote || in.Vote == models.None {
 			userID, ok := r.Context().Value(middleware.UserID).(int)
 			if !ok {
 				err = errors.Wrap(err, "While getting UserID from request context")
-				sendError(w, http.StatusBadRequest, err)
+				sendError(w, http.StatusBadRequest, err, InternalError)
 				return
 			}
 			err = models.RateProduct(db, userID, in.ID, in.Vote)
 			if err != nil {
-				sendError(w, http.StatusBadRequest, err)
+				sendError(w, http.StatusBadRequest, err, InternalError)
 				return
 			}
 			sendData(w, http.StatusOK)
 			return
 		}
 		err = errors.New("Invalid vote value")
-		sendError(w, http.StatusBadRequest, err)
+		sendError(w, http.StatusBadRequest, err, InvalidData)
 		return
 	})
 }

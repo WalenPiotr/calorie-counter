@@ -1,146 +1,137 @@
 import * as storage from "@storage";
 
-const base = "http://localhost:8080/";
+const base = "http://" + location.hostname + ":8080/";
 
 const endpoints = {
     login: base + "api/user/login",
-    register: base + "api/user/register",
+    register: base + "api/user/new",
     productNew: base + "api/product/new",
     productSearch: base + "api/product/search",
+    entriesCreate: base + "api/user/entries/create",
     entriesView: base + "api/user/entries/view",
     entriesDates: base + "api/user/entries/dates",
     entriesUpdate: base + "api/user/entries/update",
     entriesDelete: base + "api/user/entries/delete"
 };
 
-export const login = async (email: string, password: string) => {
-    const request = {
-        body: JSON.stringify({
-            email,
-            password
-        }),
-        headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json"
-        },
-        method: "POST",
-        type: "cors"
-    };
-    const response = await fetch(endpoints.login, request);
-    const parsed = await response.json();
-    storage.persistToken(parsed["token"]);
-};
-
-export const register = async (email: string, password: string) => {
-    const request = {
-        body: JSON.stringify({
-            email,
-            password
-        }),
-        headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json"
-        },
-        method: "POST",
-        type: "cors"
-    };
-    const response = await fetch(endpoints.register, request);
-    const parsed = await response.json();
-    console.log(parsed);
-    storage.persistToken(parsed["token"]);
-};
-
-export const productNew = async (product: {
-    name: string;
-    description: string;
-    portions: {
-        energy: number;
-        unit: string;
-    }[];
-}) => {
-    const token = storage.retrieveToken();
-    const request = {
-        body: JSON.stringify({ product }),
-        headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token
-        },
-        method: "POST",
-        type: "cors"
-    };
-    const response = await fetch(endpoints.productNew, request);
-    const parsed = await response.json();
-};
-
-interface SearchProductResponse {
-    id: number;
-    name: string;
-    creator: number;
-    portions: { id: number; productID: number; unit: string; energy: number }[];
+interface LoginRequest {
+    email: string;
+    password: string;
+}
+interface LoginResponse {
+    error?: string;
+    token?: string;
 }
 
-export const searchProducts = async (
-    name: string
-): Promise<SearchProductResponse[]> => {
-    const token = storage.retrieveToken();
+export const login = async (req: LoginRequest): Promise<LoginResponse> => {
     const request = {
-        body: JSON.stringify({
-            name
-        }),
+        body: JSON.stringify(req),
         headers: {
             Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            "Content-Type": "application/json"
         },
         method: "POST",
         type: "cors"
     };
-    const response = await fetch(endpoints.productSearch, request);
-    const parsed = await response.json();
-    return parsed["products"];
-};
-
-export const createEntry = async (entry: {
-    productID: number;
-    portionID: number;
-    quantity: number;
-    date: string;
-}) => {
-    const token = storage.retrieveToken();
-
-    const request = {
-        body: JSON.stringify({
-            entry
-        }),
-        headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token
-        },
-        method: "POST",
-        type: "cors"
-    };
-    console.log(request);
     try {
-        const response = await fetch(
-            "http://localhost:8080/api/user/entries/create",
-            request
-        );
+        const response = await fetch(endpoints.login, request);
         const parsed = await response.json();
-    } catch (err) {
-        console.log(err);
+        console.log(parsed);
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        if (parsed.token) {
+            return { token: parsed.token };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
     }
 };
 
-interface GetEntriesResponse {
-    id: number;
-    userID: number;
-    productID: number;
-    portionID: number;
-    quantity: number;
-    date: string;
+interface RegisterRequest {
+    email: string;
+    password: string;
+}
+interface RegisterResponse {
+    error?: string;
+    token?: string;
+}
+export const register = async (
+    req: RegisterRequest
+): Promise<RegisterResponse> => {
+    const request = {
+        body: JSON.stringify(req),
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json"
+        },
+        method: "POST",
+        type: "cors"
+    };
+    try {
+        const response = await fetch(endpoints.register, request);
+        const parsed = await response.json();
+        console.log(parsed);
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        if (parsed.token) {
+            return { token: parsed.token };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
+};
+
+interface ProductNewRequest {
     product: {
+        name: string;
+        description: string;
+        portions: {
+            energy: number;
+            unit: string;
+        }[];
+    };
+}
+interface ProductNewResponse {
+    error?: string;
+}
+
+export const productNew = async (req: ProductNewRequest) => {
+    const token = storage.retrieveToken();
+    const request = {
+        body: JSON.stringify(req),
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+        },
+        method: "POST",
+        type: "cors"
+    };
+    try {
+        const response = await fetch(endpoints.productNew, request);
+        const parsed = await response.json();
+        if (response.status == 200) {
+            return parsed;
+        }
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
+};
+
+interface SearchProductRequest {
+    name: string;
+}
+interface SearchProductResponse {
+    error?: string;
+    products?: {
         id: number;
         name: string;
         creator: number;
@@ -150,17 +141,14 @@ interface GetEntriesResponse {
             unit: string;
             energy: number;
         }[];
-    };
+    }[];
 }
-
-export const entriesView = async (
-    date: string
-): Promise<GetEntriesResponse[]> => {
+export const searchProducts = async (
+    req: SearchProductRequest
+): Promise<SearchProductResponse> => {
     const token = storage.retrieveToken();
     const request = {
-        body: JSON.stringify({
-            date
-        }),
+        body: JSON.stringify(req),
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
@@ -169,16 +157,129 @@ export const entriesView = async (
         method: "POST",
         type: "cors"
     };
-    console.log(request);
-    const response = await fetch(endpoints.entriesView, request);
-    const parsed = await response.json();
-    console.log(parsed);
-    return parsed["entries"];
+    try {
+        const response = await fetch(endpoints.productSearch, request);
+        const parsed = await response.json();
+        if (response.status == 200) {
+            return parsed;
+        }
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
 };
 
-export const getDates = async (): Promise<Date[]> => {
+interface CreateEntryRequest {
+    entry: {
+        productID: number;
+        portionID: number;
+        quantity: number;
+        date: string;
+    };
+}
+interface CreateEntryResponse {
+    error?: string;
+    entry?: {
+        productID: number;
+        portionID: number;
+        quantity: number;
+        date: string;
+    };
+}
+export const createEntry = async (
+    req: CreateEntryRequest
+): Promise<CreateEntryResponse> => {
     const token = storage.retrieveToken();
 
+    const request = {
+        body: JSON.stringify(req),
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+        },
+        method: "POST",
+        type: "cors"
+    };
+    try {
+        const response = await fetch(endpoints.entriesCreate, request);
+        const parsed = await response.json();
+        if (response.status == 200) {
+            return parsed;
+        }
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
+};
+
+interface GetEntriesRequest {
+    date: string;
+}
+interface GetEntriesResponse {
+    error?: string;
+    entries?: {
+        id: number;
+        userID: number;
+        productID: number;
+        portionID: number;
+        quantity: number;
+        date: string;
+        product: {
+            id: number;
+            name: string;
+            creator: number;
+            portions: {
+                id: number;
+                productID: number;
+                unit: string;
+                energy: number;
+            }[];
+        };
+    }[];
+}
+export const entriesView = async (
+    req: GetEntriesRequest
+): Promise<GetEntriesResponse> => {
+    const token = storage.retrieveToken();
+    const request = {
+        body: JSON.stringify(req),
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+        },
+        method: "POST",
+        type: "cors"
+    };
+    try {
+        const response = await fetch(endpoints.entriesView, request);
+        const parsed = await response.json();
+        if (response.status == 200) {
+            return parsed;
+        }
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
+};
+
+interface GetDatesRequest {}
+interface GetDatesResponse {
+    error?: string;
+    dates?: string[];
+}
+export const getDates = async (): Promise<GetDatesResponse> => {
+    const token = storage.retrieveToken();
     const request = {
         body: JSON.stringify({}),
         headers: {
@@ -189,50 +290,40 @@ export const getDates = async (): Promise<Date[]> => {
         method: "POST",
         type: "cors"
     };
-    console.log(request);
-    const response = await fetch(endpoints.entriesDates, request);
-    const parsed = await response.json();
-    console.log(parsed);
-    return parsed.dates.map((date: string) => {
-        return new Date(date);
-    });
+    try {
+        const response = await fetch(endpoints.entriesDates, request);
+        const parsed = await response.json();
+        if (response.status == 200) {
+            return parsed;
+        }
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
 };
 
-export const updateEntry = async (
-    id: number,
+interface UpdateEntryRequest {
+    id: number;
     entry: {
         productID: number;
         portionID: number;
         quantity: number;
         date: string;
-    }
-) => {
-    const token = storage.retrieveToken();
-
-    const request = {
-        body: JSON.stringify({
-            id,
-            entry
-        }),
-        headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token
-        },
-        method: "POST",
-        type: "cors"
     };
-    console.log(request);
-    const response = await fetch(endpoints.entriesUpdate, request);
-    const parsed = await response.json();
-};
-
-export const deleteEntry = async (id: number) => {
+}
+interface UpdateEntryResponse {
+    error?: string;
+}
+export const updateEntry = async (
+    req: UpdateEntryRequest
+): Promise<UpdateEntryResponse> => {
     const token = storage.retrieveToken();
+
     const request = {
-        body: JSON.stringify({
-            id
-        }),
+        body: JSON.stringify(req),
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
@@ -243,9 +334,52 @@ export const deleteEntry = async (id: number) => {
     };
     console.log(request);
     try {
+        const response = await fetch(endpoints.entriesUpdate, request);
+        const parsed = await response.json();
+        if (response.status == 200) {
+            return {};
+        }
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
+};
+
+interface DeleteEntryRequest {
+    id: number;
+}
+interface DeleteEntryResponse {
+    error?: string;
+}
+
+export const deleteEntry = async (
+    req: DeleteEntryRequest
+): Promise<DeleteEntryResponse> => {
+    const token = storage.retrieveToken();
+    const request = {
+        body: JSON.stringify(req),
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+        },
+        method: "POST",
+        type: "cors"
+    };
+    try {
         const response = await fetch(endpoints.entriesDelete, request);
         const parsed = await response.json();
-    } catch (err) {
-        console.log(err);
+        if (response.status == 200) {
+            return {};
+        }
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
     }
 };

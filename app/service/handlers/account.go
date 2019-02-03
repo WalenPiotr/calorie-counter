@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
@@ -32,6 +33,11 @@ func (cred *Credentials) Validate() error {
 }
 
 func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidDataMsg = "Invalid request body"
+	const InvalidCredentials = "Invalid email or password"
+	const InternalError = "Internal Error"
+	const AlreadyExists = "Account with provided email already exists"
+
 	type RequestObject struct {
 		Credentials
 	}
@@ -39,13 +45,13 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Error string `json:"error,omitempty"`
 		Token string `json:"token,omitempty"`
 	}
-	sendError := func(w http.ResponseWriter, status int, err error) {
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
 		err = errors.Wrap(err, "While creating account")
 		logger.Error(err)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Error: err.Error(),
+			Error: message,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -62,27 +68,27 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InvalidDataMsg)
 			return
 		}
 		cred := in.Credentials
 		err = cred.Validate()
 		if err != nil {
 			err = errors.Wrap(err, "While validating acc data")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InvalidCredentials)
 			return
 		}
 		hashedBytes, err := bcrypt.GenerateFromPassword([]byte(cred.Password), bcrypt.DefaultCost)
 		if err != nil {
 			err = errors.Wrap(err, "While generating hash")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		acc := &models.Account{Email: cred.Email, Password: string(hashedBytes)}
 		count, err := models.GetAccountsCount(db)
 		if err != nil {
 			err := errors.Wrap(err, "While fetching account count")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		if count == 0 {
@@ -93,14 +99,20 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		err = models.CreateAccount(db, acc)
 		if err != nil {
+			if pgerr, ok := err.(*pq.Error); ok {
+				if pgerr.Code == "23505" {
+					sendError(w, http.StatusBadRequest, err, AlreadyExists)
+					return
+				}
+			}
 			err = errors.Wrap(err, "While creating user")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		acc, err = models.GetAccountByEmail(db, acc.Email)
 		if err != nil {
 			err = errors.Wrap(err, "While fetching account by email")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		tokenPassword := os.Getenv("TOKEN_PASS")
@@ -109,7 +121,7 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 		tokenString, err := token.SignedString([]byte(tokenPassword))
 		if err != nil {
 			err := errors.Wrap(err, "While signing token")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		sendData(w, http.StatusBadRequest, tokenString)
@@ -118,6 +130,11 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 }
 
 func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidData = "Invalid request body"
+	const InvalidCredentials = "Invalid email or password"
+	const NotExists = "Account with provided email not exists"
+	const InternalError = "Internal Error"
+
 	type RequestObject struct {
 		Credentials
 	}
@@ -125,13 +142,13 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Error string `json:"error,omitempty"`
 		Token string `json:"token,omitempty"`
 	}
-	sendError := func(w http.ResponseWriter, status int, err error) {
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
 		err = errors.Wrap(err, "While Authenticate")
 		logger.Error(err)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Error: err.Error(),
+			Error: message,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -148,14 +165,14 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 		err := json.NewDecoder(r.Body).Decode(in)
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
 		cred := in.Credentials
 		err = cred.Validate()
 		if err != nil {
 			err = errors.Wrap(err, "Invalid acc data")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InvalidCredentials)
 			return
 		}
 		password := cred.Password
@@ -163,18 +180,18 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 		acc, err := models.GetAccountByEmail(db, email)
 		if err != nil {
 			err = errors.Wrap(err, "While fetching account by email")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, NotExists)
 			return
 		}
 		err = bcrypt.CompareHashAndPassword([]byte(acc.Password), []byte(password))
 		if err != nil { //Password does not match!
 			if err == bcrypt.ErrMismatchedHashAndPassword {
-				err = errors.Wrap(err, "Invalid login cred. Please try again")
-				sendError(w, http.StatusBadRequest, err)
+				err = errors.Wrap(err, "Invalid login credentials")
+				sendError(w, http.StatusBadRequest, err, InvalidCredentials)
 				return
 			}
 			err = errors.Wrap(err, "While comparing hash and password")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		tokenPassword := os.Getenv("TOKEN_PASS")
@@ -183,125 +200,10 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 		tokenString, err := token.SignedString([]byte(tokenPassword))
 		if err != nil {
 			err = errors.Wrap(err, "While signing token")
-			sendError(w, http.StatusBadRequest, err)
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		sendData(w, http.StatusOK, tokenString)
-		return
-	})
-}
-
-func GetUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
-	type User struct {
-		ID          int              `json:"id,omitempty"`
-		Email       string           `json:"email,omitempty"`
-		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
-	}
-	type RequestObject struct {
-		ID          uint             `json:"id,omitempty"`
-		Email       string           `json:"email,omitempty"`
-		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
-	}
-	type ResponseObject struct {
-		Error string `json:"error,omitempty"`
-		Users []User `json:"users,omitempty"`
-	}
-	sendError := func(w http.ResponseWriter, status int, err error) {
-		err = errors.Wrap(err, "While Authenticate")
-		logger.Error(err)
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(status)
-		out := ResponseObject{
-			Error: err.Error(),
-		}
-		json.NewEncoder(w).Encode(out)
-	}
-	sendData := func(w http.ResponseWriter, status int, users []User) {
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(status)
-		out := ResponseObject{
-			Users: users,
-		}
-		json.NewEncoder(w).Encode(out)
-	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		in := &RequestObject{}
-		err := json.NewDecoder(r.Body).Decode(in)
-		if err != nil {
-			err = errors.Wrap(err, "While decoding request body")
-			sendError(w, http.StatusBadRequest, err)
-			return
-		}
-		accs, err := models.GetAccounts(db)
-		if err != nil {
-			err = errors.Wrap(err, "While get accounts")
-			sendError(w, http.StatusBadRequest, err)
-			return
-		}
-		users := []User{}
-		for _, acc := range *accs {
-			user := User{ID: acc.ID, Email: acc.Email, AccessLevel: acc.AccessLevel}
-			users = append(users, user)
-		}
-		sendData(w, http.StatusOK, users)
-		return
-	})
-}
-
-func GetUsersCreatedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
-	type User struct {
-		ID          int              `json:"id,omitempty"`
-		Email       string           `json:"email,omitempty"`
-		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
-	}
-	type RequestObject struct {
-		ID          uint             `json:"id,omitempty"`
-		Email       string           `json:"email,omitempty"`
-		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
-	}
-	type ResponseObject struct {
-		Error string `json:"error,omitempty"`
-		Users []User `json:"users,omitempty"`
-	}
-	sendError := func(w http.ResponseWriter, status int, err error) {
-		err = errors.Wrap(err, "While Authenticate")
-		logger.Error(err)
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(status)
-		out := ResponseObject{
-			Error: err.Error(),
-		}
-		json.NewEncoder(w).Encode(out)
-	}
-	sendData := func(w http.ResponseWriter, status int, users []User) {
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(status)
-		out := ResponseObject{
-			Users: users,
-		}
-		json.NewEncoder(w).Encode(out)
-	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		in := &RequestObject{}
-		err := json.NewDecoder(r.Body).Decode(in)
-		if err != nil {
-			err = errors.Wrap(err, "While decoding request body")
-			sendError(w, http.StatusBadRequest, err)
-			return
-		}
-
-		accs, err := models.GetAccounts(db)
-		if err != nil {
-			err = errors.Wrap(err, "While get accounts")
-			sendError(w, http.StatusBadRequest, err)
-			return
-		}
-		users := []User{}
-		for _, acc := range *accs {
-			user := User{ID: acc.ID, Email: acc.Email, AccessLevel: acc.AccessLevel}
-			users = append(users, user)
-		}
-		sendData(w, http.StatusBadRequest, users)
 		return
 	})
 }

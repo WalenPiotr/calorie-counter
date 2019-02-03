@@ -37,18 +37,21 @@ interface InputProps {
     onChange: (e: React.FormEvent<HTMLInputElement>) => void;
 }
 
-const Input = ({ label, type, value, onChange }: InputProps) => {
-    return (
-        <InputBox>
-            <InputLabel>{label}</InputLabel>
-            <BaseInput
-                placeholder=""
-                type={type}
-                onChange={onChange}
-                value={value}
-            />
-        </InputBox>
-    );
-};
+class Input extends React.PureComponent<InputProps> {
+    render() {
+        const { label, type, value, onChange } = this.props;
+        return (
+            <InputBox>
+                <InputLabel>{label}</InputLabel>
+                <BaseInput
+                    placeholder=""
+                    type={type}
+                    onChange={onChange}
+                    value={value}
+                />
+            </InputBox>
+        );
+    }
+}
 
 export default Input;

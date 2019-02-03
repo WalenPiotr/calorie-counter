@@ -4,7 +4,7 @@ import * as Styled from "./styled";
 interface AddNewProps {
     onClick: () => void;
 }
-class AddNew extends React.Component<AddNewProps, any> {
+class AddNew extends React.PureComponent<AddNewProps, any> {
     render() {
         return (
             <Styled.AddNewBox>

@@ -5,11 +5,12 @@ interface CalendarProps {
     logged: Date[];
     date: Date;
     onDateChange: (newDate: Date) => void;
+    onCollapseClick: () => void;
 }
 interface CalendarState {
     visible: boolean;
 }
-class Calendar extends React.Component<CalendarProps, CalendarState> {
+class Calendar extends React.PureComponent<CalendarProps, CalendarState> {
     state = { visible: false };
     inLogged(date: Date): boolean {
         for (const l of this.props.logged) {
@@ -37,6 +38,8 @@ class Calendar extends React.Component<CalendarProps, CalendarState> {
             ...prevState,
             visible: !prevState.visible
         }));
+
+        this.props.onCollapseClick();
     };
     render() {
         const monthTable = helpers.getMonthTable(

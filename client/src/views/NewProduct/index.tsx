@@ -1,12 +1,14 @@
 import * as React from "react";
-import styled from "styled-components";
-import * as storage from "@storage";
 import Input from "@components/Input";
 import * as requests from "@requests";
 import * as Styled from "./styled";
+import { Status } from "@status";
+import Widget from "@elements/Widget";
 
-interface AddNewProps {}
-interface AddNewState {
+export interface NewProductProps {
+    setStatus: (status: Status, message: string) => void;
+}
+interface NewProductState {
     product: {
         name: string;
         description: string;
@@ -17,7 +19,7 @@ interface AddNewState {
     };
 }
 
-class NewProduct extends React.Component<AddNewProps, AddNewState> {
+class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
     state = {
         product: {
             name: "",
@@ -31,42 +33,53 @@ class NewProduct extends React.Component<AddNewProps, AddNewState> {
         }
     };
     onAddClick = async () => {
-        const token = storage.retrieveToken();
-        const parsedPortions = this.state.product.portions.map(
-            (portion: {
-                energy: string;
-                unit: string;
-            }): {
-                energy: number;
-                unit: string;
-            } => {
-                const energy = parseFloat(portion.energy);
-                if (isNaN(energy)) {
-                    throw Error("PARSING ERROR TO HANDLE");
-                } else {
-                    return {
-                        energy: energy,
-                        unit: portion.unit
-                    };
-                }
-            }
-        );
-        const product = {
-            name: this.state.product.name,
-            description: this.state.product.description,
-            portions: parsedPortions
-        };
         try {
-            await requests.productNew(product);
+            const parsedPortions = this.state.product.portions.map(
+                (portion: {
+                    energy: string;
+                    unit: string;
+                }): {
+                    energy: number;
+                    unit: string;
+                } => {
+                    const energy = parseFloat(portion.energy);
+                    if (isNaN(energy)) {
+                        throw Error("Parsing error");
+                    } else {
+                        return {
+                            energy: energy,
+                            unit: portion.unit
+                        };
+                    }
+                }
+            );
+            const product = {
+                name: this.state.product.name,
+                description: this.state.product.description,
+                portions: parsedPortions
+            };
+            const res = await requests.productNew({ product });
+            if (res.error) {
+                this.props.setStatus(Status.Error, res.error);
+                return;
+            }
+            if (res.product) {
+                this.props.setStatus(
+                    Status.Success,
+                    "Product successfully added"
+                );
+                return;
+            }
         } catch (e) {
-            console.log(e);
+            this.props.setStatus(Status.Error, "Invalid input data");
         }
     };
     onBaseInputChange = (field: string) => (
         e: React.FormEvent<HTMLInputElement>
     ) => {
         const value = e.currentTarget.value;
-        this.setState((prevState: AddNewState) => ({
+        this.props.setStatus(Status.None, "");
+        this.setState((prevState: NewProductState) => ({
             ...prevState,
             product: {
                 ...prevState.product,
@@ -78,7 +91,8 @@ class NewProduct extends React.Component<AddNewProps, AddNewState> {
         e: React.FormEvent<HTMLInputElement>
     ) => {
         const value = e.currentTarget.value;
-        this.setState((prevState: AddNewState) => {
+        this.setState((prevState: NewProductState) => {
+            this.props.setStatus(Status.None, "");
             const newPortions = [...prevState.product.portions];
             newPortions[index][field] = value;
             return {
@@ -91,7 +105,8 @@ class NewProduct extends React.Component<AddNewProps, AddNewState> {
         });
     };
     addAnotherUnit = () => {
-        this.setState((prevState: AddNewState) => {
+        this.setState((prevState: NewProductState) => {
+            this.props.setStatus(Status.None, "");
             const oldPortions = prevState.product.portions;
             const newPortions = [
                 ...oldPortions,
@@ -107,7 +122,8 @@ class NewProduct extends React.Component<AddNewProps, AddNewState> {
         });
     };
     deleteCurrentPortion = (index: number) => () => {
-        this.setState((prevState: AddNewState) => {
+        this.setState((prevState: NewProductState) => {
+            this.props.setStatus(Status.None, "");
             const oldPortions = prevState.product.portions;
             const newPortions = [...oldPortions];
             newPortions.splice(index, 1);
@@ -123,7 +139,7 @@ class NewProduct extends React.Component<AddNewProps, AddNewState> {
     render() {
         const renderClose = this.state.product.portions.length > 1;
         return (
-            <Styled.MainBox>
+            <Widget>
                 <Styled.Label>Add new product</Styled.Label>
                 <Styled.BaseGroup>
                     <Input
@@ -182,7 +198,7 @@ class NewProduct extends React.Component<AddNewProps, AddNewState> {
                 <Styled.Button onClick={this.onAddClick}>
                     Add product
                 </Styled.Button>
-            </Styled.MainBox>
+            </Widget>
         );
     }
 }

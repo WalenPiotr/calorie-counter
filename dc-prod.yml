@@ -26,6 +26,5 @@ services:
             TOKEN_PASS: abcdefasdfasdfasdf
     client:
         image: walenpiotr/cc-client:0.0.1
-        build: ./client
         ports:
             - 8081:8081

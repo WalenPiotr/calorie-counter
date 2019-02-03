@@ -38,7 +38,7 @@ func CreateAccount(db *sql.DB, acc *Account) error {
 		VALUES($1, $2, $3);
 	`, acc.Email, acc.Password, acc.AccessLevel)
 	if err != nil {
-		return errors.Wrap(err, "While creating account")
+		return err
 	}
 	defer rows.Close()
 	return nil

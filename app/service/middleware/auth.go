@@ -43,11 +43,10 @@ func WithAuth(next http.Handler, accessLevel auth.AccessLevel) http.Handler {
 			return
 		}
 		if token.AccessLevel < 0 {
-			err = errors.New("You accound have been banished")
 			w.WriteHeader(http.StatusForbidden)
 			resObj := ResponseObject{
 				Status: http.StatusForbidden,
-				Error:  err.Error(),
+				Error:  "You accound have been banished",
 			}
 			resObj.Send(w)
 			return
@@ -59,11 +58,10 @@ func WithAuth(next http.Handler, accessLevel auth.AccessLevel) http.Handler {
 			next.ServeHTTP(w, r) //proceed in the middleware chain!
 			return
 		}
-		err = errors.New("Access denied")
 		w.WriteHeader(http.StatusForbidden)
 		resObj := ResponseObject{
 			Status: http.StatusForbidden,
-			Error:  err.Error(),
+			Error:  "Access denied",
 		}
 		resObj.Send(w)
 		return
@@ -73,7 +71,7 @@ func WithAuth(next http.Handler, accessLevel auth.AccessLevel) http.Handler {
 func authenticateUser(header http.Header) (token *auth.Token, err error) {
 	tokenPassword := os.Getenv("TOKEN_PASS")
 	tokenHeader := header.Get("Authorization") //Grab the token from the header
-	if tokenHeader == "" { //Token is missing, returns with error code 403 Unauthorized
+	if tokenHeader == "" {                     //Token is missing, returns with error code 403 Unauthorized
 		err := errors.New("Missing authentication token")
 		return nil, err
 	}

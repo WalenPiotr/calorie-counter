@@ -13,6 +13,8 @@ import Calendar from "@components/Calendar";
 import * as requests from "@requests";
 import Spinner from "@elements/Spinner";
 
+import { Status } from "@status";
+
 interface Entry {
     id: number;
     userID: number;
@@ -64,9 +66,11 @@ interface EntriesState {
     date: Date;
     isLoading: boolean;
 }
-interface EntriesProps {}
+interface EntriesProps {
+    setStatus: (status: Status, message: string) => void;
+}
 
-class Entries extends React.Component<EntriesProps, EntriesState> {
+class Entries extends React.PureComponent<EntriesProps, EntriesState> {
     state = {
         entries: [],
         date: new Date(),
@@ -82,6 +86,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
             isLoading: true,
             date
         }));
+        this.props.setStatus(Status.None, "");
         this.fetchData();
     };
     fetchData = async () => {
@@ -90,14 +95,27 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
             isLoading: true
         }));
         const date = this.state.date.toISOString();
-        const entries = await requests.entriesView(date);
-        const loggedDates = await requests.getDates();
-        await this.setState((prevState: EntriesState) => ({
-            ...prevState,
-            entries,
-            loggedDates,
-            isLoading: false
-        }));
+        const resView = await requests.entriesView({ date });
+        if (resView.error) {
+            this.props.setStatus(Status.Error, resView.error);
+            this.setState({ isLoading: false });
+            return;
+        }
+        const resDates = await requests.getDates();
+        if (resDates.error) {
+            this.props.setStatus(Status.Error, resDates.error);
+            this.setState({ isLoading: false });
+            return;
+        }
+        if (resDates.dates != undefined && resView.entries != undefined) {
+            this.setState({
+                loggedDates: resDates.dates.map((val: string) => new Date(val)),
+                entries: resView.entries,
+                isLoading: false
+            });
+            return;
+        }
+        this.setState({ isLoading: false });
     };
 
     updateEntry = async (id: number, entry: any) => {
@@ -105,16 +123,35 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
             ...prevState,
             isLoading: true
         }));
-        await requests.updateEntry(id, entry);
+        const res = await requests.updateEntry({ id, entry });
+        if (res.error) {
+            this.props.setStatus(Status.Error, res.error);
+            return;
+        }
         const date = this.state.date.toISOString();
-        const entries = await requests.entriesView(date);
-        const loggedDates = await requests.getDates();
-        await this.setState((prevState: EntriesState) => ({
-            ...prevState,
-            entries,
-            loggedDates,
-            isLoading: false
-        }));
+        const resEntries = await requests.entriesView({ date });
+        if (resEntries.error) {
+            this.props.setStatus(Status.Error, resEntries.error);
+            this.setState({ isLoading: false });
+            return;
+        }
+        const resLoggedDates = await requests.getDates();
+        if (resLoggedDates.error) {
+            this.props.setStatus(Status.Error, resLoggedDates.error);
+            this.setState({ isLoading: false });
+            return;
+        }
+        if (resLoggedDates.dates && resEntries.entries) {
+            this.props.setStatus(Status.Success, "Entry successfully updated");
+            await this.setState({
+                entries: resEntries.entries,
+                loggedDates: resLoggedDates.dates.map(
+                    (val: string) => new Date(val)
+                ),
+                isLoading: false
+            });
+        }
+        this.setState({ isLoading: false });
     };
 
     deleteEntry = async (id: number) => {
@@ -122,16 +159,39 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
             ...prevState,
             isLoading: true
         }));
-        await requests.deleteEntry(id);
+        const res = await requests.deleteEntry({ id });
+        if (res.error) {
+            this.props.setStatus(Status.Error, res.error);
+            return;
+        }
         const date = this.state.date.toISOString();
-        const entries = await requests.entriesView(date);
-        const loggedDates = await requests.getDates();
-        await this.setState((prevState: EntriesState) => ({
-            ...prevState,
-            entries,
-            loggedDates,
-            isLoading: false
-        }));
+        const resEntries = await requests.entriesView({ date });
+        if (resEntries.error) {
+            this.props.setStatus(Status.Error, resEntries.error);
+            this.setState({ isLoading: false });
+            return;
+        }
+        const resLoggedDates = await requests.getDates();
+        if (resLoggedDates.error) {
+            this.props.setStatus(Status.Error, resLoggedDates.error);
+            this.setState({ isLoading: false });
+            return;
+        }
+        if (resLoggedDates.dates && resEntries.entries) {
+            this.props.setStatus(Status.Success, "Entry successfully deleted");
+            await this.setState({
+                entries: resEntries.entries,
+                loggedDates: resLoggedDates.dates.map(
+                    (val: string) => new Date(val)
+                ),
+                isLoading: false
+            });
+        }
+        this.setState({ isLoading: false });
+    };
+
+    onCalendarClick = () => {
+        this.props.setStatus(Status.None, "");
     };
     render() {
         const rows =
@@ -143,6 +203,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
                     .map((entry: Entry) => {
                         return (
                             <Row
+                                setStatus={this.props.setStatus}
                                 updateEntry={this.updateEntry}
                                 deleteEntry={this.deleteEntry}
                                 key={entry.id}
@@ -160,6 +221,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
                         date={this.state.date}
                         logged={this.state.loggedDates}
                         onDateChange={this.onDateChange}
+                        onCollapseClick={this.onCalendarClick}
                     />
                 </CalendarBox>
 
@@ -258,6 +320,7 @@ const RowCalendarBox = styled.div`
 interface RowProps {
     updateEntry: (id: number, entry: any) => Promise<void>;
     deleteEntry: (id: number) => Promise<void>;
+    setStatus: (status: Status, message: string) => void;
     entry: Entry;
     loggedDates: Date[];
 }
@@ -283,12 +346,14 @@ class Row extends React.Component<RowProps, RowState> {
             ...prevState,
             quantity: newValue
         }));
+        this.props.setStatus(Status.None, "");
     };
     onSelectChange = (value: string) => {
         this.setState((prevState: RowState) => ({
             ...prevState,
             unit: value
         }));
+        this.props.setStatus(Status.None, "");
     };
     onCollapseClick = () => {
         this.setState((prevState: RowState) => ({
@@ -299,6 +364,7 @@ class Row extends React.Component<RowProps, RowState> {
                 (portion: Portion) => this.props.entry.portionID == portion.id
             )[0].unit
         }));
+        this.props.setStatus(Status.None, "");
     };
     onUpdateClick = async () => {
         var portionID = -1;
@@ -343,7 +409,9 @@ class Row extends React.Component<RowProps, RowState> {
         const quantity = isNaN(parsedQuantity) ? 0 : parsedQuantity;
         return portionEnergy * quantity;
     };
-
+    onCalendarClick = () => {
+        this.props.setStatus(Status.None, "");
+    };
     render() {
         const { entry } = this.props;
         const name = entry.product.name;
@@ -369,6 +437,7 @@ class Row extends React.Component<RowProps, RowState> {
                             date={this.state.date}
                             logged={this.props.loggedDates}
                             onDateChange={this.onDateChange}
+                            onCollapseClick={this.onCalendarClick}
                         />
                     </RowCalendarBox>
                     <Input

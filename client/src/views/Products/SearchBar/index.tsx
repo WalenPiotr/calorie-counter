@@ -8,7 +8,7 @@ interface SearchBarProps {
 }
 interface SearchBarState {}
 
-class SearchBar extends React.Component<SearchBarProps, SearchBarState> {
+class SearchBar extends React.PureComponent<SearchBarProps, SearchBarState> {
     render() {
         return (
             <Styled.SearchBox>

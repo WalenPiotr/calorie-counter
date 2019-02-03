@@ -1,27 +1,25 @@
 import * as React from "react";
-import * as storage from "@storage";
 import { withRouter } from "react-router-dom";
 import { RouteProps, RouteComponentProps } from "react-router";
-import { Redirect } from "react-router-dom";
 import AuthForm from "@components/AuthForm";
+import { Status } from "@status";
 
 export interface RegisterProps extends RouteComponentProps {
     register: (email: string, password: string) => void;
+    setStatus: (status: Status, message: string) => void;
 }
 interface RegisterState {
     email: string;
     password: string;
-    redirect: boolean;
 }
 
-class Register extends React.Component<
+class Register extends React.PureComponent<
     RegisterProps & RouteProps,
     RegisterState
 > {
     state = {
         email: "",
-        password: "",
-        redirect: false
+        password: ""
     };
     onEmailChange = (e: React.FormEvent<HTMLInputElement>) => {
         const email = e.currentTarget.value;
@@ -41,9 +39,6 @@ class Register extends React.Component<
         this.props.register(this.state.email, this.state.password);
     };
     render() {
-        if (this.state.redirect) {
-            return <Redirect to="/products" />;
-        }
         return (
             <AuthForm
                 title={"Register"}

@@ -21,6 +21,7 @@ module.exports = {
             "@elements": path.resolve(__dirname, "src/elements/"),
             "@media": path.resolve(__dirname, "src/media.ts"),
             "@storage": path.resolve(__dirname, "src/storage.ts"),
+            "@status": path.resolve(__dirname, "src/status.ts"),
             "@requests": path.resolve(__dirname, "src/requests.ts")
         }
     },
