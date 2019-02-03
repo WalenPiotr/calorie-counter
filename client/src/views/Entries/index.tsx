@@ -70,7 +70,7 @@ interface EntriesProps {
     setStatus: (status: Status, message: string) => void;
 }
 
-class Entries extends React.PureComponent<EntriesProps, EntriesState> {
+class Entries extends React.Component<EntriesProps, EntriesState> {
     state = {
         entries: [],
         date: new Date(),
@@ -107,7 +107,7 @@ class Entries extends React.PureComponent<EntriesProps, EntriesState> {
             this.setState({ isLoading: false });
             return;
         }
-        if (resDates.dates != undefined && resView.entries != undefined) {
+        if (resDates.dates !== undefined && resView.entries !== undefined) {
             this.setState({
                 loggedDates: resDates.dates.map((val: string) => new Date(val)),
                 entries: resView.entries,
@@ -119,73 +119,41 @@ class Entries extends React.PureComponent<EntriesProps, EntriesState> {
     };
 
     updateEntry = async (id: number, entry: any) => {
-        await this.setState((prevState: EntriesState) => ({
-            ...prevState,
-            isLoading: true
-        }));
-        const res = await requests.updateEntry({ id, entry });
-        if (res.error) {
-            this.props.setStatus(Status.Error, res.error);
-            return;
-        }
-        const date = this.state.date.toISOString();
-        const resEntries = await requests.entriesView({ date });
-        if (resEntries.error) {
-            this.props.setStatus(Status.Error, resEntries.error);
-            this.setState({ isLoading: false });
-            return;
-        }
-        const resLoggedDates = await requests.getDates();
-        if (resLoggedDates.error) {
-            this.props.setStatus(Status.Error, resLoggedDates.error);
-            this.setState({ isLoading: false });
-            return;
-        }
-        if (resLoggedDates.dates && resEntries.entries) {
+        try {
+            await this.setState((prevState: EntriesState) => ({
+                ...prevState,
+                isLoading: true
+            }));
+            const res = await requests.updateEntry({ id, entry });
+            if (res.error) {
+                this.props.setStatus(Status.Error, res.error);
+                return;
+            }
+            await this.fetchData();
             this.props.setStatus(Status.Success, "Entry successfully updated");
-            await this.setState({
-                entries: resEntries.entries,
-                loggedDates: resLoggedDates.dates.map(
-                    (val: string) => new Date(val)
-                ),
-                isLoading: false
-            });
+        } catch (e) {
+            this.props.setStatus(Status.Error, "Something went wrong");
+            console.log(e);
         }
         this.setState({ isLoading: false });
     };
 
     deleteEntry = async (id: number) => {
-        await this.setState((prevState: EntriesState) => ({
-            ...prevState,
-            isLoading: true
-        }));
-        const res = await requests.deleteEntry({ id });
-        if (res.error) {
-            this.props.setStatus(Status.Error, res.error);
-            return;
-        }
-        const date = this.state.date.toISOString();
-        const resEntries = await requests.entriesView({ date });
-        if (resEntries.error) {
-            this.props.setStatus(Status.Error, resEntries.error);
-            this.setState({ isLoading: false });
-            return;
-        }
-        const resLoggedDates = await requests.getDates();
-        if (resLoggedDates.error) {
-            this.props.setStatus(Status.Error, resLoggedDates.error);
-            this.setState({ isLoading: false });
-            return;
-        }
-        if (resLoggedDates.dates && resEntries.entries) {
+        try {
+            await this.setState((prevState: EntriesState) => ({
+                ...prevState,
+                isLoading: true
+            }));
+            const res = await requests.deleteEntry({ id });
+            if (res.error) {
+                this.props.setStatus(Status.Error, res.error);
+                return;
+            }
+            await this.fetchData();
             this.props.setStatus(Status.Success, "Entry successfully deleted");
-            await this.setState({
-                entries: resEntries.entries,
-                loggedDates: resLoggedDates.dates.map(
-                    (val: string) => new Date(val)
-                ),
-                isLoading: false
-            });
+        } catch (e) {
+            this.props.setStatus(Status.Error, "Something went wrong");
+            console.log(e);
         }
         this.setState({ isLoading: false });
     };

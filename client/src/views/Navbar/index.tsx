@@ -44,7 +44,7 @@ class Navbar extends React.PureComponent<NavbarProps, NavbarState> {
         this.props.history.push("/");
     };
     render = () => {
-        const isLoggedIn = !(storage.retrieveToken() == "");
+        const isLoggedIn = this.props.isLogged;
         const authLinks = [
             <Styled.Link
                 current={this.props.history.location.pathname == "/"}

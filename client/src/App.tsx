@@ -54,7 +54,7 @@ class App extends React.PureComponent<AppProps, AppState> {
     state = {
         isLoggedIn: false,
         status: Status.None,
-        message: "TEST MESSAGE"
+        message: ""
     };
     logIn = async (email: string, password: string) => {
         const res = await requests.login({ email, password });

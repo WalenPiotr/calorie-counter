@@ -10,7 +10,7 @@ services:
         volumes:
             - ./data/db:/var/lib/postgresql/data
     app:
-        image: walenpiotr/cc-service:0.0.1
+        image: walenpiotr/cc-service:0.0.3
         depends_on:
             - db
         ports:
@@ -25,6 +25,6 @@ services:
             PG_USER: user
             TOKEN_PASS: abcdefasdfasdfasdf
     client:
-        image: walenpiotr/cc-client:0.0.1
+        image: walenpiotr/cc-client:0.0.3
         ports:
             - 8081:8081

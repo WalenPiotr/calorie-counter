@@ -167,7 +167,7 @@ func GetUsersDatesWithEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 	}
 	type ResponseObject struct {
 		Error string      `json:"error,omitempty"`
-		Dates []time.Time `json:"dates,omitempty"`
+		Dates *[]time.Time `json:"dates,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {
 		err = errors.Wrap(err, "While creating entry")
@@ -183,7 +183,7 @@ func GetUsersDatesWithEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Dates: *dates,
+			Dates: dates,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -255,6 +255,11 @@ func DeleteEntry(db *sql.DB, logger *logrus.Logger) http.Handler {
 
 		}
 		entry, err := models.GetEntry(db, in.ID)
+		if err != nil {
+			err = errors.Wrap(err, "While get users entry")
+			sendError(w, http.StatusBadRequest, err, InvalidData)
+			return
+		}
 		if entry.UserID != userID {
 			err = errors.New("Permission denied, user id do not match")
 			sendError(w, http.StatusUnauthorized, err, PermissionDenied)

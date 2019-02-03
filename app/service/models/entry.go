@@ -92,6 +92,9 @@ func GetEntry(db *sql.DB, id int) (*Entry, error) {
 		}
 		entries = append(entries, entry)
 	}
+	if len(entries) == 0 {
+		return nil, errors.New("Not found")
+	}
 	if len(entries) > 1 {
 		return nil, errors.New("Two entries with the same id")
 	}
