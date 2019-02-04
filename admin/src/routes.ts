@@ -5,5 +5,5 @@ export const routes = {
     productNew: "/product-new",
     productUpdate: "/product-update",
     users: "/user-search",
-    user: "/user",
+    userProducts: "/user-products"
 };

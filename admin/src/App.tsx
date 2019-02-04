@@ -16,6 +16,7 @@ import Products from "@views/Products";
 import Product from "@views/Product";
 import NewProduct from "@views/NewProduct";
 import Users from "@views/Users";
+import UserProducts from "@views/UserProducts";
 
 const GlobalStyle = createGlobalStyle`
 
@@ -115,6 +116,39 @@ class App extends React.PureComponent<AppProps, AppState> {
         this.setStatus(Status.Error, "Unexpected error");
         return;
     };
+    ban = async (id: number) => {
+        const { error } = await requests.banUser({ id });
+        if (error !== undefined) {
+            this.setStatus(Status.Error, error);
+            return;
+        }
+        this.setStatus(Status.Error, "Unexpected error");
+        return;
+    };
+    unban = async (id: number) => {
+        const { error } = await requests.unbanUser({ id });
+        if (error !== undefined) {
+            this.setStatus(Status.Error, error);
+            return;
+        }
+        this.setStatus(Status.Error, "Unexpected error");
+        return;
+    };
+    getUserProducts = async (id: number) => {
+        const { products, error } = await requests.getUserProducts({
+            id
+        });
+        console.log({ products, error });
+        if (error !== undefined) {
+            this.setStatus(Status.Error, error);
+            return;
+        }
+        if (products !== undefined) {
+            return products;
+        }
+        this.setStatus(Status.Error, "Unexpected error");
+        return;
+    };
     render = () => {
         return (
             <div>
@@ -126,9 +160,6 @@ class App extends React.PureComponent<AppProps, AppState> {
                 </div>
                 <div>
                     <Link to={routes.products}>products</Link>
-                </div>
-                <div>
-                    <Link to={routes.productNew}>new</Link>
                 </div>
                 <Switch>
                     <Route
@@ -162,7 +193,21 @@ class App extends React.PureComponent<AppProps, AppState> {
                     <Route
                         path={routes.users}
                         render={props => (
-                            <Users {...props} search={this.searchUser} />
+                            <Users
+                                {...props}
+                                search={this.searchUser}
+                                ban={this.ban}
+                                unban={this.unban}
+                            />
+                        )}
+                    />
+                    <Route
+                        path={routes.userProducts}
+                        render={props => (
+                            <UserProducts
+                                {...props}
+                                get={this.getUserProducts}
+                            />
                         )}
                     />
                 </Switch>

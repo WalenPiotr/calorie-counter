@@ -11,7 +11,8 @@ const endpoints = {
     productUpdate: base + "api/product/update",
     userSearch: base + "api/user/search",
     userBan: base + "api/user/ban",
-    userUnBan: base + "api/user/unban"
+    userUnban: base + "api/user/unban",
+    getUserProducts: base + "api/user/products"
 };
 
 export interface LoginRequest {
@@ -323,6 +324,7 @@ export const banUser = async (
     try {
         const response = await fetch(endpoints.userBan, request);
         const parsed = await response.json();
+        console.log(parsed);
         if (response.status == 200) {
             return parsed;
         }
@@ -356,8 +358,46 @@ export const unbanUser = async (
         type: "cors"
     };
     try {
-        const response = await fetch(endpoints.userBan, request);
+        const response = await fetch(endpoints.userUnban, request);
         const parsed = await response.json();
+        if (response.status == 200) {
+            return parsed;
+        }
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
+};
+
+interface GetUserProductsRequest {
+    id: number;
+}
+interface GetUserProductsResponse {
+    products?: Product[];
+    error?: string;
+}
+
+export const getUserProducts = async (
+    req: GetUserProductsRequest
+): Promise<GetUserProductsResponse> => {
+    const token = storage.retrieveToken();
+    const request = {
+        body: JSON.stringify(req),
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+        },
+        method: "POST",
+        type: "cors"
+    };
+    try {
+        const response = await fetch(endpoints.getUserProducts, request);
+        const parsed = await response.json();
+        console.log(parsed);
         if (response.status == 200) {
             return parsed;
         }

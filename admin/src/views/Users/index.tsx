@@ -10,6 +10,8 @@ interface User {
 
 interface UsersProps extends RouteComponentProps {
     search: (name: string) => Promise<User[] | undefined>;
+    ban: (id: number) => Promise<void>;
+    unban: (id: number) => Promise<void>;
 }
 interface UsersState {
     users: User[];
@@ -19,22 +21,34 @@ class Users extends React.PureComponent<UsersProps, UsersState> {
     state = {
         users: []
     };
-    componentDidMount = async () => {
+    fetchData = async () => {
         const users = await this.props.search("");
         if (users !== undefined) {
             this.setState({ users });
         }
     };
-    goToUsersProduct = (id: number) => () => {
-        this.props.history.push(routes.user, { id });
+
+    componentDidMount = () => {
+        this.fetchData();
     };
-    ban = (id: number) => () => {};
-    unban = (id: number) => () => {};
+
+    goToUserProducts = (id: number) => () => {
+        this.props.history.push(routes.userProducts, { id });
+    };
+    ban = (id: number) => async () => {
+        await this.props.ban(id);
+        this.fetchData();
+    };
+    unban = (id: number) => async () => {
+        await this.props.unban(id);
+        this.fetchData();
+    };
     render() {
         const usersElements = this.state.users.map((user: User) => (
-            <div>
+            <div onClick={this.goToUserProducts(user.id)}>
                 {user.id} - {user.email} - {user.accessLevel} -{" "}
-                <button onClick={}>BAN</button>
+                <button onClick={this.ban(user.id)}>BAN</button>
+                <button onClick={this.unban(user.id)}>UNBAN</button>
             </div>
         ));
         return (
