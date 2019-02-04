@@ -320,6 +320,73 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 	})
 }
 
+func GetUsersAddedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidData = "Invalid request body"
+	const InternalError = "Internal error"
+
+	type Product struct {
+		models.Product
+		Portions []models.Portion `json:"portions"`
+		Votes    []*models.Votes  `json:"votes"`
+	}
+	type RequestObject struct {
+		ID int `json:"id,omitempty"`
+	}
+	type ResponseObject struct {
+		Error    string    `json:"error,omitempty"`
+		Products []Product `json:"products,omitempty"`
+	}
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
+		err = errors.Wrap(err, "While Authenticate")
+		logger.Error(err)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{
+			Error: message,
+		}
+		json.NewEncoder(w).Encode(out)
+	}
+	sendData := func(w http.ResponseWriter, status int, products []Product) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{
+			Products: products,
+		}
+		json.NewEncoder(w).Encode(out)
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := &RequestObject{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			err = errors.Wrap(err, "While decoding request body")
+			sendError(w, http.StatusBadRequest, err, InvalidData)
+			return
+		}
+		products, err := models.GetProductsByCreatorID(db, in.ID)
+		if err != nil {
+			err = errors.Wrap(err, "While fetching products")
+			sendError(w, http.StatusBadRequest, err, InternalError)
+			return
+		}
+		bundledProducts := []Product{}
+		for _, product := range *products {
+			portions, err := models.GetProductsPortions(db, product.ID)
+			if err != nil {
+				err = errors.Wrap(err, "While products portions")
+				sendError(w, http.StatusBadRequest, err, InternalError)
+				return
+			}
+			bundledProduct := Product{
+				Product:  product,
+				Portions: portions,
+			}
+			bundledProducts = append(bundledProducts, bundledProduct)
+		}
+		sendData(w, http.StatusOK, bundledProducts)
+		return
+	})
+}
+
 func RateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 	const InvalidData = "Invalid request body"
 	const InternalError = "Internal error"

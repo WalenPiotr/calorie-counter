@@ -2,6 +2,7 @@ package models
 
 import (
 	"app/service/auth"
+	"strings"
 
 	"database/sql"
 
@@ -36,7 +37,7 @@ func CreateAccount(db *sql.DB, acc *Account) error {
 	rows, err := db.Query(`
 		INSERT INTO accounts (email, password, access_level)
 		VALUES($1, $2, $3);
-	`, acc.Email, acc.Password, acc.AccessLevel)
+	`, strings.ToLower(acc.Email), acc.Password, acc.AccessLevel)
 	if err != nil {
 		return err
 	}
@@ -73,7 +74,7 @@ func GetAccountById(db *sql.DB, id int) (*Account, error) {
 func GetAccountByEmail(db *sql.DB, email string) (*Account, error) {
 	rows, err := db.Query(`
 		SELECT * FROM accounts WHERE email=$1;
-	`, email)
+	`, strings.ToLower(email))
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -138,4 +139,24 @@ func SetAccessLevel(db *sql.DB, id int, accessLevel auth.AccessLevel) error {
 	`, id, accessLevel)
 	defer rows.Close()
 	return err
+}
+
+func SearchAccounts(db *sql.DB, email string) (*[]Account, error) {
+	rows, err := db.Query(`
+		SELECT * FROM accounts WHERE email LIKE $1;
+	`, "%"+strings.ToLower(email)+"%")
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	accs := []Account{}
+	for rows.Next() {
+		acc := Account{}
+		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel)
+		if err != nil {
+			return nil, err
+		}
+		accs = append(accs, acc)
+	}
+	return &accs, nil
 }

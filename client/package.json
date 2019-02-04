@@ -1,7 +1,7 @@
 {
-    "name": "sample-app",
+    "name": "cc-client",
     "version": "1.1.0",
-    "description": "Sample App",
+    "description": "Calorie counter client",
     "main": "index.js",
     "scripts": {
         "build": "rm -rf dist && webpack --mode production",

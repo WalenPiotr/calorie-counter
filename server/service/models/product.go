@@ -132,7 +132,19 @@ func GetProductsByCreatorID(db *sql.DB, id int) (*[]Product, error) {
 
 func DeleteProduct(db *sql.DB, id int) error {
 	rows, err := db.Query(`
-		DELETE FROM products WHERE id=$1 
+		DELETE FROM entries WHERE product_id=$1;
+	`, id)
+	if err != nil {
+		return errors.Wrap(err, "While deleting product")
+	}
+	rows, err = db.Query(`
+		DELETE FROM portions WHERE product_id=$1;
+	`, id)
+	if err != nil {
+		return errors.Wrap(err, "While deleting product")
+	}
+	rows, err = db.Query(`
+		DELETE FROM products WHERE id=$1; 
 	`, id)
 	if err != nil {
 		return errors.Wrap(err, "While deleting product")

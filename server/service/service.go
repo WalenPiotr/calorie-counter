@@ -31,6 +31,14 @@ func NewService() error {
 		handlers.CreateAccount(db, logger), auth.Default))
 	router.Handle("/api/user/login", middleware.WithAuth(
 		handlers.Authenticate(db, logger), auth.Default))
+	router.Handle("/api/user/ban", middleware.WithAuth(
+		handlers.BanUser(db, logger), auth.Moderator))
+	router.Handle("/api/user/unban", middleware.WithAuth(
+		handlers.UnbanUser(db, logger), auth.Moderator))
+	router.Handle("/api/user/search", middleware.WithAuth(
+		handlers.SearchUsers(db, logger), auth.Moderator))
+	router.Handle("/api/user/products", middleware.WithAuth(
+		handlers.GetUsersAddedProducts(db, logger), auth.Moderator))
 
 	router.Handle("/api/user/entries/create", middleware.WithAuth(
 		handlers.CreateEntry(db, logger), auth.User))
@@ -49,7 +57,7 @@ func NewService() error {
 		handlers.GetProduct(db, logger), auth.User))
 	router.Handle("/api/product/search", middleware.WithAuth(
 		handlers.SearchProduct(db, logger), auth.User))
-	router.Handle("/api/product/all", middleware.WithAuth(
+	router.Handle("/api/product/delete", middleware.WithAuth(
 		handlers.DeleteProduct(db, logger), auth.Moderator))
 	router.Handle("/api/product/rate", middleware.WithAuth(
 		handlers.RateProduct(db, logger), auth.User))

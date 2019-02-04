@@ -36,7 +36,7 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 	const InvalidDataMsg = "Invalid request body"
 	const InvalidCredentials = "Invalid email or password"
 	const InternalError = "Internal Error"
-	const AlreadyExists = "Account with provided email already exists"
+	const AlreadyExists = "User with provided email already exists"
 
 	type RequestObject struct {
 		Credentials
@@ -132,7 +132,7 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 	const InvalidData = "Invalid request body"
 	const InvalidCredentials = "Invalid email or password"
-	const NotExists = "Account with provided email not exists"
+	const NotExists = "User with provided email not exists"
 	const InternalError = "Internal Error"
 
 	type RequestObject struct {
@@ -204,6 +204,155 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 			return
 		}
 		sendData(w, http.StatusOK, tokenString)
+		return
+	})
+}
+
+func BanUser(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidData = "Invalid request body"
+	const InvalidCredentials = "Invalid email or password"
+	const NotExists = "User with provided email not exists"
+	const InternalError = "Internal Error"
+
+	type RequestObject struct {
+		ID int `json:"id,omitempty"`
+	}
+	type ResponseObject struct {
+		Error string `json:"error,omitempty"`
+	}
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
+		err = errors.Wrap(err, "While Authenticate")
+		logger.Error(err)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{
+			Error: message,
+		}
+		json.NewEncoder(w).Encode(out)
+	}
+	sendData := func(w http.ResponseWriter, status int) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{}
+		json.NewEncoder(w).Encode(out)
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := &RequestObject{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			err = errors.Wrap(err, "While decoding request body")
+			sendError(w, http.StatusBadRequest, err, InvalidData)
+			return
+		}
+		err = models.SetAccessLevel(db, in.ID, auth.Banned)
+		if err != nil {
+			err = errors.Wrap(err, "While setting access level")
+			sendError(w, http.StatusBadRequest, err, InternalError)
+			return
+		}
+		sendData(w, http.StatusOK)
+		return
+	})
+}
+
+func UnbanUser(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidData = "Invalid request body"
+	const InternalError = "Internal Error"
+
+	type RequestObject struct {
+		ID int `json:"id,omitempty"`
+	}
+	type ResponseObject struct {
+		Error string `json:"error,omitempty"`
+	}
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
+		err = errors.Wrap(err, "While Authenticate")
+		logger.Error(err)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{
+			Error: message,
+		}
+		json.NewEncoder(w).Encode(out)
+	}
+	sendData := func(w http.ResponseWriter, status int) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{}
+		json.NewEncoder(w).Encode(out)
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := &RequestObject{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			err = errors.Wrap(err, "While decoding request body")
+			sendError(w, http.StatusBadRequest, err, InvalidData)
+			return
+		}
+		err = models.SetAccessLevel(db, in.ID, auth.User)
+		if err != nil {
+			err = errors.Wrap(err, "While setting access level")
+			sendError(w, http.StatusBadRequest, err, InternalError)
+			return
+		}
+		sendData(w, http.StatusOK)
+		return
+	})
+}
+
+func SearchUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidData = "Invalid request body"
+	const InternalError = "Internal Error"
+	type User struct {
+		Email       string           `json:"email,omitempty"`
+		ID          int              `json:"id,omitempty"`
+		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
+	}
+	type RequestObject struct {
+		Email string `json:"email,omitempty"`
+	}
+	type ResponseObject struct {
+		Error string `json:"error,omitempty"`
+		Users []User `json:"users,omitempty"`
+	}
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
+		err = errors.Wrap(err, "While Authenticate")
+		logger.Error(err)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{
+			Error: message,
+		}
+		json.NewEncoder(w).Encode(out)
+	}
+	sendData := func(w http.ResponseWriter, status int, users []User) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{
+			Users: users,
+		}
+		json.NewEncoder(w).Encode(out)
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := &RequestObject{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			err = errors.Wrap(err, "While decoding request body")
+			sendError(w, http.StatusBadRequest, err, InvalidData)
+			return
+		}
+		accounts, err := models.SearchAccounts(db, in.Email)
+		if err != nil {
+			err = errors.Wrap(err, "While fetching users")
+			sendError(w, http.StatusBadRequest, err, InternalError)
+			return
+		}
+		users := []User{}
+		for _, acc := range *accounts {
+			accData := User{ID: acc.ID, Email: acc.Email, AccessLevel: acc.AccessLevel}
+			users = append(users, accData)
+		}
+		sendData(w, http.StatusOK, users)
 		return
 	})
 }
