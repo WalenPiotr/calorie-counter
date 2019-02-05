@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"app/service/auth"
+	"app/service/middleware"
 	"app/service/models"
 	"database/sql"
 	"encoding/json"
@@ -210,10 +211,9 @@ func Authenticate(db *sql.DB, logger *logrus.Logger) http.Handler {
 
 func BanUser(db *sql.DB, logger *logrus.Logger) http.Handler {
 	const InvalidData = "Invalid request body"
-	const InvalidCredentials = "Invalid email or password"
-	const NotExists = "User with provided email not exists"
 	const InternalError = "Internal Error"
-
+	const CannotBanYourself = "Cannot ban yourself"
+	const HaveNoRight = "Cannot ban this user, because he has the same or greater priviledges as you"
 	type RequestObject struct {
 		ID int `json:"id,omitempty"`
 	}
@@ -244,13 +244,41 @@ func BanUser(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
-		err = models.SetAccessLevel(db, in.ID, auth.Banned)
-		if err != nil {
-			err = errors.Wrap(err, "While setting access level")
+		userID, ok := r.Context().Value(middleware.UserID).(int)
+		if !ok {
+			err = errors.New("While fetching id from context")
 			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
-		sendData(w, http.StatusOK)
+		if in.ID != userID {
+			user, err := models.GetAccountById(db, in.ID)
+			if err != nil {
+				err = errors.Wrap(err, "While fetching user")
+				sendError(w, http.StatusBadRequest, err, InternalError)
+				return
+			}
+			admin, err := models.GetAccountById(db, userID)
+			if err != nil {
+				err = errors.Wrap(err, "While fetching user")
+				sendError(w, http.StatusBadRequest, err, InternalError)
+				return
+			}
+			if user.AccessLevel >= admin.AccessLevel {
+				err = errors.Wrap(err, "While checking if has right to ban")
+				sendError(w, http.StatusBadRequest, err, HaveNoRight)
+				return
+			}
+			err = models.SetAccessLevel(db, in.ID, auth.Banned)
+			if err != nil {
+				err = errors.Wrap(err, "While setting access level")
+				sendError(w, http.StatusBadRequest, err, InternalError)
+				return
+			}
+			sendData(w, http.StatusOK)
+			return
+		}
+		err = errors.Wrap(err, "While checking user id")
+		sendError(w, http.StatusBadRequest, err, CannotBanYourself)
 		return
 	})
 }
@@ -258,7 +286,8 @@ func BanUser(db *sql.DB, logger *logrus.Logger) http.Handler {
 func UnbanUser(db *sql.DB, logger *logrus.Logger) http.Handler {
 	const InvalidData = "Invalid request body"
 	const InternalError = "Internal Error"
-
+	const CannotBanYourself = "Cannot ban yourself"
+	const HaveNoRight = "Cannot ban this user, because he has the same or greater priviledges as you"
 	type RequestObject struct {
 		ID int `json:"id,omitempty"`
 	}
@@ -289,13 +318,122 @@ func UnbanUser(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
-		err = models.SetAccessLevel(db, in.ID, auth.User)
-		if err != nil {
-			err = errors.Wrap(err, "While setting access level")
+		userID, ok := r.Context().Value(middleware.UserID).(int)
+		if !ok {
+			err = errors.New("While fetching id from context")
 			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
-		sendData(w, http.StatusOK)
+		if in.ID != userID {
+			user, err := models.GetAccountById(db, in.ID)
+			if err != nil {
+				err = errors.Wrap(err, "While fetching user")
+				sendError(w, http.StatusBadRequest, err, InternalError)
+				return
+			}
+			admin, err := models.GetAccountById(db, userID)
+			if err != nil {
+				err = errors.Wrap(err, "While fetching user")
+				sendError(w, http.StatusBadRequest, err, InternalError)
+				return
+			}
+			if user.AccessLevel >= admin.AccessLevel {
+				err = errors.Wrap(err, "While checking if has right to ban")
+				sendError(w, http.StatusBadRequest, err, HaveNoRight)
+				return
+			}
+			err = models.SetAccessLevel(db, in.ID, auth.User)
+			if err != nil {
+				err = errors.Wrap(err, "While setting access level")
+				sendError(w, http.StatusBadRequest, err, InternalError)
+				return
+			}
+			sendData(w, http.StatusOK)
+			return
+		}
+		err = errors.Wrap(err, "While checking user id")
+		sendError(w, http.StatusBadRequest, err, CannotBanYourself)
+		return
+	})
+}
+
+func SetAccessLevel(db *sql.DB, logger *logrus.Logger) http.Handler {
+	const InvalidData = "Invalid request body"
+	const InternalError = "Internal Error"
+	const CannotSetPriveledgesYourself = "Cannot set access level for yourself"
+	const HaveNoRight = "Cannot set access level this user, because you have the same priveledges"
+	const CannotSetAdminRights = "Cannot set admin priveledges"
+	type RequestObject struct {
+		ID          int              `json:"id,omitempty"`
+		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
+	}
+	type ResponseObject struct {
+		Error string `json:"error,omitempty"`
+	}
+	sendError := func(w http.ResponseWriter, status int, err error, message string) {
+		err = errors.Wrap(err, "While Authenticate")
+		logger.Error(err)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{
+			Error: message,
+		}
+		json.NewEncoder(w).Encode(out)
+	}
+	sendData := func(w http.ResponseWriter, status int) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		out := ResponseObject{}
+		json.NewEncoder(w).Encode(out)
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		in := &RequestObject{}
+		err := json.NewDecoder(r.Body).Decode(in)
+		if err != nil {
+			err = errors.Wrap(err, "While decoding request body")
+			sendError(w, http.StatusBadRequest, err, InvalidData)
+			return
+		}
+		if in.AccessLevel >= auth.Admin {
+			err = errors.Wrap(err, "While checking if has right to ban")
+			sendError(w, http.StatusBadRequest, err, CannotSetAdminRights)
+			return
+		}
+		userID, ok := r.Context().Value(middleware.UserID).(int)
+		if !ok {
+			err = errors.New("While fetching id from context")
+			sendError(w, http.StatusBadRequest, err, InternalError)
+			return
+		}
+		if in.ID != userID {
+			user, err := models.GetAccountById(db, in.ID)
+			if err != nil {
+				err = errors.Wrap(err, "While fetching user")
+				sendError(w, http.StatusBadRequest, err, InternalError)
+				return
+			}
+			admin, err := models.GetAccountById(db, userID)
+			if err != nil {
+				err = errors.Wrap(err, "While fetching user")
+				sendError(w, http.StatusBadRequest, err, InternalError)
+				return
+			}
+			if user.AccessLevel >= admin.AccessLevel {
+				err = errors.Wrap(err, "While checking if has right to ban")
+				sendError(w, http.StatusBadRequest, err, HaveNoRight)
+				return
+			}
+			err = models.SetAccessLevel(db, in.ID, auth.User)
+			if err != nil {
+				err = errors.Wrap(err, "While setting access level")
+				sendError(w, http.StatusBadRequest, err, InternalError)
+				return
+			}
+			sendData(w, http.StatusOK)
+			return
+		}
+		err = errors.Wrap(err, "While checking user id")
+		sendError(w, http.StatusBadRequest, err, CannotSetPriveledgesYourself)
 		return
 	})
 }

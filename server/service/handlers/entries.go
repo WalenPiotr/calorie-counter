@@ -55,7 +55,6 @@ func CreateEntry(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		entry := in.Entry
 		userID, ok := r.Context().Value(middleware.UserID).(int)
-		logger.Debugf("USER ID: %d", userID)
 		if !ok {
 			err = errors.New("While getting UserID from request context")
 			sendError(w, http.StatusBadRequest, err, InternalError)
@@ -166,7 +165,7 @@ func GetUsersDatesWithEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 	type RequestObject struct {
 	}
 	type ResponseObject struct {
-		Error string      `json:"error,omitempty"`
+		Error string       `json:"error,omitempty"`
 		Dates *[]time.Time `json:"dates,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error) {

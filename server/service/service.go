@@ -28,39 +28,46 @@ func NewService() error {
 	router.Use(middleware.WithTracing)
 
 	router.Handle("/api/user/new", middleware.WithAuth(
-		handlers.CreateAccount(db, logger), auth.Default))
+		handlers.CreateAccount(db, logger), db, auth.Default))
 	router.Handle("/api/user/login", middleware.WithAuth(
-		handlers.Authenticate(db, logger), auth.Default))
+		handlers.Authenticate(db, logger), db, auth.Default))
+
 	router.Handle("/api/user/ban", middleware.WithAuth(
-		handlers.BanUser(db, logger), auth.Moderator))
+		handlers.BanUser(db, logger), db, auth.Moderator))
 	router.Handle("/api/user/unban", middleware.WithAuth(
-		handlers.UnbanUser(db, logger), auth.Moderator))
+		handlers.UnbanUser(db, logger), db, auth.Moderator))
 	router.Handle("/api/user/search", middleware.WithAuth(
-		handlers.SearchUsers(db, logger), auth.Moderator))
+		handlers.SearchUsers(db, logger), db, auth.Moderator))
 	router.Handle("/api/user/products", middleware.WithAuth(
-		handlers.GetUsersAddedProducts(db, logger), auth.Moderator))
+		handlers.GetUsersAddedProducts(db, logger), db, auth.Moderator))
+
+	router.Handle("/api/user/priviledges", middleware.WithAuth(
+		handlers.SetAccessLevel(db, logger), db, auth.Admin))
 
 	router.Handle("/api/user/entries/create", middleware.WithAuth(
-		handlers.CreateEntry(db, logger), auth.User))
+		handlers.CreateEntry(db, logger), db, auth.User))
 	router.Handle("/api/user/entries/view", middleware.WithAuth(
-		handlers.GetUsersEntries(db, logger), auth.User))
+		handlers.GetUsersEntries(db, logger), db, auth.User))
 	router.Handle("/api/user/entries/delete", middleware.WithAuth(
-		handlers.DeleteEntry(db, logger), auth.User))
+		handlers.DeleteEntry(db, logger), db, auth.User))
 	router.Handle("/api/user/entries/update", middleware.WithAuth(
-		handlers.UpdateEntry(db, logger), auth.User))
+		handlers.UpdateEntry(db, logger), db, auth.User))
 	router.Handle("/api/user/entries/dates", middleware.WithAuth(
-		handlers.GetUsersDatesWithEntries(db, logger), auth.User))
+		handlers.GetUsersDatesWithEntries(db, logger), db, auth.User))
 
 	router.Handle("/api/product/new", middleware.WithAuth(
-		handlers.CreateProduct(db, logger), auth.User))
+		handlers.CreateProduct(db, logger), db, auth.User))
 	router.Handle("/api/product/view", middleware.WithAuth(
-		handlers.GetProduct(db, logger), auth.User))
+		handlers.GetProduct(db, logger), db, auth.User))
 	router.Handle("/api/product/search", middleware.WithAuth(
-		handlers.SearchProduct(db, logger), auth.User))
-	router.Handle("/api/product/delete", middleware.WithAuth(
-		handlers.DeleteProduct(db, logger), auth.Moderator))
+		handlers.SearchProduct(db, logger), db, auth.User))
 	router.Handle("/api/product/rate", middleware.WithAuth(
-		handlers.RateProduct(db, logger), auth.User))
+		handlers.RateProduct(db, logger), db, auth.User))
+
+	router.Handle("/api/product/delete", middleware.WithAuth(
+		handlers.DeleteProduct(db, logger), db, auth.Moderator))
+	router.Handle("/api/product/update", middleware.WithAuth(
+		handlers.UpdateProduct(db, logger), db, auth.Moderator))
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
 

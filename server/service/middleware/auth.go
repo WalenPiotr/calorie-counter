@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"app/service/auth"
+	"app/service/models"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
@@ -26,7 +28,7 @@ func (res *ResponseObject) Send(w http.ResponseWriter) {
 	json.NewEncoder(w).Encode(*res)
 }
 
-func WithAuth(next http.Handler, accessLevel auth.AccessLevel) http.Handler {
+func WithAuth(next http.Handler, db *sql.DB, accessLevel auth.AccessLevel) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header
 		if accessLevel == auth.Default {
@@ -42,7 +44,17 @@ func WithAuth(next http.Handler, accessLevel auth.AccessLevel) http.Handler {
 			resObj.Send(w)
 			return
 		}
-		if token.AccessLevel < 0 {
+		acc, err := models.GetAccountById(db, token.UserID)
+		if err != nil {
+			resObj := ResponseObject{
+				Status: http.StatusForbidden,
+				Error:  err.Error(),
+			}
+			resObj.Send(w)
+			return
+		}
+		userAccessLevel := acc.AccessLevel
+		if userAccessLevel < 0 {
 			w.WriteHeader(http.StatusForbidden)
 			resObj := ResponseObject{
 				Status: http.StatusForbidden,
@@ -52,7 +64,7 @@ func WithAuth(next http.Handler, accessLevel auth.AccessLevel) http.Handler {
 			return
 		}
 		//Everything went well, proceed with the request and set the caller to the user retrieved from the parsed token
-		if token.AccessLevel >= accessLevel {
+		if userAccessLevel >= accessLevel {
 			ctx := context.WithValue(r.Context(), UserID, token.UserID)
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r) //proceed in the middleware chain!
