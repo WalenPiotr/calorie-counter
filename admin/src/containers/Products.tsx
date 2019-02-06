@@ -2,13 +2,14 @@ import * as React from "react";
 import { Product } from "@requests";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 import { routes } from "@routes";
+import ProductsTable from "@components/ProductsTable";
+
 interface ProductsProps extends RouteComponentProps {
     search: (name: string) => Promise<Product[] | undefined>;
 }
 interface ProductsState {
     products: Product[];
 }
-
 class Products extends React.PureComponent<ProductsProps, ProductsState> {
     state = {
         products: []
@@ -19,27 +20,18 @@ class Products extends React.PureComponent<ProductsProps, ProductsState> {
             this.setState({ products });
         }
     };
-
     goToProduct = (id: number) => () => {
-        this.props.history.push(routes.product, { id });
+        this.props.history.push(routes.product(id.toString()));
     };
     goToNew = () => () => {
-        this.props.history.push(routes.productNew);
+        this.props.history.push(routes.productNew());
     };
-
     render() {
-        const productsElements = this.state.products.map((product: Product) => (
-            <div onClick={this.goToProduct(product.id)}>
-                {product.id} - {product.name} - {product.creator}
-            </div>
-        ));
         return (
-            <div>
-                <div>{productsElements}</div>
-                <div>
-                    <button onClick={this.goToNew}>Add new</button>
-                </div>
-            </div>
+            <ProductsTable
+                products={this.state.products}
+                goToProduct={this.goToProduct}
+            />
         );
     }
 }

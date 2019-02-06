@@ -1,5 +1,6 @@
 import * as React from "react";
-
+import * as Elements from "@elements/index";
+import AuthForm from "@components/AuthForm";
 interface ProductsProps {
     login: (email: string, password: string) => void;
 }
@@ -7,7 +8,6 @@ interface ProductsState {
     password: string;
     email: string;
 }
-
 class Login extends React.PureComponent<ProductsProps, ProductsState> {
     state = {
         password: "",
@@ -27,21 +27,14 @@ class Login extends React.PureComponent<ProductsProps, ProductsState> {
     };
     render() {
         return (
-            <div>
-                <input
-                    placeholder="email"
-                    value={this.state.email}
-                    onChange={this.emailChange}
-                />
-                <input
-                    placeholder="password"
-                    value={this.state.password}
-                    onChange={this.passwordChange}
-                />
-                <button onClick={this.buttonClick}>Login</button>
-            </div>
+            <AuthForm
+                email={this.state.email}
+                password={this.state.password}
+                onPasswordChange={this.passwordChange}
+                onEmailChange={this.emailChange}
+                buttonClick={this.buttonClick}
+            />
         );
     }
 }
-
 export default Login;

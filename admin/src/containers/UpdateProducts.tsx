@@ -1,15 +1,20 @@
 import * as React from "react";
 import { withRouter, RouteComponentProps } from "react-router-dom";
-import { routes } from "@routes";
+import ProductForm from "@components/ProductForm";
+import * as requests from "@requests";
 
-interface NewProductProps extends RouteComponentProps {
-    new: (product: {
-        name: string;
-        description: string;
-        portions: { energy: number; unit: string }[];
-    }) => Promise<void>;
+interface UpdateProductProps extends RouteComponentProps<{ id: string }> {
+    update: (
+        id: number,
+        product: {
+            name: string;
+            description: string;
+            portions: { energy: number; unit: string }[];
+        }
+    ) => Promise<void>;
+    get: (id: number) => Promise<requests.Product | undefined>;
 }
-interface NewProductState {
+interface UpdateProductState {
     product: {
         name: string;
         portions: {
@@ -20,7 +25,10 @@ interface NewProductState {
     isLoading: boolean;
 }
 
-class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
+class UpdateProduct extends React.PureComponent<
+    UpdateProductProps,
+    UpdateProductState
+> {
     state = {
         product: {
             name: "",
@@ -34,10 +42,28 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
         },
         isLoading: true
     };
+    componentDidMount = async () => {
+        console.log("from componentDidMount");
+        const { id } = this.props.match.params;
+        const product = await this.props.get(parseInt(id));
+        if (product) {
+            this.setState({
+                product: {
+                    name: product.name,
+                    description: "",
+                    portions: product.portions.map(({ energy, unit }) => ({
+                        energy: energy.toString(),
+                        unit
+                    }))
+                }
+            });
+        }
+    };
+
     removePortion = (index: number) => () => {
         const newPortions = [...this.state.product.portions];
         newPortions.splice(index, 1);
-        this.setState((prevState: NewProductState) => ({
+        this.setState((prevState: UpdateProductState) => ({
             ...prevState,
             product: {
                 ...prevState.product,
@@ -48,7 +74,7 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
     newPortion = () => {
         const portions = this.state.product.portions;
         const newPortions = [...portions, portions[portions.length - 1]];
-        this.setState((prevState: NewProductState) => ({
+        this.setState((prevState: UpdateProductState) => ({
             ...prevState,
             product: {
                 ...prevState.product,
@@ -56,7 +82,7 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
             }
         }));
     };
-    addClick = () => {
+    updateClick = () => {
         const { product } = this.state;
         try {
             const parsedPortions = product.portions.map(
@@ -76,15 +102,15 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
                 ...product,
                 portions: parsedPortions
             };
-            this.props.new(newProduct);
-            this.props.history.push(routes.products);
+            const { id } = this.props.match.params;
+            this.props.update(parseInt(id), newProduct);
         } catch (e) {
             console.log(e);
         }
     };
     nameChange = (e: React.FormEvent<HTMLInputElement>) => {
         const { value } = e.currentTarget;
-        this.setState((prevState: NewProductState) => {
+        this.setState((prevState: UpdateProductState) => {
             return {
                 ...prevState,
                 product: {
@@ -96,7 +122,7 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
     };
     descriptionChange = (e: React.FormEvent<HTMLInputElement>) => {
         const { value } = e.currentTarget;
-        this.setState((prevState: NewProductState) => {
+        this.setState((prevState: UpdateProductState) => {
             return {
                 ...prevState,
                 product: {
@@ -110,9 +136,9 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
         e: React.FormEvent<HTMLInputElement>
     ) => {
         const value = e.currentTarget.value;
-        this.setState((prevState: NewProductState) => {
+        this.setState((prevState: UpdateProductState) => {
             const newPortions = [...prevState.product.portions];
-            newPortions[index][field] = value;
+            newPortions[index] = { ...newPortions[index], [field]: value };
             return {
                 ...prevState,
                 product: {
@@ -123,50 +149,19 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
         });
     };
     render() {
-        const { product } = this.state;
-        const portionsInputs = product.portions.map(
-            (portion: { energy: string; unit: string }, index: number) => (
-                <div key={index}>
-                    {product.portions.length > 1 ? (
-                        <button onClick={this.removePortion(index)}>X</button>
-                    ) : null}
-                    <input
-                        placeholder="unit"
-                        value={portion.unit}
-                        onChange={this.onPortionInputChange(index, "unit")}
-                    />
-                    <input
-                        placeholder="energy"
-                        value={portion.energy}
-                        onChange={this.onPortionInputChange(index, "energy")}
-                    />
-                </div>
-            )
-        );
         return (
-            <div>
-                <div>
-                    <input
-                        placeholder="name"
-                        value={product.name}
-                        onChange={this.nameChange}
-                    />
-                    <input
-                        placeholder="description"
-                        value={product.description}
-                        onChange={this.descriptionChange}
-                    />
-                </div>
-                <div>{portionsInputs}</div>
-                <div>
-                    <button onClick={this.newPortion}>New Portion</button>
-                </div>
-                <div>
-                    <button onClick={this.addClick}>Add</button>
-                </div>
-            </div>
+            <ProductForm
+                product={this.state.product}
+                onPortionInputChange={this.onPortionInputChange}
+                removePortionClick={this.removePortion}
+                proceedClick={this.updateClick}
+                proceedText={"Update"}
+                newPortionClick={this.newPortion}
+                nameChange={this.nameChange}
+                descriptionChange={this.descriptionChange}
+            />
         );
     }
 }
 
-export default withRouter(NewProduct);
+export default withRouter(UpdateProduct);

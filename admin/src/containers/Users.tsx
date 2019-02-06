@@ -1,7 +1,7 @@
 import * as React from "react";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 import { routes } from "@routes";
-
+import UsersTable from "@components/UsersTable";
 interface User {
     email: string;
     id: number;
@@ -21,19 +21,17 @@ class Users extends React.PureComponent<UsersProps, UsersState> {
     state = {
         users: []
     };
+    componentDidMount = () => {
+        this.fetchData();
+    };
     fetchData = async () => {
         const users = await this.props.search("");
         if (users !== undefined) {
             this.setState({ users });
         }
     };
-
-    componentDidMount = () => {
-        this.fetchData();
-    };
-
-    goToUserProducts = (id: number) => () => {
-        this.props.history.push(routes.userProducts, { id });
+    goToUserProducts = (userId: number) => () => {
+        this.props.history.push(routes.userProducts(userId.toString()));
     };
     ban = (id: number) => async () => {
         await this.props.ban(id);
@@ -44,17 +42,13 @@ class Users extends React.PureComponent<UsersProps, UsersState> {
         this.fetchData();
     };
     render() {
-        const usersElements = this.state.users.map((user: User) => (
-            <div onClick={this.goToUserProducts(user.id)}>
-                {user.id} - {user.email} - {user.accessLevel} -{" "}
-                <button onClick={this.ban(user.id)}>BAN</button>
-                <button onClick={this.unban(user.id)}>UNBAN</button>
-            </div>
-        ));
         return (
-            <div>
-                <div>{usersElements}</div>
-            </div>
+            <UsersTable
+                users={this.state.users}
+                goToUserProducts={this.goToUserProducts}
+                ban={this.ban}
+                unban={this.unban}
+            />
         );
     }
 }

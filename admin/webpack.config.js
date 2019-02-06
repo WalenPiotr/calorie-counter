@@ -8,22 +8,25 @@ module.exports = {
     entry: path.resolve(__dirname, "src/index.tsx"),
     output: {
         filename: "[name].bundle.js",
-        path: path.resolve(__dirname, "dist")
-        // publicPath: "/"
+        path: path.resolve(__dirname, "dist"),
+        publicPath: "/"
     },
     devtool: "source-map",
     resolve: {
         extensions: [".js", ".json", ".ts", ".tsx", ".d.ts"],
         alias: {
             "@interfaces": path.resolve(__dirname, "src/interfaces/"),
-            "@views": path.resolve(__dirname, "src/views/"),
+            "@containers": path.resolve(__dirname, "src/containers/"),
             "@components": path.resolve(__dirname, "src/components/"),
             "@elements": path.resolve(__dirname, "src/elements/"),
             "@media": path.resolve(__dirname, "src/media.ts"),
             "@storage": path.resolve(__dirname, "src/storage.ts"),
             "@status": path.resolve(__dirname, "src/status.ts"),
             "@requests": path.resolve(__dirname, "src/requests.ts"),
-            "@routes": path.resolve(__dirname, "src/routes.ts")
+            "@routes": path.resolve(__dirname, "src/routes.ts"),
+            "@theme": path.resolve(__dirname, "src/theme.ts"),
+            "@reducers": path.resolve(__dirname, "src/reducers/"),
+            "@actions": path.resolve(__dirname, "src/actions/")
         }
     },
     module: {

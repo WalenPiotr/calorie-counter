@@ -10,13 +10,16 @@
         "paths": {
             "@interfaces/*": ["src/interfaces/*"],
             "@components/*": ["src/components/*"],
-            "@views/*": ["src/views/*"],
+            "@containers/*": ["src/containers/*"],
             "@elements/*": ["src/elements/*"],
             "@storage": ["src/storage.ts"],
             "@media": ["src/media.ts"],
             "@requests": ["src/requests.ts"],
             "@status": ["src/status.ts"],
-            "@routes": ["src/routes.ts"]
+            "@routes": ["src/routes.ts"],
+            "@theme": ["src/theme.ts"],
+            "@reducers": ["src/reducers"],
+            "@actions": ["src/actions"]
         },
         "downlevelIteration": true,
         "forceConsistentCasingInFileNames": true,

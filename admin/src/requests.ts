@@ -394,6 +394,7 @@ export const getUserProducts = async (
         method: "POST",
         type: "cors"
     };
+    console.log(req);
     try {
         const response = await fetch(endpoints.getUserProducts, request);
         const parsed = await response.json();
