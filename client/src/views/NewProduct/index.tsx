@@ -94,7 +94,7 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
         this.setState((prevState: NewProductState) => {
             this.props.setStatus(Status.None, "");
             const newPortions = [...prevState.product.portions];
-            newPortions[index][field] = value;
+            newPortions[index] = { ...newPortions[index], [field]: value };
             return {
                 ...prevState,
                 product: {
@@ -108,10 +108,7 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
         this.setState((prevState: NewProductState) => {
             this.props.setStatus(Status.None, "");
             const oldPortions = prevState.product.portions;
-            const newPortions = [
-                ...oldPortions,
-                oldPortions[oldPortions.length - 1]
-            ];
+            const newPortions = [...oldPortions, { energy: "", unit: "" }];
             return {
                 ...prevState,
                 product: {

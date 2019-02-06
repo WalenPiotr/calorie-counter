@@ -8,8 +8,8 @@ module.exports = {
     entry: path.resolve(__dirname, "src/index.tsx"),
     output: {
         filename: "[name].bundle.js",
-        path: path.resolve(__dirname, "dist")
-        // publicPath: "/"
+        path: path.resolve(__dirname, "dist"),
+        publicPath: "/"
     },
     devtool: "source-map",
     resolve: {
