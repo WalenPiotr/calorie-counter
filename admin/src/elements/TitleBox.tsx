@@ -13,14 +13,13 @@ export const TitleBox = styled.div`
     display: block;
     box-sizing: border-box;
 
-    font-size: ${fonts.size.xlarge};
-    font-weight: ${fonts.weight.regular};
+    font-size: ${fonts.size.medium};
+    font-weight: ${fonts.weight.bold};
 
     width: 100%;
-    height: 50px;
+    height: 30px;
 
     ${({ css }: TitleBoxProps) => {
         return css;
     }}
 `;
-

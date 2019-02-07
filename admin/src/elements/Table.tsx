@@ -5,4 +5,5 @@ export const Table = styled.table`
     border-collapse: collapse;
     box-sizing: border-box;
     font-size: ${fonts.size.small};
+    width: 100%;
 `;

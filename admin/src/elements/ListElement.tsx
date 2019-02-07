@@ -1,5 +1,5 @@
 import styled, { css, FlattenSimpleInterpolation } from "styled-components";
-
+import { fonts } from "@theme";
 interface ListElementProps {
     css?: FlattenSimpleInterpolation;
 }
@@ -13,4 +13,5 @@ export const ListElement = styled.div`
     ${({ css }: ListElementProps) => {
         return css;
     }}
+    font-size: ${fonts.size.small};
 `;

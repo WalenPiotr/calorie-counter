@@ -36,11 +36,7 @@ class ProductsTable extends React.PureComponent<ProductsTableProps> {
                 ])
         );
 
-        return (
-            <Elements.Widget>
-                <Table heading={heading} rows={rows} />
-            </Elements.Widget>
-        );
+        return <Table heading={heading} rows={rows} />;
     }
 }
 export default ProductsTable;

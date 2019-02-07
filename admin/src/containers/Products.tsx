@@ -3,6 +3,7 @@ import { Product } from "@requests";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 import { routes } from "@routes";
 import ProductsTable from "@components/ProductsTable";
+import * as Elements from "@elements/index";
 
 interface ProductsProps extends RouteComponentProps {
     search: (name: string) => Promise<Product[] | undefined>;
@@ -28,10 +29,12 @@ class Products extends React.PureComponent<ProductsProps, ProductsState> {
     };
     render() {
         return (
-            <ProductsTable
-                products={this.state.products}
-                goToProduct={this.goToProduct}
-            />
+            <Elements.Widget>
+                <ProductsTable
+                    products={this.state.products}
+                    goToProduct={this.goToProduct}
+                />
+            </Elements.Widget>
         );
     }
 }

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"app/service/auth"
 	"app/service/middleware"
 	"app/service/models"
 	"database/sql"
@@ -329,11 +330,17 @@ func GetUsersAddedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Portions []models.Portion `json:"portions"`
 		Votes    []*models.Votes  `json:"votes"`
 	}
+	type User struct {
+		Email       string           `json:"email"`
+		AccessLevel auth.AccessLevel `json:"accessLevel"`
+		ID          int              `json:"id"`
+	}
 	type RequestObject struct {
 		ID int `json:"id,omitempty"`
 	}
 	type ResponseObject struct {
 		Error    string    `json:"error,omitempty"`
+		User     User      `json:"user,omitempty"`
 		Products []Product `json:"products,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error, message string) {
@@ -346,11 +353,12 @@ func GetUsersAddedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, products []Product) {
+	sendData := func(w http.ResponseWriter, status int, products []Product, user User) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
 			Products: products,
+			User:     user,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -382,7 +390,13 @@ func GetUsersAddedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 			}
 			bundledProducts = append(bundledProducts, bundledProduct)
 		}
-		sendData(w, http.StatusOK, bundledProducts)
+		acc, err := models.GetAccountById(db, in.ID)
+		if err != nil {
+			err = errors.Wrap(err, "While get account by id")
+			sendError(w, http.StatusBadRequest, err, InternalError)
+			return
+		}
+		sendData(w, http.StatusOK, bundledProducts, User{Email: acc.Email, ID: acc.ID, AccessLevel: acc.AccessLevel})
 		return
 	})
 }

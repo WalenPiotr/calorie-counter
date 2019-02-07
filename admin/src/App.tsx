@@ -166,16 +166,15 @@ class App extends React.PureComponent<AppProps, AppState> {
         return;
     };
     getUserProducts = async (id: number) => {
-        const { products, error } = await requests.getUserProducts({
+        const res = await requests.getUserProducts({
             id
         });
-        console.log({ products, error });
-        if (error !== undefined) {
-            this.setStatus(Status.Error, error);
+        if (res.error) {
+            this.setStatus(Status.Error, res.error);
             return;
         }
-        if (products !== undefined) {
-            return products;
+        if (res !== undefined) {
+            return res;
         }
         this.setStatus(Status.Error, "Unexpected error");
         return;

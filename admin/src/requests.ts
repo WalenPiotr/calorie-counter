@@ -376,6 +376,11 @@ interface GetUserProductsRequest {
     id: number;
 }
 interface GetUserProductsResponse {
+    user?: {
+        id: number;
+        email:string;
+        accessLevel: number;
+    }
     products?: Product[];
     error?: string;
 }
