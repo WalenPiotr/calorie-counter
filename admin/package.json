@@ -1,12 +1,12 @@
 {
-    "name": "cc-client",
+    "name": "cc-admin",
     "version": "1.0.0",
-    "description": "Calorie counter client",
+    "description": "Calorie counter admin",
     "scripts": {
         "build": "rm -rf dist && webpack --mode production",
         "start": "webpack-dev-server --open --mode development"
     },
-    "main": "webpack.config.js",
+    "main": "index.js",
     "author": "Walen Piotr",
     "license": "ISC",
     "dependencies": {
@@ -36,8 +36,11 @@
         "typescript": "^3.2.2",
         "typescript-plugin-styled-components": "1.0.0",
         "uglifyjs-webpack-plugin": "^2.1.1",
-        "webpack": "^4.28.4",
-        "webpack-cli": "^3.2.1",
+        "webpack": "^4.29.3",
+        "webpack-cli": "^3.2.3",
         "webpack-dev-server": "^3.1.14"
+    },
+    "devDependencies": {
+        "file-loader": "^3.0.1"
     }
 }

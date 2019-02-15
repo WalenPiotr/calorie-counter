@@ -2,13 +2,11 @@ package models
 
 import (
 	"app/service/auth"
-	"os"
 	"strings"
 
 	"database/sql"
 
 	"github.com/pkg/errors"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // Account struct is used to represent user acc
@@ -30,26 +28,6 @@ func MigrateAccounts(db *sql.DB) error {
 			verified boolean default false
 		);
 	`)
-	if err != nil {
-		return errors.Wrap(err, "While creating accounts table")
-	}
-	defer rows.Close()
-	password := os.Getenv("ADMIN_PASSWORD")
-	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return errors.Wrap(err, "While creating accounts table")
-	}
-	admin := Account{
-		Email:       os.Getenv("ADMIN_EMAIL"),
-		Password:    string(hashed),
-		AccessLevel: auth.Admin,
-		Verified:    true,
-	}
-	rows, err = db.Query(`
-		INSERT INTO accounts (email, password, access_level, verified)
-		VALUES($1, $2, $3, $4)
-		ON CONFLICT (email) DO UPDATE SET password=$2, access_level=$3, verified=$4;
-	`, strings.ToLower(admin.Email), admin.Password, admin.AccessLevel, admin.Verified)
 	if err != nil {
 		return errors.Wrap(err, "While creating accounts table")
 	}
