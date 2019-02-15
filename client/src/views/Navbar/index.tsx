@@ -98,7 +98,6 @@ class Navbar extends React.PureComponent<NavbarProps, NavbarState> {
                 Logout
             </Styled.Link>
         ];
-
         return (
             <div>
                 <Styled.NavbarBox>
@@ -108,11 +107,19 @@ class Navbar extends React.PureComponent<NavbarProps, NavbarState> {
                         </Styled.IconButton>
                         <Styled.NavGroup>
                             <Styled.IconButton
+                                current={
+                                    this.props.history.location.pathname ==
+                                    "/entries"
+                                }
                                 onClick={this.onLinkClick("/entries")}
                             >
                                 <Styled.ShoppingBasketIcon />
                             </Styled.IconButton>
                             <Styled.IconButton
+                                current={
+                                    this.props.history.location.pathname ==
+                                    "/products"
+                                }
                                 onClick={this.onLinkClick("/products")}
                             >
                                 <Styled.SearchIcon />

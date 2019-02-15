@@ -22,7 +22,11 @@ module.exports = {
             "@media": path.resolve(__dirname, "src/media.ts"),
             "@storage": path.resolve(__dirname, "src/storage.ts"),
             "@status": path.resolve(__dirname, "src/status.ts"),
-            "@requests": path.resolve(__dirname, "src/requests.ts")
+            "@requests": path.resolve(__dirname, "src/requests.ts"),
+            "@inputValidation": path.resolve(
+                __dirname,
+                "src/inputValidation.ts"
+            )
         }
     },
     module: {
@@ -76,8 +80,16 @@ module.exports = {
     ],
     devServer: {
         proxy: {
-            "/api": "http://localhost:8080"
+            "/*.*-*": {
+                // Match all URL's with period/dot
+                target: "http://localhost:8080/", // send to webpack dev server
+                rewrite: function(req) {
+                    req.url = "index.html"; // Send to react app
+                }
+            }
         },
-        historyApiFallback: true
+        historyApiFallback: {
+            disableDotRule: true
+        }
     }
 };

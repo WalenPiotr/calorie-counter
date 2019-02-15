@@ -32,12 +32,12 @@ interface ProductsState {
     searchInput: string;
     products: Product[];
     isLoading: boolean;
+    nothingFound: boolean;
 }
 
 const Box = styled.div`
     flex: 100px 1 1;
     margin: 10px;
-    width: 85%;
 `;
 const SpinnerBox = styled.div`
     width: 50px;
@@ -50,7 +50,8 @@ class Products extends React.PureComponent<ProductsProps, ProductsState> {
     state = {
         searchInput: "",
         products: [],
-        isLoading: false
+        isLoading: false,
+        nothingFound: false
     };
     onSearchClick = async () => {
         this.setState((prevState: ProductsState) => ({
@@ -61,19 +62,28 @@ class Products extends React.PureComponent<ProductsProps, ProductsState> {
             name: this.state.searchInput
         });
         const products = res.products;
+        console.log(products);
         if (products) {
             this.setState((prevState: ProductsState) => ({
                 ...prevState,
                 products: products,
-                isLoading: false
+                isLoading: false,
+                nothingFound: false
             }));
-            return;
+        } else {
+            this.setState((prevState: ProductsState) => ({
+                ...prevState,
+                products: [],
+                isLoading: false,
+                nothingFound: true
+            }));
         }
         if (res.error) {
             this.props.setStatus(Status.Error, res.error);
             this.setState((prevState: ProductsState) => ({
                 ...prevState,
-                isLoading: false
+                isLoading: false,
+                nothingFound: true
             }));
             return;
         }
@@ -105,6 +115,7 @@ class Products extends React.PureComponent<ProductsProps, ProductsState> {
                         </SpinnerBox>
                     ) : (
                         <Table
+                            nothingFound={this.state.nothingFound}
                             products={this.state.products}
                             setStatus={this.props.setStatus}
                         />

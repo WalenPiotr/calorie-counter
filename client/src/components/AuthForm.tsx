@@ -9,10 +9,8 @@ const Inputs = styled.div`
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    width: 85%;
 `;
 const Label = styled.div`
-    width: 85%;
     color: grey;
     font-size: 24px;
     text-transform: uppercase;
@@ -27,14 +25,13 @@ const Links = styled.div`
     justify-content: space-between;
     text-decoration: none;
     color: rgba(30, 100, 200, 1);
-    width: 80%;
     margin-bottom: 20px;
 `;
 const Link = styled.a`
     text-decoration: none;
 `;
 const Button = styled(BlockButton)`
-    width: 85%;
+    width: 100%;
 `;
 
 interface LinkParams {
@@ -48,8 +45,10 @@ interface ButtonParams {
 interface AuthFormProps {
     title: string;
     emailValue: string;
+    emailError: string | null;
     onEmailChange: (e: React.FormEvent<HTMLInputElement>) => void;
     passwordValue: string;
+    passwordError: string | null;
     onPasswordChange: (e: React.FormEvent<HTMLInputElement>) => void;
     linkParams: LinkParams[];
     buttonParams: ButtonParams;
@@ -66,12 +65,14 @@ class AuthForm extends React.PureComponent<AuthFormProps, any> {
                         type={"email"}
                         value={props.emailValue}
                         onChange={props.onEmailChange}
+                        error={props.emailError}
                     />
                     <Input
                         label={"password"}
                         type={"password"}
                         value={props.passwordValue}
                         onChange={props.onPasswordChange}
+                        error={props.passwordError}
                     />
                 </Inputs>
                 <Links>

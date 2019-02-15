@@ -38,12 +38,10 @@ interface Product {
 }
 
 const CalendarBox = styled.div`
-    width: 85%;
     margin-bottom: 20px;
     border: 1px solid grey;
 `;
 const Label = styled.div`
-    width: 85%;
     color: grey;
     font-size: 24px;
     text-transform: uppercase;
@@ -58,6 +56,23 @@ const SpinnerBox = styled.div`
     height: 50px;
     color: rgba(30, 100, 200, 1);
     margin: 10px auto;
+`;
+
+const TableBox = styled.div``;
+
+const SummaryBox = styled.div`
+    border-top: 1px solid grey;
+    padding-top: 10px;
+    margin-top: 10px;
+    display: flex;
+`;
+const SummaryLabel = styled.div`
+    width: 60%;
+    font-weight: 500;
+`;
+const SummaryValue = styled.div`
+    width: 30%;
+    font-weight: 500;
 `;
 
 interface EntriesState {
@@ -181,6 +196,17 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
                         );
                     })
             );
+
+        const sum = this.state.entries.reduce((acc: number, entry: Entry) => {
+            const portion = entry.product.portions.find(
+                (portion: Portion) => portion.id == entry.portionID
+            );
+            if (portion) {
+                return acc + entry.quantity * portion.energy;
+            }
+            return 0;
+        }, 0);
+
         return (
             <Widget>
                 <Label>Entries</Label>
@@ -192,9 +218,14 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
                         onCollapseClick={this.onCalendarClick}
                     />
                 </CalendarBox>
-
                 {!this.state.isLoading ? (
-                    rows
+                    <TableBox>
+                        <div>{rows}</div>
+                        <SummaryBox>
+                            <SummaryLabel>Total energy: </SummaryLabel>
+                            <SummaryValue>{sum.toFixed()} kcal</SummaryValue>
+                        </SummaryBox>
+                    </TableBox>
                 ) : (
                     <SpinnerBox>
                         <Spinner />
@@ -205,10 +236,6 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
     }
 }
 
-interface ElementProps {
-    width: string;
-}
-
 const RowBox = styled.div`
     display: flex;
     align-items: center;
@@ -217,22 +244,29 @@ const RowBox = styled.div`
     border-top: 1px solid grey;
     width: 100%;
 `;
+
+interface ElementProps {
+    width: string;
+    grow?: boolean;
+    shrink?: boolean;
+}
 const Element = styled.div`
-    width: ${(props: ElementProps) => props.width};
+    flex-basis: ${(props: ElementProps) => props.width};
+    flex-grow: ${(props: ElementProps) => (props.grow ? 1 : 0)};
+    flex-shrink: ${(props: ElementProps) => (props.shrink ? 1 : 0)};
     text-align: left;
     vertical-align: middle;
     font-size: 14px;
 `;
 const ExpandButton = styled.button`
-    width: 50px;
-    height: 50px;
+    flex: 40px 0 0;
+    height: 40px;
     background-color: none;
     color: rgba(30, 100, 200, 1);
     border: none;
     background-color: transparent;
     height: 50px;
     width: 50px;
-    padding: 10px;
     font-size: 20px;
 `;
 
@@ -268,9 +302,7 @@ const NutrientDiv = styled.div`
     align-items: center;
     flex-direction: column;
 `;
-const Box = styled.div`
-    width: 85%;
-`;
+const Box = styled.div``;
 const BlockButtonGroup = styled.div`
     display: flex;
     width: 100%;
@@ -295,6 +327,7 @@ interface RowProps {
 interface RowState {
     collapsed: boolean;
     quantity: string;
+    quantityError: string | null;
     unit: string;
     date: Date;
 }
@@ -305,7 +338,8 @@ class Row extends React.Component<RowProps, RowState> {
         unit: this.props.entry.product.portions.filter(
             (portion: Portion) => this.props.entry.portionID == portion.id
         )[0].unit,
-        date: new Date(this.props.entry.date)
+        date: new Date(this.props.entry.date),
+        quantityError: null
     };
 
     onInputChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -343,14 +377,24 @@ class Row extends React.Component<RowProps, RowState> {
             }
         }
         const id = this.props.entry.id;
+        const parsedQuantity = parseFloat(this.state.quantity);
+        if (isNaN(parsedQuantity)) {
+            this.setState({ quantityError: "Please enter valid value" });
+            return;
+        }
+        if (parsedQuantity < 0) {
+            this.setState({ quantityError: "Please enter positive value" });
+            return;
+        }
         const entry = {
             productID: this.props.entry.product.id,
             portionID: portionID,
-            quantity: parseFloat(this.state.quantity),
+            quantity: parsedQuantity,
             date: this.state.date.toISOString()
         };
         try {
-            await this.props.updateEntry(id, entry);
+            const res = await this.props.updateEntry(id, entry);
+            this.setState({ quantityError: null });
         } catch (e) {
             console.log(e);
         }
@@ -365,7 +409,7 @@ class Row extends React.Component<RowProps, RowState> {
             date
         }));
     };
-    getEnergy = (): number => {
+    getEnergy = (): string => {
         var portionEnergy = 0;
         for (const portion of this.props.entry.product.portions) {
             if (portion.unit == this.state.unit) {
@@ -374,8 +418,13 @@ class Row extends React.Component<RowProps, RowState> {
             }
         }
         const parsedQuantity = parseFloat(this.state.quantity);
-        const quantity = isNaN(parsedQuantity) ? 0 : parsedQuantity;
-        return portionEnergy * quantity;
+        if (isNaN(parsedQuantity)) {
+            return "X";
+        }
+        if (parsedQuantity <= 0) {
+            return "X";
+        }
+        return (portionEnergy * parsedQuantity).toFixed().toString();
     };
     onCalendarClick = () => {
         this.props.setStatus(Status.None, "");
@@ -389,11 +438,11 @@ class Row extends React.Component<RowProps, RowState> {
         return (
             <Box>
                 <RowBox>
-                    <Element width={"35%"}>{name}</Element>
+                    <Element width={"30%"}>{name}</Element>
                     <Element width={"15%"}>{quantity}</Element>
                     <Element width={"15%"}>{unit}</Element>
-                    <Element width={"30%"}>
-                        {this.getEnergy().toFixed()} kcal
+                    <Element width={"25%"} grow>
+                        {this.getEnergy()} kcal
                     </Element>
                     <ExpandButton onClick={this.onCollapseClick}>
                         {this.state.collapsed ? <Gear /> : <ChevronUp />}
@@ -412,6 +461,7 @@ class Row extends React.Component<RowProps, RowState> {
                         label={"Enter Amount"}
                         value={this.state.quantity}
                         onChange={this.onInputChange}
+                        error={this.state.quantityError}
                     />
                     <Select
                         label={"Select unit"}
@@ -423,9 +473,7 @@ class Row extends React.Component<RowProps, RowState> {
                     />
                     <NutrientDiv>
                         <NutrientLabel>Calories</NutrientLabel>
-                        <NutrientValue>
-                            {this.getEnergy().toFixed()}
-                        </NutrientValue>
+                        <NutrientValue>{this.getEnergy()}</NutrientValue>
                     </NutrientDiv>
                     <BlockButtonGroup>
                         <SmallBlockButton onClick={this.onUpdateClick}>

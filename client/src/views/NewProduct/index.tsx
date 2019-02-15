@@ -4,17 +4,22 @@ import * as requests from "@requests";
 import * as Styled from "./styled";
 import { Status } from "@status";
 import Widget from "@elements/Widget";
+import { RouteComponentProps, withRouter } from "react-router";
 
-export interface NewProductProps {
+export interface NewProductProps extends RouteComponentProps {
     setStatus: (status: Status, message: string) => void;
 }
 interface NewProductState {
     product: {
         name: string;
+        nameError: string | null;
         description: string;
+        descriptionError: string | null;
         portions: {
             energy: string;
+            energyError: string | null;
             unit: string;
+            unitError: string | null;
         }[];
     };
 }
@@ -23,52 +28,104 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
     state = {
         product: {
             name: "",
+            nameError: null,
             description: "",
+            descriptionError: null,
             portions: [
                 {
                     energy: "",
-                    unit: ""
+                    energyError: null,
+                    unit: "",
+                    unitError: null
                 }
             ]
         }
     };
     onAddClick = async () => {
         try {
-            const parsedPortions = this.state.product.portions.map(
-                (portion: {
-                    energy: string;
-                    unit: string;
-                }): {
-                    energy: number;
-                    unit: string;
-                } => {
-                    const energy = parseFloat(portion.energy);
-                    if (isNaN(energy)) {
-                        throw Error("Parsing error");
-                    } else {
+            var parsingError = false;
+            var newPortions: {
+                energy: string;
+                energyError: string | null;
+                unit: string;
+                unitError: string | null;
+            }[] = [];
+            for (const portion of this.state.product.portions) {
+                var energyError = null;
+                var unitError = null;
+                const energy = parseFloat(portion.energy);
+                if (isNaN(energy)) {
+                    energyError = "Enter valid energy value";
+                    parsingError = true;
+                }
+                if (energy <= 0) {
+                    energyError = "Enter positive energy value";
+                    parsingError = true;
+                }
+                if (portion.unit === "") {
+                    unitError = "Enter unit";
+                    parsingError = true;
+                }
+                newPortions = [
+                    ...newPortions,
+                    {
+                        ...portion,
+                        energyError: energyError,
+                        unitError: unitError
+                    }
+                ];
+            }
+            var nameError: string | null = null;
+            var descriptionError: string | null = null;
+            if (this.state.product.name === "") {
+                nameError = "Enter products name";
+                parsingError = true;
+            }
+            if (parsingError) {
+                this.setState((prevState: NewProductState) => {
+                    return {
+                        ...prevState,
+                        product: {
+                            ...prevState.product,
+                            nameError,
+                            descriptionError,
+                            portions: newPortions
+                        }
+                    };
+                });
+            } else {
+                const parsedPortions = this.state.product.portions.map(
+                    (portion: {
+                        energy: string;
+                        unit: string;
+                    }): {
+                        energy: number;
+                        unit: string;
+                    } => {
                         return {
-                            energy: energy,
+                            energy: parseFloat(portion.energy),
                             unit: portion.unit
                         };
                     }
-                }
-            );
-            const product = {
-                name: this.state.product.name,
-                description: this.state.product.description,
-                portions: parsedPortions
-            };
-            const res = await requests.productNew({ product });
-            if (res.error) {
-                this.props.setStatus(Status.Error, res.error);
-                return;
-            }
-            if (res.product) {
-                this.props.setStatus(
-                    Status.Success,
-                    "Product successfully added"
                 );
-                return;
+                const product = {
+                    name: this.state.product.name,
+                    description: this.state.product.description,
+                    portions: parsedPortions
+                };
+                const res = await requests.productNew({ product });
+                if (res.error) {
+                    this.props.setStatus(Status.Error, res.error);
+                    return;
+                }
+                if (res.product) {
+                    this.props.setStatus(
+                        Status.Success,
+                        "Product successfully added"
+                    );
+                    this.props.history.push("/products");
+                    return;
+                }
             }
         } catch (e) {
             this.props.setStatus(Status.Error, "Invalid input data");
@@ -108,7 +165,10 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
         this.setState((prevState: NewProductState) => {
             this.props.setStatus(Status.None, "");
             const oldPortions = prevState.product.portions;
-            const newPortions = [...oldPortions, { energy: "", unit: "" }];
+            const newPortions = [
+                ...oldPortions,
+                { energy: "", energyError: null, unit: "", unitError: null }
+            ];
             return {
                 ...prevState,
                 product: {
@@ -143,16 +203,23 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
                         label={"name"}
                         value={this.state.product.name}
                         onChange={this.onBaseInputChange("name")}
+                        error={this.state.product.nameError}
                     />
                     <Input
                         label={"description"}
                         value={this.state.product.description}
                         onChange={this.onBaseInputChange("description")}
+                        error={this.state.product.descriptionError}
                     />
                 </Styled.BaseGroup>
                 {this.state.product.portions.map(
                     (
-                        portion: { energy: string; unit: string },
+                        portion: {
+                            energy: string;
+                            unit: string;
+                            energyError: string | null;
+                            unitError: string | null;
+                        },
                         index: number
                     ) => (
                         <Styled.PortionGroup
@@ -176,6 +243,7 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
                                     index,
                                     "unit"
                                 )}
+                                error={portion.unitError}
                             />
                             <Input
                                 label={"Enter energy [kcal]"}
@@ -184,6 +252,7 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
                                     index,
                                     "energy"
                                 )}
+                                error={portion.energyError}
                             />
                         </Styled.PortionGroup>
                     )
@@ -200,4 +269,4 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
     }
 }
 
-export default NewProduct;
+export default withRouter(NewProduct);

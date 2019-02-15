@@ -15,7 +15,8 @@
             "@storage": ["src/storage.ts"],
             "@media": ["src/media.ts"],
             "@requests": ["src/requests.ts"],
-            "@status": ["src/status.ts"]
+            "@status": ["src/status.ts"],
+            "@inputValidation": ["src/inputValidation.ts"]
         },
         "downlevelIteration": true,
         "forceConsistentCasingInFileNames": true,

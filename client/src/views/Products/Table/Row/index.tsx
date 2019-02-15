@@ -19,6 +19,7 @@ interface RowProps {
 interface RowState {
     collapsed: boolean;
     quantity: string;
+    quantityError: string | null;
     unit: string;
     date: Date;
 }
@@ -27,6 +28,7 @@ class Row extends React.PureComponent<RowProps, RowState> {
     state = {
         collapsed: true,
         quantity: "1",
+        quantityError: null,
         unit: this.props.product.portions[0].unit,
         date: new Date()
     };
@@ -57,16 +59,26 @@ class Row extends React.PureComponent<RowProps, RowState> {
                 break;
             }
         }
+        const parsedQuantity = parseFloat(this.state.quantity);
+        if (isNaN(parsedQuantity)) {
+            this.setState({ quantityError: "Please enter valid value" });
+            return;
+        }
+        if (parsedQuantity < 0) {
+            this.setState({ quantityError: "Please enter positive value" });
+            return;
+        }
         const entry = {
             productID: this.props.product.id,
             portionID: portionID,
-            quantity: parseFloat(this.state.quantity),
+            quantity: parsedQuantity,
             date: this.state.date.toISOString()
         };
         const res = await requests.createEntry({ entry });
         this.setState({ collapsed: true });
         if (res.entry) {
             this.props.setStatus(Status.Success, "Entry added");
+            this.setState({ quantityError: null });
             return;
         }
         if (res.error) {
@@ -74,7 +86,7 @@ class Row extends React.PureComponent<RowProps, RowState> {
             return;
         }
     };
-    getEnergy = (): number => {
+    getEnergy = (): string => {
         var portionEnergy = 0;
         for (const portion of this.props.product.portions) {
             if (portion.unit == this.state.unit) {
@@ -83,8 +95,13 @@ class Row extends React.PureComponent<RowProps, RowState> {
             }
         }
         const parsedQuantity = parseFloat(this.state.quantity);
-        const quantity = isNaN(parsedQuantity) ? 0 : parsedQuantity;
-        return portionEnergy * quantity;
+        if (isNaN(parsedQuantity)) {
+            return "X";
+        }
+        if (parsedQuantity <= 0) {
+            return "X";
+        }
+        return (portionEnergy * parsedQuantity).toFixed().toString();
     };
     onDateChange = async (date: Date) => {
         console.log(date.toISOString());
@@ -143,6 +160,7 @@ class Row extends React.PureComponent<RowProps, RowState> {
                         label={"Enter Amount"}
                         value={this.state.quantity}
                         onChange={this.onInputChange}
+                        error={this.state.quantityError}
                     />
                     <Select
                         label={"Select Unit"}
@@ -155,7 +173,7 @@ class Row extends React.PureComponent<RowProps, RowState> {
                     <Styled.NutrientDiv>
                         <Styled.NutrientLabel>Calories</Styled.NutrientLabel>
                         <Styled.NutrientValue>
-                            {this.getEnergy().toFixed()}
+                            {this.getEnergy()}
                         </Styled.NutrientValue>
                     </Styled.NutrientDiv>
                     <BlockButton onClick={this.onAddClick}>ADD</BlockButton>

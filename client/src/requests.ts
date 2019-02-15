@@ -5,6 +5,10 @@ const base = "http://" + location.hostname + ":8080/";
 const endpoints = {
     login: base + "api/user/login",
     register: base + "api/user/new",
+    verifyAccount: base + "api/user/verify",
+    changePassword: base + "api/user/change-password",
+    remindPassword: base + "api/user/remind-password",
+    check: base + "api/user/check-token",
     productNew: base + "api/product/new",
     productSearch: base + "api/product/search",
     entriesCreate: base + "api/user/entries/create",
@@ -49,13 +53,46 @@ export const login = async (req: LoginRequest): Promise<LoginResponse> => {
     }
 };
 
+interface CheckRequest {
+    token: string;
+}
+interface CheckResponse {
+    error?: string;
+    authenticated?: boolean;
+}
+
+export const checkToken = async (req: CheckRequest): Promise<CheckResponse> => {
+    const request = {
+        body: JSON.stringify(req),
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json"
+        },
+        method: "POST",
+        type: "cors"
+    };
+    try {
+        const response = await fetch(endpoints.check, request);
+        const parsed = await response.json();
+        console.log(parsed);
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        if (parsed.authenticated) {
+            return { authenticated: parsed.authenticated };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
+};
+
 interface RegisterRequest {
     email: string;
     password: string;
 }
 interface RegisterResponse {
     error?: string;
-    token?: string;
 }
 export const register = async (
     req: RegisterRequest
@@ -76,8 +113,8 @@ export const register = async (
         if (parsed.error) {
             return { error: parsed.error };
         }
-        if (parsed.token) {
-            return { token: parsed.token };
+        if (parsed) {
+            return {};
         }
         return { error: "Something went wrong" };
     } catch (e) {
@@ -371,6 +408,108 @@ export const deleteEntry = async (
     };
     try {
         const response = await fetch(endpoints.entriesDelete, request);
+        const parsed = await response.json();
+        if (response.status == 200) {
+            return {};
+        }
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
+};
+
+interface VerifyAccountRequest {
+    token: string;
+}
+interface VerifyAccountResponse {
+    error?: string;
+}
+
+export const verifyAccount = async (
+    req: VerifyAccountRequest
+): Promise<VerifyAccountResponse> => {
+    const request = {
+        body: JSON.stringify(req),
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json"
+        },
+        method: "POST",
+        type: "cors"
+    };
+    try {
+        const response = await fetch(endpoints.verifyAccount, request);
+        const parsed = await response.json();
+        if (response.status == 200) {
+            return {};
+        }
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
+};
+
+interface ChangePasswordRequest {
+    token: string;
+    password: string;
+}
+interface ChangePasswordResponse {
+    error?: string;
+}
+export const changePassword = async (
+    req: ChangePasswordRequest
+): Promise<ChangePasswordResponse> => {
+    const request = {
+        body: JSON.stringify(req),
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json"
+        },
+        method: "POST",
+        type: "cors"
+    };
+    try {
+        const response = await fetch(endpoints.changePassword, request);
+        const parsed = await response.json();
+        if (response.status == 200) {
+            return {};
+        }
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
+};
+
+interface RemindPasswordRequest {
+    email: string;
+}
+interface RemindPasswordResponse {
+    error?: string;
+}
+
+export const remindPassword = async (
+    req: RemindPasswordRequest
+): Promise<RemindPasswordResponse> => {
+    const request = {
+        body: JSON.stringify(req),
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json"
+        },
+        method: "POST",
+        type: "cors"
+    };
+    try {
+        const response = await fetch(endpoints.remindPassword, request);
         const parsed = await response.json();
         if (response.status == 200) {
             return {};

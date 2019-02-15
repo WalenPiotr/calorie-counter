@@ -1,8 +1,8 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import { createGlobalStyle, ThemeProvider } from "styled-components";
 import { BrowserRouter, Route, Link, Switch, Redirect } from "react-router-dom";
 
+import VerifyAccount from "@views/VerifyAccount";
 import Login from "@views/Login";
 import Products from "@views/Products";
 import Entries from "@views/Entries";
@@ -14,6 +14,8 @@ import * as storage from "@storage";
 import { Status } from "@status";
 import NewProduct from "@views/NewProduct";
 import { withRouter, RouteComponentProps } from "react-router-dom";
+import NewPassword from "@views/NewPassword";
+import RemindPassword from "@views/RemindPassword";
 
 const GlobalStyle = createGlobalStyle`
     body {
@@ -51,17 +53,35 @@ class App extends React.PureComponent<AppProps, AppState> {
         status: Status.None,
         message: ""
     };
-    componentDidMount() {
+    componentDidMount = async () => {
         const token = storage.retrieveToken();
-        if (token !== "") {
-            this.setState({ isLoggedIn: true });
+        if (token != "") {
+            const res = await requests.checkToken({ token });
+            if (res.error) {
+                this.setStatus(Status.Error, res.error);
+                return;
+            }
+            if (res.authenticated) {
+                this.setState((prevState: AppState) => {
+                    return {
+                        ...prevState,
+                        isLoggedIn: true
+                    };
+                });
+                this.props.history.push("/products");
+                this.setStatus(Status.Success, "Successfully logged in");
+                return;
+            }
         }
-    }
-    logIn = async (email: string, password: string) => {
+    };
+    logIn = async (
+        email: string,
+        password: string
+    ): Promise<{ error?: string }> => {
         const res = await requests.login({ email, password });
         if (res.error) {
             this.setStatus(Status.Error, res.error);
-            return;
+            return { error: res.error };
         }
         if (res.token) {
             storage.persistToken(res.token);
@@ -73,8 +93,9 @@ class App extends React.PureComponent<AppProps, AppState> {
             });
             this.props.history.push("/products");
             this.setStatus(Status.Success, "Successfully logged in");
-            return;
+            return {};
         }
+        return { error: "Something went horribly wrong" };
     };
     logOut = () => {
         storage.invalidateToken();
@@ -85,24 +106,22 @@ class App extends React.PureComponent<AppProps, AppState> {
             };
         });
     };
-    register = async (email: string, password: string) => {
+    register = async (
+        email: string,
+        password: string
+    ): Promise<{ error?: string }> => {
+        storage.invalidateToken();
         const res = await requests.register({ email, password });
         if (res.error) {
             this.setStatus(Status.Error, res.error);
-            return;
+            return { error: res.error };
         }
-        if (res.token) {
-            storage.persistToken(res.token);
-            this.setState((prevState: AppState) => {
-                return {
-                    ...prevState,
-                    isLoggedIn: true
-                };
-            });
-            this.props.history.push("/products");
-            this.setStatus(Status.Success, "Successfully registered");
-            return;
-        }
+        this.setStatus(
+            Status.Success,
+            "Please check your email and verify your account"
+        );
+        this.props.history.push("/");
+        return {};
     };
     setStatus = (status: Status, message: string) => {
         this.setState({ status, message });
@@ -128,7 +147,6 @@ class App extends React.PureComponent<AppProps, AppState> {
                                 render={props => (
                                     <Register
                                         {...props}
-                                        setStatus={this.setStatus}
                                         register={this.register}
                                     />
                                 )}
@@ -136,11 +154,7 @@ class App extends React.PureComponent<AppProps, AppState> {
                             <Route
                                 path="/login"
                                 render={props => (
-                                    <Login
-                                        {...props}
-                                        setStatus={this.setStatus}
-                                        logIn={this.logIn}
-                                    />
+                                    <Login {...props} logIn={this.logIn} />
                                 )}
                             />
                             <Route
@@ -181,6 +195,28 @@ class App extends React.PureComponent<AppProps, AppState> {
                                         <Redirect to={"/login"} />
                                     )
                                 }
+                            />
+                            <Route
+                                path="/verify/:token"
+                                render={props => <VerifyAccount {...props} />}
+                            />
+                            <Route
+                                path="/change-password/:token"
+                                render={props => (
+                                    <NewPassword
+                                        {...props}
+                                        setStatus={this.setStatus}
+                                    />
+                                )}
+                            />
+                            <Route
+                                path="/remind-password"
+                                render={props => (
+                                    <RemindPassword
+                                        {...props}
+                                        setStatus={this.setStatus}
+                                    />
+                                )}
                             />
                         </Switch>
                     </div>

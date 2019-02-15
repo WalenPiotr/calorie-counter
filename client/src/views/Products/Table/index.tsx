@@ -7,6 +7,7 @@ import { Status } from "@status";
 interface TableProps {
     products: Product[];
     setStatus: (status: Status, message: string) => void;
+    nothingFound: boolean;
 }
 interface TableState {
     collapsed: boolean;
@@ -16,8 +17,6 @@ class Table extends React.PureComponent<TableProps, TableState> {
         super(props);
         this.state = { collapsed: true };
     }
-    async componentDidMount() {}
-
     render() {
         const components = this.props.products.map((product: Product) => {
             return (
@@ -28,6 +27,9 @@ class Table extends React.PureComponent<TableProps, TableState> {
                 />
             );
         });
+        if (this.props.nothingFound) {
+            return <div>Nothing Found</div>;
+        }
         return <div>{components}</div>;
     }
 }

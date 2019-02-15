@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { Menu } from "styled-icons/boxicons-regular/Menu";
 import { ShoppingBasket } from "styled-icons/material/ShoppingBasket";
 import { Search } from "styled-icons/boxicons-regular/Search";
@@ -32,8 +32,12 @@ export const NavbarBox = styled.div`
 export const Spacer = styled.div`
     height: 50px;
 `;
+
+interface IconButtonProps {
+    current?: boolean;
+}
 export const IconButton = styled.button`
-    height: 50px;
+    height: 40px;
     background: none;
     color: white;
     border: none;
@@ -41,6 +45,15 @@ export const IconButton = styled.button`
         outline: none;
     }
     font-size: 18px;
+    border-bottom: 3px solid transparent;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-right: 5px;
+    ${({ current }: IconButtonProps) =>
+        current &&
+        css`
+            border-bottom: 3px solid white;
+        `}
 `;
 
 interface LinkProps {
