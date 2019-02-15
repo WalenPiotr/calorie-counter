@@ -19,7 +19,9 @@ Whole application deployed with docker-compse on Digital Ocean droplet. Each par
 ## Live demo
 
 If you want to test my app please go to:
-http://104.248.17.169/
-Use following credentials to login:
-Email: kcalccountapp@gmail.com
-Password: zxcASDqwe123
+
+### http://104.248.17.169/
+
+Use following credentials to login: <br>
+Email: kcalccountapp@gmail.com <br>
+Password: zxcASDqwe123 <br>
