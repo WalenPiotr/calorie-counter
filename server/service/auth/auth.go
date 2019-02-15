@@ -8,6 +8,19 @@ type Token struct {
 	jwt.StandardClaims
 }
 
+type VerifyToken struct {
+	UserID      int
+	Email       string
+	AccessLevel AccessLevel
+	jwt.StandardClaims
+}
+
+type PassToken struct {
+	UserID int
+	Email  string
+	jwt.StandardClaims
+}
+
 type AccessLevel int
 
 const (

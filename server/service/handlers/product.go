@@ -6,6 +6,7 @@ import (
 	"app/service/models"
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/lib/pq"
@@ -72,10 +73,12 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			return
 		}
 		newProduct := models.Product{
-			ID:      in.Product.ID,
-			Creator: userID,
-			Name:    in.Product.Name,
+			ID:          in.Product.ID,
+			Creator:     userID,
+			Name:        in.Product.Name,
+			Description: in.Product.Description,
 		}
+		log.Println(newProduct)
 		dbProduct, err := models.CreateProduct(db, newProduct)
 		if err != nil {
 			if pgerr, ok := err.(*pq.Error); ok {

@@ -29,6 +29,9 @@ func (res *ResponseObject) Send(w http.ResponseWriter) {
 }
 
 func WithAuth(next http.Handler, db *sql.DB, accessLevel auth.AccessLevel) http.Handler {
+	const NotAuthenticated = "You are not authenticated, please login or register"
+	const Banished = "You accound have been banished"
+	const AccessDenied = "Access denied"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header
 		if accessLevel == auth.Default {
@@ -39,7 +42,7 @@ func WithAuth(next http.Handler, db *sql.DB, accessLevel auth.AccessLevel) http.
 		if err != nil {
 			resObj := ResponseObject{
 				Status: http.StatusForbidden,
-				Error:  err.Error(),
+				Error:  NotAuthenticated,
 			}
 			resObj.Send(w)
 			return
@@ -48,7 +51,7 @@ func WithAuth(next http.Handler, db *sql.DB, accessLevel auth.AccessLevel) http.
 		if err != nil {
 			resObj := ResponseObject{
 				Status: http.StatusForbidden,
-				Error:  err.Error(),
+				Error:  NotAuthenticated,
 			}
 			resObj.Send(w)
 			return
@@ -58,7 +61,7 @@ func WithAuth(next http.Handler, db *sql.DB, accessLevel auth.AccessLevel) http.
 			w.WriteHeader(http.StatusForbidden)
 			resObj := ResponseObject{
 				Status: http.StatusForbidden,
-				Error:  "You accound have been banished",
+				Error:  Banished,
 			}
 			resObj.Send(w)
 			return
@@ -73,7 +76,7 @@ func WithAuth(next http.Handler, db *sql.DB, accessLevel auth.AccessLevel) http.
 		w.WriteHeader(http.StatusForbidden)
 		resObj := ResponseObject{
 			Status: http.StatusForbidden,
-			Error:  "Access denied",
+			Error:  AccessDenied,
 		}
 		resObj.Send(w)
 		return
@@ -81,7 +84,7 @@ func WithAuth(next http.Handler, db *sql.DB, accessLevel auth.AccessLevel) http.
 }
 
 func authenticateUser(header http.Header) (token *auth.Token, err error) {
-	tokenPassword := os.Getenv("TOKEN_PASS")
+	authSecret := os.Getenv("AUTH_SECRET")
 	tokenHeader := header.Get("Authorization") //Grab the token from the header
 	if tokenHeader == "" {                     //Token is missing, returns with error code 403 Unauthorized
 		err := errors.New("Missing authentication token")
@@ -95,7 +98,7 @@ func authenticateUser(header http.Header) (token *auth.Token, err error) {
 	tokenPart := splitted[1] //Grab the token part, what we are truly interested in
 	token = &auth.Token{}
 	jwtToken, err := jwt.ParseWithClaims(tokenPart, token, func(token *jwt.Token) (interface{}, error) {
-		return []byte(tokenPassword), nil
+		return []byte(authSecret), nil
 	})
 	if err != nil { //Malformed token, returns with http code 403 as usual
 		err := errors.New("Malformed authentication token")

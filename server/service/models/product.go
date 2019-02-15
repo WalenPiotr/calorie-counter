@@ -8,9 +8,10 @@ import (
 )
 
 type Product struct {
-	ID      int    `json:"id"`
-	Name    string `json:"name"`
-	Creator int    `json:"creator"`
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Creator     int    `json:"creator"`
+	Description string `json:"description"`
 }
 
 func MigrateProducts(db *sql.DB) error {
@@ -18,7 +19,8 @@ func MigrateProducts(db *sql.DB) error {
 		CREATE TABLE IF NOT EXISTS products (
 			id serial PRIMARY KEY,
 			creator integer REFERENCES accounts(id),
-			name text UNIQUE NOT NULL
+			name text UNIQUE NOT NULL,
+			description text
 		);
 	`)
 	if err != nil {
@@ -30,10 +32,10 @@ func MigrateProducts(db *sql.DB) error {
 
 func CreateProduct(db *sql.DB, product Product) (*Product, error) {
 	rows, err := db.Query(`
-		INSERT INTO products (creator, name)
-		VALUES ($1, $2)
+		INSERT INTO products (creator, name, description)
+		VALUES ($1, $2, $3)
 		RETURNING *;
-	`, product.Creator, strings.ToLower(product.Name))
+	`, product.Creator, strings.ToLower(product.Name), product.Description)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +43,7 @@ func CreateProduct(db *sql.DB, product Product) (*Product, error) {
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Description)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +63,7 @@ func GetProducts(db *sql.DB) (*[]Product, error) {
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Description)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +83,7 @@ func GetProductById(db *sql.DB, id int) (*Product, error) {
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Description)
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +103,7 @@ func GetProductsByName(db *sql.DB, name string) (*[]Product, error) {
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Description)
 		if err != nil {
 			return nil, err
 		}
@@ -121,7 +123,7 @@ func GetProductsByCreatorID(db *sql.DB, id int) (*[]Product, error) {
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Description)
 		if err != nil {
 			return nil, err
 		}
@@ -164,7 +166,7 @@ func UpdateProduct(db *sql.DB, id int, new Product) (*Product, error) {
 	prods := []Product{}
 	for rows.Next() {
 		prod := Product{}
-		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name)
+		err := rows.Scan(&prod.ID, &prod.Creator, &prod.Name, &prod.Description)
 		if err != nil {
 			return nil, err
 		}

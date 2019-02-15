@@ -2,11 +2,13 @@ package models
 
 import (
 	"app/service/auth"
+	"os"
 	"strings"
 
 	"database/sql"
 
 	"github.com/pkg/errors"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Account struct is used to represent user acc
@@ -15,6 +17,7 @@ type Account struct {
 	Email       string
 	Password    string
 	AccessLevel auth.AccessLevel
+	Verified    bool
 }
 
 func MigrateAccounts(db *sql.DB) error {
@@ -23,9 +26,30 @@ func MigrateAccounts(db *sql.DB) error {
 			id serial primary key, 
 			email text unique, 
 			password text, 
-			access_level integer
+			access_level integer,
+			verified boolean default false
 		);
 	`)
+	if err != nil {
+		return errors.Wrap(err, "While creating accounts table")
+	}
+	defer rows.Close()
+	password := os.Getenv("ADMIN_PASSWORD")
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.Wrap(err, "While creating accounts table")
+	}
+	admin := Account{
+		Email:       os.Getenv("ADMIN_EMAIL"),
+		Password:    string(hashed),
+		AccessLevel: auth.Admin,
+		Verified:    true,
+	}
+	rows, err = db.Query(`
+		INSERT INTO accounts (email, password, access_level, verified)
+		VALUES($1, $2, $3, $4)
+		ON CONFLICT (email) DO UPDATE SET password=$2, access_level=$3, verified=$4;
+	`, strings.ToLower(admin.Email), admin.Password, admin.AccessLevel, admin.Verified)
 	if err != nil {
 		return errors.Wrap(err, "While creating accounts table")
 	}
@@ -45,6 +69,19 @@ func CreateAccount(db *sql.DB, acc *Account) error {
 	return nil
 }
 
+func VerifyAccount(db *sql.DB, acc *Account) error {
+	rows, err := db.Query(`
+		UPDATE accounts 
+		SET verified=true 
+		WHERE id=$1 AND email=$2 AND access_level=$3 
+	`, acc.ID, acc.Email, acc.AccessLevel)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	return nil
+}
+
 func GetAccountById(db *sql.DB, id int) (*Account, error) {
 	rows, err := db.Query(`
 		SELECT * FROM accounts WHERE id=$1;
@@ -56,7 +93,7 @@ func GetAccountById(db *sql.DB, id int) (*Account, error) {
 	accs := []Account{}
 	for rows.Next() {
 		acc := Account{}
-		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel)
+		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified)
 		if err != nil {
 			return nil, err
 		}
@@ -82,7 +119,7 @@ func GetAccountByEmail(db *sql.DB, email string) (*Account, error) {
 	accs := []Account{}
 	for rows.Next() {
 		acc := Account{}
-		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel)
+		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified)
 		if err != nil {
 			return nil, err
 		}
@@ -108,7 +145,7 @@ func GetAccounts(db *sql.DB) (*[]Account, error) {
 	accs := []Account{}
 	for rows.Next() {
 		acc := Account{}
-		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel)
+		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified)
 		if err != nil {
 			return nil, err
 		}
@@ -152,11 +189,22 @@ func SearchAccounts(db *sql.DB, email string) (*[]Account, error) {
 	accs := []Account{}
 	for rows.Next() {
 		acc := Account{}
-		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel)
+		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified)
 		if err != nil {
 			return nil, err
 		}
 		accs = append(accs, acc)
 	}
 	return &accs, nil
+}
+
+func ChangePassword(db *sql.DB, email, password string) error {
+	rows, err := db.Query(`
+		UPDATE accounts SET password=$2 WHERE email=$1;
+	`, email, password)
+	defer rows.Close()
+	if err != nil {
+		return err
+	}
+	return nil
 }

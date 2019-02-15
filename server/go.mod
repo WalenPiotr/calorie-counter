@@ -1,7 +1,6 @@
 module app
 
 require (
-	cloud.google.com/go v0.34.0 // indirect
 	github.com/briandowns/spinner v0.0.0-20181029155426-195c31b675a7 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20181014144952-4e0d7dc8888f // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -26,6 +25,9 @@ require (
 	github.com/sirupsen/logrus v1.3.0
 	golang.org/x/arch v0.0.0-20181203225421-5a4828bb7045 // indirect
 	golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b
+	golang.org/x/net v0.0.0-20190206173232-65e2d4e15006
+	golang.org/x/oauth2 v0.0.0-20190130055435-99b60b757ec1
 	golang.org/x/sys v0.0.0-20190109145017-48ac38b7c8cb // indirect
+	google.golang.org/api v0.1.0
 	mellium.im/sasl v0.2.1 // indirect
 )

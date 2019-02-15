@@ -31,11 +31,15 @@ func NewService() error {
 		handlers.CreateAccount(db, logger), db, auth.Default))
 	router.Handle("/api/user/login", middleware.WithAuth(
 		handlers.Authenticate(db, logger), db, auth.Default))
-
+	router.Handle("/api/user/check-token", handlers.CheckIfAuthenticated(db, logger))
+	router.Handle("/api/user/verify", handlers.Verify(db, logger))
+	router.Handle("/api/user/remind-password", handlers.MailChangePasswordLink(db, logger))
+	router.Handle("/api/user/change-password", handlers.ChangePassword(db, logger))
 	router.Handle("/api/user/ban", middleware.WithAuth(
 		handlers.BanUser(db, logger), db, auth.Moderator))
 	router.Handle("/api/user/unban", middleware.WithAuth(
 		handlers.UnbanUser(db, logger), db, auth.Moderator))
+		
 	router.Handle("/api/user/search", middleware.WithAuth(
 		handlers.SearchUsers(db, logger), db, auth.Moderator))
 	router.Handle("/api/user/products", middleware.WithAuth(
