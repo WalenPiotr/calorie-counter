@@ -15,3 +15,11 @@ Whole application deployed with docker-compse on Digital Ocean droplet. Each par
 -   backend server (build with golang) (walenpiotr/cc-service)
 -   user client (build with react and launched on node server) (walenpiotr/cc-client)
 -   admin client (build with react and launched on node server) (walenpiotr/cc-admin)
+
+## Live demo
+
+If you want to test my app please go to:
+http://104.248.17.169/
+Use following credentials to login:
+Email: kcalccountapp@gmail.com
+Password: zxcASDqwe123
