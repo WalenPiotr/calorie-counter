@@ -25,13 +25,11 @@ export const Element = styled.div`
 `;
 export const ExpandButton = styled.button`
     flex: 40px 0 0;
-    height: 40px;
+    height: 50px;
     background-color: none;
     color: rgba(30, 100, 200, 1);
     border: none;
     background-color: transparent;
-    height: 50px;
-    width: 50px;
     font-size: 20px;
 `;
 interface ControlBoxProps {

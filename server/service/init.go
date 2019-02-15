@@ -46,6 +46,9 @@ func NewDBConnection() (*sql.DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "While migrating entries table")
 	}
-
+	err = models.MigrateVotes(db)
+	if err != nil {
+		return nil, errors.Wrap(err, "While migrating votes")
+	}
 	return db, nil
 }

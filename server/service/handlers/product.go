@@ -264,13 +264,14 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 	type Product struct {
 		models.Product
 		Portions []models.Portion `json:"portions"`
-		Votes    []*models.Votes  `json:"votes"`
+		Ratings  []models.Rating  `json:"ratings"`
 	}
 	type RequestObject struct {
 		Name string `json:"name"`
 	}
 	type ResponseObject struct {
 		Error    string    `json:"error,omitempty"`
+		UserID   int       `json:"userID,omitempty"`
 		Products []Product `json:"products,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error, message string) {
@@ -283,11 +284,12 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, products []Product) {
+	sendData := func(w http.ResponseWriter, status int, products []Product, userID int) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
 			Products: products,
+			UserID:   userID,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -297,6 +299,12 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		if err != nil {
 			err = errors.Wrap(err, "While decoding request body")
 			sendError(w, http.StatusBadRequest, err, InvalidData)
+			return
+		}
+		userID, ok := r.Context().Value(middleware.UserID).(int)
+		if !ok {
+			err = errors.Wrap(err, "While getting UserID from request context")
+			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
 		products, err := models.GetProductsByName(db, in.Name)
@@ -313,13 +321,20 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 				sendError(w, http.StatusBadRequest, err, InternalError)
 				return
 			}
+			ratings, err := models.GetProductVotes(db, product.ID)
+			if err != nil {
+				err = errors.Wrap(err, "While fetching ratings for product")
+				sendError(w, http.StatusBadRequest, err, InternalError)
+				return
+			}
 			bundledProduct := Product{
 				Product:  product,
 				Portions: portions,
+				Ratings:  ratings,
 			}
 			bundledProducts = append(bundledProducts, bundledProduct)
 		}
-		sendData(w, http.StatusOK, bundledProducts)
+		sendData(w, http.StatusOK, bundledProducts, userID)
 		return
 	})
 }
@@ -331,7 +346,7 @@ func GetUsersAddedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 	type Product struct {
 		models.Product
 		Portions []models.Portion `json:"portions"`
-		Votes    []*models.Votes  `json:"votes"`
+		Ratings  []models.Rating  `json:"ratings"`
 	}
 	type User struct {
 		Email       string           `json:"email"`
@@ -387,9 +402,16 @@ func GetUsersAddedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 				sendError(w, http.StatusBadRequest, err, InternalError)
 				return
 			}
+			ratings, err := models.GetProductVotes(db, product.ID)
+			if err != nil {
+				err = errors.Wrap(err, "While fetching ratings for product")
+				sendError(w, http.StatusBadRequest, err, InternalError)
+				return
+			}
 			bundledProduct := Product{
 				Product:  product,
 				Portions: portions,
+				Ratings:  ratings,
 			}
 			bundledProducts = append(bundledProducts, bundledProduct)
 		}

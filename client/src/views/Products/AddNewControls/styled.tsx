@@ -3,7 +3,6 @@ import { Plus } from "styled-icons/boxicons-regular/Plus";
 
 export const AddNewBox = styled.div`
     display: flex;
-    margin-top: 10px;
     padding-top: 10px;
     border-top: 1px solid grey;
 `;

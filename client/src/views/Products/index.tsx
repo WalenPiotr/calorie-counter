@@ -23,6 +23,10 @@ export interface Product {
     name: string;
     creator: number;
     portions: Portion[];
+    ratings: {
+        userID: number;
+        vote: number;
+    }[];
 }
 
 export interface ProductsProps extends RouteComponentProps {
@@ -33,6 +37,7 @@ interface ProductsState {
     products: Product[];
     isLoading: boolean;
     nothingFound: boolean;
+    userID: number;
 }
 
 const Box = styled.div`
@@ -51,7 +56,8 @@ class Products extends React.PureComponent<ProductsProps, ProductsState> {
         searchInput: "",
         products: [],
         isLoading: false,
-        nothingFound: false
+        nothingFound: false,
+        userID: -1
     };
     onSearchClick = async () => {
         this.setState((prevState: ProductsState) => ({
@@ -62,13 +68,14 @@ class Products extends React.PureComponent<ProductsProps, ProductsState> {
             name: this.state.searchInput
         });
         const products = res.products;
-        console.log(products);
-        if (products) {
+        const userID = res.userID;
+        if (products && userID) {
             this.setState((prevState: ProductsState) => ({
                 ...prevState,
                 products: products,
                 isLoading: false,
-                nothingFound: false
+                nothingFound: false,
+                userID
             }));
         } else {
             this.setState((prevState: ProductsState) => ({
@@ -118,6 +125,7 @@ class Products extends React.PureComponent<ProductsProps, ProductsState> {
                             nothingFound={this.state.nothingFound}
                             products={this.state.products}
                             setStatus={this.props.setStatus}
+                            userID={this.state.userID}
                         />
                     )}
                     <AddNewControls onClick={this.onAddNew} />

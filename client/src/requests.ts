@@ -11,6 +11,7 @@ const endpoints = {
     check: base + "api/user/check-token",
     productNew: base + "api/product/new",
     productSearch: base + "api/product/search",
+    productRate: base + "api/product/rate",
     entriesCreate: base + "api/user/entries/create",
     entriesView: base + "api/user/entries/view",
     entriesDates: base + "api/user/entries/dates",
@@ -40,7 +41,6 @@ export const login = async (req: LoginRequest): Promise<LoginResponse> => {
     try {
         const response = await fetch(endpoints.login, request);
         const parsed = await response.json();
-        console.log(parsed);
         if (parsed.error) {
             return { error: parsed.error };
         }
@@ -74,7 +74,6 @@ export const checkToken = async (req: CheckRequest): Promise<CheckResponse> => {
     try {
         const response = await fetch(endpoints.check, request);
         const parsed = await response.json();
-        console.log(parsed);
         if (parsed.error) {
             return { error: parsed.error };
         }
@@ -109,7 +108,6 @@ export const register = async (
     try {
         const response = await fetch(endpoints.register, request);
         const parsed = await response.json();
-        console.log(parsed);
         if (parsed.error) {
             return { error: parsed.error };
         }
@@ -178,7 +176,12 @@ interface SearchProductResponse {
             unit: string;
             energy: number;
         }[];
+        ratings: {
+            userID: number;
+            vote: number;
+        }[];
     }[];
+    userID?: number;
 }
 export const searchProducts = async (
     req: SearchProductRequest
@@ -197,6 +200,8 @@ export const searchProducts = async (
     try {
         const response = await fetch(endpoints.productSearch, request);
         const parsed = await response.json();
+        console.log(parsed);
+
         if (response.status == 200) {
             return parsed;
         }
@@ -369,7 +374,6 @@ export const updateEntry = async (
         method: "POST",
         type: "cors"
     };
-    console.log(request);
     try {
         const response = await fetch(endpoints.entriesUpdate, request);
         const parsed = await response.json();
@@ -510,6 +514,41 @@ export const remindPassword = async (
     };
     try {
         const response = await fetch(endpoints.remindPassword, request);
+        const parsed = await response.json();
+        if (response.status == 200) {
+            return {};
+        }
+        if (parsed.error) {
+            return { error: parsed.error };
+        }
+        return { error: "Something went wrong" };
+    } catch (e) {
+        return { error: "Connection error" };
+    }
+};
+
+interface RateProductRequest {
+    id: number;
+    vote: number;
+}
+interface RateProductResponse {}
+
+export const rateProduct = async (
+    req: RateProductRequest
+): Promise<RateProductResponse> => {
+    const token = storage.retrieveToken();
+    const request = {
+        body: JSON.stringify(req),
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+        },
+        method: "POST",
+        type: "cors"
+    };
+    try {
+        const response = await fetch(endpoints.productRate, request);
         const parsed = await response.json();
         if (response.status == 200) {
             return {};

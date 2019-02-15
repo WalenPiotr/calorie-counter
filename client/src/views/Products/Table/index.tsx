@@ -8,6 +8,7 @@ interface TableProps {
     products: Product[];
     setStatus: (status: Status, message: string) => void;
     nothingFound: boolean;
+    userID: number;
 }
 interface TableState {
     collapsed: boolean;
@@ -24,6 +25,7 @@ class Table extends React.PureComponent<TableProps, TableState> {
                     product={product}
                     key={product.id}
                     setStatus={this.props.setStatus}
+                    userID={this.props.userID}
                 />
             );
         });

@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
 export const LineBox = styled.div`
     display: flex;
@@ -11,13 +11,17 @@ export const LineBox = styled.div`
     padding-left: 5px;
 `;
 export const CollapseButton = styled.button`
-    border: none;
-    color: rgba(30, 100, 200, 1);
-    background-color: transparent;
+    flex: 40px 0 0;
     height: 50px;
-    width: 50px;
-    padding: 10px;
-    font-size: 30px;
+    background-color: none;
+    color: rgba(30, 100, 200, 1);
+    border: none;
+    background-color: transparent;
+    font-size: 20px;
+`;
+
+export const InfoBox = styled.div`
+    flex: 100px 1 0;
 `;
 
 interface ControlBoxProps {
@@ -61,4 +65,49 @@ export const CalendarBox = styled.div`
     width: 100%;
     margin-bottom: 20px;
     border: 1px solid grey;
+`;
+
+interface VoteButtonProps {
+    red?: boolean;
+    green?: boolean;
+}
+
+export const VoteBox = styled.div`
+    box-sizing: border-box;
+    margin-right: 5px;
+    padding-right: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 1px solid grey;
+    height: 45px;
+`;
+
+export const VoteButton = styled.button`
+    background-color: transparent;
+    border: none;
+    width: 40px;
+    height: 40px;
+    flex: 40px 0 0;
+    ${(props: VoteButtonProps) => {
+        if (props.red) {
+            return css`
+                color: rgba(150, 0, 20, 1);
+            `;
+        }
+        if (props.green) {
+            return css`
+                color: rgba(0, 150, 20, 1);
+            `;
+        }
+        return css`
+            color: rgba(30, 100, 200, 1);
+        `;
+    }}
+`;
+export const Votes = styled.label`
+    display: flex;
+    justify-content: center;
+    padding-right: 3px;
+    align-items: left;
 `;

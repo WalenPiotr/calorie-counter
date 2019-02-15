@@ -39,7 +39,7 @@ func NewService() error {
 		handlers.BanUser(db, logger), db, auth.Moderator))
 	router.Handle("/api/user/unban", middleware.WithAuth(
 		handlers.UnbanUser(db, logger), db, auth.Moderator))
-		
+
 	router.Handle("/api/user/search", middleware.WithAuth(
 		handlers.SearchUsers(db, logger), db, auth.Moderator))
 	router.Handle("/api/user/products", middleware.WithAuth(
@@ -68,7 +68,7 @@ func NewService() error {
 	router.Handle("/api/product/rate", middleware.WithAuth(
 		handlers.RateProduct(db, logger), db, auth.User))
 
-	router.Handle("/api/product/delete", middleware.WithAuth(
+		router.Handle("/api/product/delete", middleware.WithAuth(
 		handlers.DeleteProduct(db, logger), db, auth.Moderator))
 	router.Handle("/api/product/update", middleware.WithAuth(
 		handlers.UpdateProduct(db, logger), db, auth.Moderator))
