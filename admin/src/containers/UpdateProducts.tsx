@@ -43,7 +43,6 @@ class UpdateProduct extends React.PureComponent<
         isLoading: true
     };
     componentDidMount = async () => {
-        console.log("from componentDidMount");
         const { id } = this.props.match.params;
         const product = await this.props.get(parseInt(id));
         if (product) {

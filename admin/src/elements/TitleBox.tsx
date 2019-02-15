@@ -15,7 +15,7 @@ export const TitleBox = styled.div`
 
     font-size: ${fonts.size.medium};
     font-weight: ${fonts.weight.bold};
-
+    margin-top: 20px;
     width: 100%;
     height: 30px;
 

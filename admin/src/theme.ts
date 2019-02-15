@@ -17,7 +17,7 @@ export const colors = {
     text: {
         weak: "rgb(50, 50, 50)",
         base: "rgb(30, 30, 30)",
-        strong: "rgb(30, 30, 30)"
+        strong: "rgb(10, 10, 10)"
     },
     border: "rgb(150, 150, 150)",
     shadow: "rgba(150, 150, 150, 0.25)"
