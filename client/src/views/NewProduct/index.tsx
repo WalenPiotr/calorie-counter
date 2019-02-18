@@ -80,8 +80,7 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
             if (this.state.product.name === "") {
                 nameError = "Enter products name";
                 parsingError = true;
-            }
-            if (this.state.product.name.length > 30) {
+            } else if (this.state.product.name.length > 30) {
                 nameError = "Product name have to be max 30 character long";
                 parsingError = true;
             }
