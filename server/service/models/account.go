@@ -11,11 +11,12 @@ import (
 
 // Account struct is used to represent user acc
 type Account struct {
-	ID          int
-	Email       string
-	Password    string
-	AccessLevel auth.AccessLevel
-	Verified    bool
+	ID             int
+	Email          string
+	Password       string
+	AccessLevel    auth.AccessLevel
+	Verified       bool
+	ChangePassword bool
 }
 
 func MigrateAccounts(db *sql.DB) error {
@@ -25,7 +26,8 @@ func MigrateAccounts(db *sql.DB) error {
 			email text unique, 
 			password text, 
 			access_level integer,
-			verified boolean default false
+			verified boolean default false,
+			change_password boolean default false
 		);
 	`)
 	if err != nil {
@@ -71,7 +73,7 @@ func GetAccountById(db *sql.DB, id int) (*Account, error) {
 	accs := []Account{}
 	for rows.Next() {
 		acc := Account{}
-		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified)
+		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified, &acc.ChangePassword)
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +99,7 @@ func GetAccountByEmail(db *sql.DB, email string) (*Account, error) {
 	accs := []Account{}
 	for rows.Next() {
 		acc := Account{}
-		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified)
+		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified, &acc.ChangePassword)
 		if err != nil {
 			return nil, err
 		}
@@ -123,7 +125,7 @@ func GetAccounts(db *sql.DB) (*[]Account, error) {
 	accs := []Account{}
 	for rows.Next() {
 		acc := Account{}
-		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified)
+		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified, &acc.ChangePassword)
 		if err != nil {
 			return nil, err
 		}
@@ -167,7 +169,7 @@ func SearchAccounts(db *sql.DB, email string) (*[]Account, error) {
 	accs := []Account{}
 	for rows.Next() {
 		acc := Account{}
-		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified)
+		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified, &acc.ChangePassword)
 		if err != nil {
 			return nil, err
 		}
@@ -176,9 +178,20 @@ func SearchAccounts(db *sql.DB, email string) (*[]Account, error) {
 	return &accs, nil
 }
 
+func ChangePasswordRequest(db *sql.DB, email string) error {
+	rows, err := db.Query(`
+		UPDATE accounts SET change_password=true WHERE email=$1;
+	`, email)
+	defer rows.Close()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func ChangePassword(db *sql.DB, email, password string) error {
 	rows, err := db.Query(`
-		UPDATE accounts SET password=$2 WHERE email=$1;
+		UPDATE accounts SET password=$2, change_password=false WHERE email=$1;
 	`, email, password)
 	defer rows.Close()
 	if err != nil {

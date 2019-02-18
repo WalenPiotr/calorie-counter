@@ -140,6 +140,7 @@ func CreateAccount(db *sql.DB, logger *logrus.Logger) http.Handler {
 func MailChangePasswordLink(db *sql.DB, logger *logrus.Logger) http.Handler {
 	const InvalidDataMsg = "Invalid request body"
 	const NotExists = "User with that mail do not exists"
+	const AlreadySent = "Password change email was already sent"
 	const InternalError = "Internal Error"
 
 	type RequestObject struct {
@@ -172,9 +173,21 @@ func MailChangePasswordLink(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err, InvalidDataMsg)
 			return
 		}
+
 		acc, err := models.GetAccountByEmail(db, in.Email)
 		if err != nil {
 			err = errors.Wrap(err, "While fetching account by email")
+			sendError(w, http.StatusBadRequest, err, NotExists)
+			return
+		}
+		if acc.ChangePassword {
+			err = errors.Wrap(err, "Password change email was already sent")
+			sendError(w, http.StatusBadRequest, err, AlreadySent)
+			return
+		}
+		err = models.ChangePasswordRequest(db, in.Email)
+		if err != nil {
+			err = errors.Wrap(err, "While change password flag set")
 			sendError(w, http.StatusBadRequest, err, NotExists)
 			return
 		}
@@ -185,6 +198,7 @@ func MailChangePasswordLink(db *sql.DB, logger *logrus.Logger) http.Handler {
 				ExpiresAt: expireToken,
 				Issuer:    "cc-admin",
 			}})
+
 		tokenString, err := token.SignedString([]byte(secret))
 		if err != nil {
 			err = errors.Wrap(err, "While signing token")
