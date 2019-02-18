@@ -84,8 +84,8 @@ class Row extends React.Component<RowProps, RowState> {
             date: this.state.date.toISOString()
         };
         try {
+            await this.setState({ quantityError: null });
             const res = await this.props.updateEntry(id, entry);
-            this.setState({ quantityError: null });
         } catch (e) {
             console.log(e);
         }

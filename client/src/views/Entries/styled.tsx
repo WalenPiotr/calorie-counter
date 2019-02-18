@@ -23,7 +23,6 @@ export const TableBox = styled.div``;
 export const SummaryBox = styled.div`
     border-top: 1px solid grey;
     padding-top: 10px;
-    margin-top: 10px;
     display: flex;
 `;
 export const SummaryLabel = styled.div`

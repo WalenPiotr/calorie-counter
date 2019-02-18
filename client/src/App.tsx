@@ -16,6 +16,7 @@ import NewProduct from "@views/NewProduct";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 import NewPassword from "@views/NewPassword";
 import RemindPassword from "@views/RemindPassword";
+import Main from "@views/Main/Main";
 
 const GlobalStyle = createGlobalStyle`
     body {
@@ -217,6 +218,10 @@ class App extends React.PureComponent<AppProps, AppState> {
                                         setStatus={this.setStatus}
                                     />
                                 )}
+                            />
+                            <Route
+                                path="/"
+                                render={props => <Main {...props} />}
                             />
                         </Switch>
                     </div>

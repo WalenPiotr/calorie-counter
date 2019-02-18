@@ -5,7 +5,7 @@ export const LineBox = styled.div`
     align-items: center;
     justify-content: space-between;
     border-top: 1px solid grey;
-    height: 50px;
+    height: 70px;
     padding-top: 5px;
     padding-bottom: 5px;
     padding-left: 5px;

@@ -25,7 +25,8 @@ interface RowState {
     quantityError: string | null;
     unit: string;
     date: Date;
-    tempVote: number;
+    vote: number;
+    voteSum: number;
 }
 
 class Row extends React.PureComponent<RowProps, RowState> {
@@ -35,8 +36,28 @@ class Row extends React.PureComponent<RowProps, RowState> {
         quantityError: null,
         unit: this.props.product.portions[0].unit,
         date: new Date(),
-        tempVote: -2
+        vote: 0,
+        voteSum: 0
     };
+    componentDidMount() {
+        const voteSum = this.props.product.ratings.reduce(
+            (prev: number, curr: { userID: number; vote: number }) => {
+                return prev + curr.vote;
+            },
+            0
+        );
+        const vote = this.getUserVote();
+        this.setState({ voteSum, vote });
+    }
+    getUserVote = (): number => {
+        for (const rating of this.props.product.ratings) {
+            if (rating.userID === this.props.userID) {
+                return rating.vote;
+            }
+        }
+        return 0;
+    };
+
     onInputChange = (e: React.FormEvent<HTMLInputElement>) => {
         const newValue = e.currentTarget.value;
         this.setState((prevState: RowState) => ({
@@ -120,84 +141,39 @@ class Row extends React.PureComponent<RowProps, RowState> {
         this.props.setStatus(Status.None, "");
     };
     rateProduct = (vote: number) => async () => {
-        if (this.state.tempVote === vote) {
-            this.setState({ tempVote: 0 });
+        if (this.state.vote == vote) {
+            this.setState((prevState: RowState) => ({
+                vote: 0,
+                voteSum: prevState.voteSum - vote
+            }));
             const res = await requests.rateProduct({
                 id: this.props.product.id,
                 vote: 0
             });
             return;
         }
-        if (
-            this.state.tempVote === -2 &&
-            this.hasBeenDownvoted() &&
-            vote === -1
-        ) {
-            this.setState({ tempVote: 0 });
+        if (this.state.vote == 0) {
+            this.setState((prevState: RowState) => ({
+                vote: vote,
+                voteSum: prevState.voteSum + vote
+            }));
             const res = await requests.rateProduct({
                 id: this.props.product.id,
-                vote: 0
+                vote: vote
             });
             return;
         }
-        if (this.state.tempVote === -2 && this.hasBeenUpvoted() && vote === 1) {
-            this.setState({ tempVote: 0 });
-            const res = await requests.rateProduct({
-                id: this.props.product.id,
-                vote: 0
-            });
-            return;
-        }
-        this.setState({ tempVote: vote });
+        this.setState((prevState: RowState) => ({
+            vote: vote,
+            voteSum: prevState.voteSum + 2 * vote
+        }));
         const res = await requests.rateProduct({
             id: this.props.product.id,
             vote: vote
         });
         return;
     };
-    findVotesSum = (): number => {
-        const val = this.props.product.ratings.reduce(
-            (prev: number, curr: { userID: number; vote: number }) => {
-                return prev + curr.vote;
-            },
-            0
-        );
-        if (this.state.tempVote === -1 && this.hasBeenUpvoted()) {
-            return val - 2;
-        }
-        if (this.state.tempVote === 1 && this.hasBeenDownvoted()) {
-            return val + 2;
-        }
-        if (this.state.tempVote === 0 && this.hasBeenDownvoted()) {
-            return val + 1;
-        }
-        if (this.state.tempVote === 0 && this.hasBeenUpvoted()) {
-            return val - 1;
-        }
-        return val;
-    };
-    hasBeenDownvoted = (): boolean => {
-        const userID = this.props.userID;
-        const db = this.props.product.ratings.reduce(
-            (prev: boolean, curr: { userID: number; vote: number }) => {
-                console.log({ ...curr });
-                return curr.vote === -1 && (prev || curr.userID === userID);
-            },
-            false
-        );
-        return db;
-    };
-    hasBeenUpvoted = (): boolean => {
-        const userID = this.props.userID;
-        const db = this.props.product.ratings.reduce(
-            (prev: boolean, curr: { userID: number; vote: number }) => {
-                console.log({ ...curr });
-                return curr.vote === 1 && (prev || curr.userID === userID);
-            },
-            false
-        );
-        return db;
-    };
+
     render() {
         return (
             <div key={this.props.product.name}>
@@ -223,24 +199,16 @@ class Row extends React.PureComponent<RowProps, RowState> {
                         </div>
                     </Styled.InfoBox>
                     <Styled.VoteBox>
-                        <Styled.Votes>{this.findVotesSum()}</Styled.Votes>
+                        <Styled.Votes>{this.state.voteSum}</Styled.Votes>
                         <Styled.VoteButton
                             onClick={this.rateProduct(1)}
-                            green={
-                                (this.state.tempVote == -2 &&
-                                    this.hasBeenUpvoted()) ||
-                                this.state.tempVote == 1
-                            }
+                            green={this.state.vote === 1}
                         >
                             <Like />
                         </Styled.VoteButton>
                         <Styled.VoteButton
                             onClick={this.rateProduct(-1)}
-                            red={
-                                (this.state.tempVote == -2 &&
-                                    this.hasBeenDownvoted()) ||
-                                this.state.tempVote == -1
-                            }
+                            red={this.state.vote === -1}
                         >
                             <Dislike />
                         </Styled.VoteButton>

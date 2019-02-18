@@ -200,8 +200,6 @@ export const searchProducts = async (
     try {
         const response = await fetch(endpoints.productSearch, request);
         const parsed = await response.json();
-        console.log(parsed);
-
         if (response.status == 200) {
             return parsed;
         }
