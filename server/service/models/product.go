@@ -139,12 +139,21 @@ func DeleteProduct(db *sql.DB, id int) error {
 	if err != nil {
 		return errors.Wrap(err, "While deleting product")
 	}
+	defer rows.Close()
 	rows, err = db.Query(`
 		DELETE FROM portions WHERE product_id=$1;
 	`, id)
 	if err != nil {
 		return errors.Wrap(err, "While deleting product")
 	}
+	defer rows.Close()
+	rows, err = db.Query(`
+		DELETE FROM votes WHERE product_id=$1; 
+	`, id)
+	if err != nil {
+		return errors.Wrap(err, "While deleting product")
+	}
+	defer rows.Close()
 	rows, err = db.Query(`
 		DELETE FROM products WHERE id=$1; 
 	`, id)
@@ -152,6 +161,7 @@ func DeleteProduct(db *sql.DB, id int) error {
 		return errors.Wrap(err, "While deleting product")
 	}
 	defer rows.Close()
+
 	return nil
 }
 
