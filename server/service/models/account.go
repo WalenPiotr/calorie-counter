@@ -2,21 +2,25 @@ package models
 
 import (
 	"app/service/auth"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"database/sql"
 
 	"github.com/pkg/errors"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Account struct is used to represent user acc
 type Account struct {
-	ID             int
-	Email          string
-	Password       string
-	AccessLevel    auth.AccessLevel
-	Verified       bool
-	ChangePassword bool
+	ID             int              `json:"id"`
+	Email          string           `json:"email"`
+	Password       string           `json:"password"`
+	AccessLevel    auth.AccessLevel `json:"accessLevel"`
+	Verified       bool             `json:"verified"`
+	ChangePassword bool             `json:"changePassword"`
 }
 
 func MigrateAccounts(db *sql.DB) error {
@@ -34,14 +38,43 @@ func MigrateAccounts(db *sql.DB) error {
 		return errors.Wrap(err, "While creating accounts table")
 	}
 	defer rows.Close()
+	f, err := ioutil.ReadFile("/tmp/seeds/accounts.json")
+	if err != nil {
+		return errors.Wrap(err, "While loading seed file")
+	}
+	var accs []Account
+	err = json.Unmarshal(f, &accs)
+	if err != nil {
+		return errors.Wrap(err, "While parsing seed file")
+	}
+	fmt.Printf("%+v\n", accs)
+	for _, acc := range accs {
+		password := acc.Password
+		hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			err = errors.Wrap(err, "While generating hash")
+		}
+		rows, err := db.Query(`
+		INSERT INTO accounts (email, password, access_level, verified)
+		VALUES($1, $2, $3, $4)
+		ON CONFLICT (email) DO UPDATE SET 
+		email=$1, password=$2, access_level=$3, verified=$4;
+	`, strings.ToLower(acc.Email), string(hashedBytes), acc.AccessLevel, acc.Verified)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+	}
 	return nil
 }
 
 func CreateAccount(db *sql.DB, acc *Account) error {
+
 	rows, err := db.Query(`
 		INSERT INTO accounts (email, password, access_level)
 		VALUES($1, $2, $3);
 	`, strings.ToLower(acc.Email), acc.Password, acc.AccessLevel)
+
 	if err != nil {
 		return err
 	}
