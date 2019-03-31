@@ -1,4 +1,5 @@
 import * as storage from "@storage";
+import { number } from "prop-types";
 
 const base = "http://" + location.hostname + ":8080/";
 
@@ -16,8 +17,14 @@ const endpoints = {
     entriesView: base + "api/user/entries/view",
     entriesDates: base + "api/user/entries/dates",
     entriesUpdate: base + "api/user/entries/update",
-    entriesDelete: base + "api/user/entries/delete"
+    entriesDelete: base + "api/user/entries/delete",
 };
+
+export interface Pagination {
+    itemsPerPage: number;
+    page: number;
+    maxPage?: number;
+}
 
 interface LoginRequest {
     email: string;
@@ -33,10 +40,10 @@ export const login = async (req: LoginRequest): Promise<LoginResponse> => {
         body: JSON.stringify(req),
         headers: {
             Accept: "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.login, request);
@@ -66,10 +73,10 @@ export const checkToken = async (req: CheckRequest): Promise<CheckResponse> => {
         body: JSON.stringify(req),
         headers: {
             Accept: "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.check, request);
@@ -94,16 +101,16 @@ interface RegisterResponse {
     error?: string;
 }
 export const register = async (
-    req: RegisterRequest
+    req: RegisterRequest,
 ): Promise<RegisterResponse> => {
     const request = {
         body: JSON.stringify(req),
         headers: {
             Accept: "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.register, request);
@@ -131,20 +138,30 @@ interface ProductNewRequest {
     };
 }
 interface ProductNewResponse {
+    product?: {
+        name: string;
+        description: string;
+        portions: {
+            energy: number;
+            unit: string;
+        }[];
+    };
     error?: string;
 }
 
-export const productNew = async (req: ProductNewRequest) => {
+export const productNew = async (
+    req: ProductNewRequest,
+): Promise<ProductNewResponse> => {
     const token = storage.retrieveToken();
     const request = {
         body: JSON.stringify(req),
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.productNew, request);
@@ -163,6 +180,7 @@ export const productNew = async (req: ProductNewRequest) => {
 
 interface SearchProductRequest {
     name: string;
+    pagination: Pagination;
 }
 interface SearchProductResponse {
     error?: string;
@@ -182,9 +200,10 @@ interface SearchProductResponse {
         }[];
     }[];
     userID?: number;
+    pagination?: Pagination;
 }
 export const searchProducts = async (
-    req: SearchProductRequest
+    req: SearchProductRequest,
 ): Promise<SearchProductResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -192,10 +211,10 @@ export const searchProducts = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.productSearch, request);
@@ -230,7 +249,7 @@ interface CreateEntryResponse {
     };
 }
 export const createEntry = async (
-    req: CreateEntryRequest
+    req: CreateEntryRequest,
 ): Promise<CreateEntryResponse> => {
     const token = storage.retrieveToken();
 
@@ -239,10 +258,10 @@ export const createEntry = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.entriesCreate, request);
@@ -261,6 +280,7 @@ export const createEntry = async (
 
 interface GetEntriesRequest {
     date: string;
+    pagination: Pagination;
 }
 interface GetEntriesResponse {
     error?: string;
@@ -283,9 +303,10 @@ interface GetEntriesResponse {
             }[];
         };
     }[];
+    pagination?: Pagination;
 }
 export const entriesView = async (
-    req: GetEntriesRequest
+    req: GetEntriesRequest,
 ): Promise<GetEntriesResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -293,10 +314,10 @@ export const entriesView = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.entriesView, request);
@@ -325,10 +346,10 @@ export const getDates = async (): Promise<GetDatesResponse> => {
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.entriesDates, request);
@@ -358,7 +379,7 @@ interface UpdateEntryResponse {
     error?: string;
 }
 export const updateEntry = async (
-    req: UpdateEntryRequest
+    req: UpdateEntryRequest,
 ): Promise<UpdateEntryResponse> => {
     const token = storage.retrieveToken();
 
@@ -367,10 +388,10 @@ export const updateEntry = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.entriesUpdate, request);
@@ -395,7 +416,7 @@ interface DeleteEntryResponse {
 }
 
 export const deleteEntry = async (
-    req: DeleteEntryRequest
+    req: DeleteEntryRequest,
 ): Promise<DeleteEntryResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -403,10 +424,10 @@ export const deleteEntry = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.entriesDelete, request);
@@ -431,16 +452,16 @@ interface VerifyAccountResponse {
 }
 
 export const verifyAccount = async (
-    req: VerifyAccountRequest
+    req: VerifyAccountRequest,
 ): Promise<VerifyAccountResponse> => {
     const request = {
         body: JSON.stringify(req),
         headers: {
             Accept: "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.verifyAccount, request);
@@ -465,16 +486,16 @@ interface ChangePasswordResponse {
     error?: string;
 }
 export const changePassword = async (
-    req: ChangePasswordRequest
+    req: ChangePasswordRequest,
 ): Promise<ChangePasswordResponse> => {
     const request = {
         body: JSON.stringify(req),
         headers: {
             Accept: "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.changePassword, request);
@@ -499,16 +520,16 @@ interface RemindPasswordResponse {
 }
 
 export const remindPassword = async (
-    req: RemindPasswordRequest
+    req: RemindPasswordRequest,
 ): Promise<RemindPasswordResponse> => {
     const request = {
         body: JSON.stringify(req),
         headers: {
             Accept: "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.remindPassword, request);
@@ -532,7 +553,7 @@ interface RateProductRequest {
 interface RateProductResponse {}
 
 export const rateProduct = async (
-    req: RateProductRequest
+    req: RateProductRequest,
 ): Promise<RateProductResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -540,10 +561,10 @@ export const rateProduct = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.productRate, request);

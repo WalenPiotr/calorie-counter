@@ -37,14 +37,14 @@ class Row extends React.PureComponent<RowProps, RowState> {
         unit: this.props.product.portions[0].unit,
         date: new Date(),
         vote: 0,
-        voteSum: 0
+        voteSum: 0,
     };
     componentDidMount() {
         const voteSum = this.props.product.ratings.reduce(
             (prev: number, curr: { userID: number; vote: number }) => {
                 return prev + curr.vote;
             },
-            0
+            0,
         );
         const vote = this.getUserVote();
         this.setState({ voteSum, vote });
@@ -62,14 +62,14 @@ class Row extends React.PureComponent<RowProps, RowState> {
         const newValue = e.currentTarget.value;
         this.setState((prevState: RowState) => ({
             ...prevState,
-            quantity: newValue
+            quantity: newValue,
         }));
         this.props.setStatus(Status.None, "");
     };
     onSelectChange = (value: string) => {
         this.setState((prevState: RowState) => ({
             ...prevState,
-            unit: value
+            unit: value,
         }));
         this.props.setStatus(Status.None, "");
     };
@@ -98,7 +98,7 @@ class Row extends React.PureComponent<RowProps, RowState> {
             productID: this.props.product.id,
             portionID: portionID,
             quantity: parsedQuantity,
-            date: this.state.date.toISOString()
+            date: this.state.date.toISOString(),
         };
         const res = await requests.createEntry({ entry });
         this.setState({ collapsed: true });
@@ -133,7 +133,7 @@ class Row extends React.PureComponent<RowProps, RowState> {
         console.log(date.toISOString());
         await this.setState((prevState: RowState) => ({
             ...prevState,
-            date
+            date,
         }));
         this.props.setStatus(Status.None, "");
     };
@@ -144,114 +144,113 @@ class Row extends React.PureComponent<RowProps, RowState> {
         if (this.state.vote == vote) {
             this.setState((prevState: RowState) => ({
                 vote: 0,
-                voteSum: prevState.voteSum - vote
+                voteSum: prevState.voteSum - vote,
             }));
             const res = await requests.rateProduct({
                 id: this.props.product.id,
-                vote: 0
+                vote: 0,
             });
             return;
         }
         if (this.state.vote == 0) {
             this.setState((prevState: RowState) => ({
                 vote: vote,
-                voteSum: prevState.voteSum + vote
+                voteSum: prevState.voteSum + vote,
             }));
             const res = await requests.rateProduct({
                 id: this.props.product.id,
-                vote: vote
+                vote: vote,
             });
             return;
         }
         this.setState((prevState: RowState) => ({
             vote: vote,
-            voteSum: prevState.voteSum + 2 * vote
+            voteSum: prevState.voteSum + 2 * vote,
         }));
         const res = await requests.rateProduct({
             id: this.props.product.id,
-            vote: vote
+            vote: vote,
         });
         return;
     };
 
     render() {
+        const controlBox = (
+            <Styled.ControlBox>
+                <Styled.CalendarBox>
+                    <Calendar
+                        onCollapseClick={this.onCalendarClick}
+                        date={this.state.date}
+                        logged={[]}
+                        onDateChange={this.onDateChange}
+                    />
+                </Styled.CalendarBox>
+                <Input
+                    label={"Enter Amount"}
+                    value={this.state.quantity}
+                    onChange={this.onInputChange}
+                    error={this.state.quantityError}
+                />
+                <Select
+                    label={"Select Unit"}
+                    options={this.props.product.portions.map(
+                        (portion: Portion) => portion.unit,
+                    )}
+                    value={this.state.unit}
+                    onSelectChange={this.onSelectChange}
+                />
+                <Styled.NutrientDiv>
+                    <Styled.NutrientLabel>Calories</Styled.NutrientLabel>
+                    <Styled.NutrientValue>
+                        {this.getEnergy()}
+                    </Styled.NutrientValue>
+                </Styled.NutrientDiv>
+                <BlockButton onClick={this.onAddClick}>ADD</BlockButton>
+            </Styled.ControlBox>
+        );
+        const lineBox = (
+            <Styled.LineBox>
+                <Styled.InfoBox>
+                    <Styled.BigLabel>{this.props.product.name}</Styled.BigLabel>
+                    <div>
+                        <Styled.SmallLabel>
+                            Energy:{" "}
+                            <label>
+                                {this.props.product.portions[0].energy.toFixed()}
+                            </label>{" "}
+                            kcal
+                        </Styled.SmallLabel>
+                        <Styled.SmallLabel>
+                            Unit:
+                            <label>{this.props.product.portions[0].unit}</label>
+                        </Styled.SmallLabel>
+                    </div>
+                </Styled.InfoBox>
+                <Styled.VoteBox>
+                    <Styled.Votes>{this.state.voteSum}</Styled.Votes>
+                    <Styled.VoteButton
+                        onClick={this.rateProduct(1)}
+                        green={this.state.vote === 1}
+                    >
+                        <Like />
+                    </Styled.VoteButton>
+                    <Styled.VoteButton
+                        onClick={this.rateProduct(-1)}
+                        red={this.state.vote === -1}
+                    >
+                        <Dislike />
+                    </Styled.VoteButton>
+                </Styled.VoteBox>
+                <Styled.CollapseButton onClick={this.onCollapseClick}>
+                    {this.state.collapsed ? <ShoppingBasket /> : <ChevronUp />}
+                </Styled.CollapseButton>
+            </Styled.LineBox>
+        );
+
         return (
             <div key={this.props.product.name}>
-                <Styled.LineBox>
-                    <Styled.InfoBox>
-                        <Styled.BigLabel>
-                            {this.props.product.name}
-                        </Styled.BigLabel>
-                        <div>
-                            <Styled.SmallLabel>
-                                Energy:{" "}
-                                <label>
-                                    {this.props.product.portions[0].energy.toFixed()}
-                                </label>{" "}
-                                kcal
-                            </Styled.SmallLabel>
-                            <Styled.SmallLabel>
-                                Unit:
-                                <label>
-                                    {this.props.product.portions[0].unit}
-                                </label>
-                            </Styled.SmallLabel>
-                        </div>
-                    </Styled.InfoBox>
-                    <Styled.VoteBox>
-                        <Styled.Votes>{this.state.voteSum}</Styled.Votes>
-                        <Styled.VoteButton
-                            onClick={this.rateProduct(1)}
-                            green={this.state.vote === 1}
-                        >
-                            <Like />
-                        </Styled.VoteButton>
-                        <Styled.VoteButton
-                            onClick={this.rateProduct(-1)}
-                            red={this.state.vote === -1}
-                        >
-                            <Dislike />
-                        </Styled.VoteButton>
-                    </Styled.VoteBox>
-                    <Styled.CollapseButton onClick={this.onCollapseClick}>
-                        {this.state.collapsed ? (
-                            <ShoppingBasket />
-                        ) : (
-                            <ChevronUp />
-                        )}
-                    </Styled.CollapseButton>
-                </Styled.LineBox>
-                <Styled.ControlBox hidden={this.state.collapsed}>
-                    <Styled.CalendarBox>
-                        <Calendar
-                            onCollapseClick={this.onCalendarClick}
-                            date={this.state.date}
-                            logged={[]}
-                            onDateChange={this.onDateChange}
-                        />
-                    </Styled.CalendarBox>
-                    <Input
-                        label={"Enter Amount"}
-                        value={this.state.quantity}
-                        onChange={this.onInputChange}
-                        error={this.state.quantityError}
-                    />
-                    <Select
-                        label={"Select Unit"}
-                        options={this.props.product.portions.map(
-                            (portion: Portion) => portion.unit
-                        )}
-                        value={this.state.unit}
-                        onSelectChange={this.onSelectChange}
-                    />
-                    <Styled.NutrientDiv>
-                        <Styled.NutrientLabel>Calories</Styled.NutrientLabel>
-                        <Styled.NutrientValue>
-                            {this.getEnergy()}
-                        </Styled.NutrientValue>
-                    </Styled.NutrientDiv>
-                    <BlockButton onClick={this.onAddClick}>ADD</BlockButton>
-                </Styled.ControlBox>
+                {lineBox}
+                {this.state.collapsed ? null : controlBox}
             </div>
         );
     }

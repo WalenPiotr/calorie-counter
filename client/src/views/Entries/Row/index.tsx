@@ -27,37 +27,45 @@ class Row extends React.Component<RowProps, RowState> {
         collapsed: true,
         quantity: this.props.entry.quantity.toString(),
         unit: this.props.entry.product.portions.filter(
-            (portion: Portion) => this.props.entry.portionID == portion.id
+            (portion: Portion) => this.props.entry.portionID == portion.id,
         )[0].unit,
         date: new Date(this.props.entry.date),
-        quantityError: null
+        quantityError: null,
     };
 
     onInputChange = (e: React.FormEvent<HTMLInputElement>) => {
         const newValue = e.currentTarget.value;
         this.setState((prevState: RowState) => ({
             ...prevState,
-            quantity: newValue
+            quantity: newValue,
         }));
         this.props.setStatus(Status.None, "");
     };
     onSelectChange = (value: string) => {
         this.setState((prevState: RowState) => ({
             ...prevState,
-            unit: value
+            unit: value,
         }));
         this.props.setStatus(Status.None, "");
     };
-    onCollapseClick = () => {
-        this.setState((prevState: RowState) => ({
+    onCollapseClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.persist();
+        await this.setState((prevState: RowState) => ({
             ...prevState,
             collapsed: !this.state.collapsed,
             quantity: this.props.entry.quantity.toString(),
             unit: this.props.entry.product.portions.filter(
-                (portion: Portion) => this.props.entry.portionID == portion.id
-            )[0].unit
+                (portion: Portion) => this.props.entry.portionID == portion.id,
+            )[0].unit,
         }));
-        this.props.setStatus(Status.None, "");
+        await this.props.setStatus(Status.None, "");
+        window.scrollTo({
+            top: event.clientY - 100,
+            left: 0,
+            behavior: "smooth",
+        });
+        event.preventDefault();
+        event.stopPropagation();
     };
     onUpdateClick = async () => {
         var portionID = -1;
@@ -81,7 +89,7 @@ class Row extends React.Component<RowProps, RowState> {
             productID: this.props.entry.product.id,
             portionID: portionID,
             quantity: parsedQuantity,
-            date: this.state.date.toISOString()
+            date: this.state.date.toISOString(),
         };
         try {
             await this.setState({ quantityError: null });
@@ -97,7 +105,7 @@ class Row extends React.Component<RowProps, RowState> {
     onDateChange = (date: Date) => {
         this.setState((prevState: RowState) => ({
             ...prevState,
-            date
+            date,
         }));
     };
     getEnergy = (): string => {
@@ -126,57 +134,63 @@ class Row extends React.Component<RowProps, RowState> {
         const quantity = entry.quantity;
         const portion = findPortion(entry.product.portions, entry.portionID);
         const unit = portion.unit;
+        const controlBox = (
+            <Styled.ControlBox hidden={this.state.collapsed}>
+                <Styled.RowCalendarBox>
+                    <Calendar
+                        date={this.state.date}
+                        logged={this.props.loggedDates}
+                        onDateChange={this.onDateChange}
+                        onCollapseClick={this.onCalendarClick}
+                    />
+                </Styled.RowCalendarBox>
+                <Input
+                    label={"Enter Amount"}
+                    value={this.state.quantity}
+                    onChange={this.onInputChange}
+                    error={this.state.quantityError}
+                />
+                <Select
+                    label={"Select unit"}
+                    options={this.props.entry.product.portions.map(
+                        (portion: Portion) => portion.unit,
+                    )}
+                    value={this.state.unit}
+                    onSelectChange={this.onSelectChange}
+                />
+                <Styled.NutrientDiv>
+                    <Styled.NutrientLabel>Calories</Styled.NutrientLabel>
+                    <Styled.NutrientValue>
+                        {this.getEnergy()}
+                    </Styled.NutrientValue>
+                </Styled.NutrientDiv>
+                <Styled.BlockButtonGroup>
+                    <Styled.SmallBlockButton onClick={this.onUpdateClick}>
+                        Update
+                    </Styled.SmallBlockButton>
+                    <Styled.SmallBlockButton onClick={this.onDeleteClick}>
+                        Delete
+                    </Styled.SmallBlockButton>
+                </Styled.BlockButtonGroup>
+            </Styled.ControlBox>
+        );
+        const rowBox = (
+            <Styled.RowBox>
+                <Styled.Element width={"30%"}>{name}</Styled.Element>
+                <Styled.Element width={"15%"}>{quantity}</Styled.Element>
+                <Styled.Element width={"15%"}>{unit}</Styled.Element>
+                <Styled.Element width={"25%"} grow>
+                    {this.getEnergy()} kcal
+                </Styled.Element>
+                <Styled.ExpandButton onClick={this.onCollapseClick}>
+                    {this.state.collapsed ? <Gear /> : <ChevronUp />}
+                </Styled.ExpandButton>
+            </Styled.RowBox>
+        );
         return (
             <Styled.Box>
-                <Styled.RowBox>
-                    <Styled.Element width={"30%"}>{name}</Styled.Element>
-                    <Styled.Element width={"15%"}>{quantity}</Styled.Element>
-                    <Styled.Element width={"15%"}>{unit}</Styled.Element>
-                    <Styled.Element width={"25%"} grow>
-                        {this.getEnergy()} kcal
-                    </Styled.Element>
-                    <Styled.ExpandButton onClick={this.onCollapseClick}>
-                        {this.state.collapsed ? <Gear /> : <ChevronUp />}
-                    </Styled.ExpandButton>
-                </Styled.RowBox>
-                <Styled.ControlBox hidden={this.state.collapsed}>
-                    <Styled.RowCalendarBox>
-                        <Calendar
-                            date={this.state.date}
-                            logged={this.props.loggedDates}
-                            onDateChange={this.onDateChange}
-                            onCollapseClick={this.onCalendarClick}
-                        />
-                    </Styled.RowCalendarBox>
-                    <Input
-                        label={"Enter Amount"}
-                        value={this.state.quantity}
-                        onChange={this.onInputChange}
-                        error={this.state.quantityError}
-                    />
-                    <Select
-                        label={"Select unit"}
-                        options={this.props.entry.product.portions.map(
-                            (portion: Portion) => portion.unit
-                        )}
-                        value={this.state.unit}
-                        onSelectChange={this.onSelectChange}
-                    />
-                    <Styled.NutrientDiv>
-                        <Styled.NutrientLabel>Calories</Styled.NutrientLabel>
-                        <Styled.NutrientValue>
-                            {this.getEnergy()}
-                        </Styled.NutrientValue>
-                    </Styled.NutrientDiv>
-                    <Styled.BlockButtonGroup>
-                        <Styled.SmallBlockButton onClick={this.onUpdateClick}>
-                            Update
-                        </Styled.SmallBlockButton>
-                        <Styled.SmallBlockButton onClick={this.onDeleteClick}>
-                            Delete
-                        </Styled.SmallBlockButton>
-                    </Styled.BlockButtonGroup>
-                </Styled.ControlBox>
+                {rowBox}
+                {this.state.collapsed ? null : controlBox}
             </Styled.Box>
         );
     }

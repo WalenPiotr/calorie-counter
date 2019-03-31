@@ -1,4 +1,4 @@
-import styled, { css } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 
 export const LineBox = styled.div`
     display: flex;
@@ -23,12 +23,8 @@ export const CollapseButton = styled.button`
 export const InfoBox = styled.div`
     flex: 100px 1 0;
 `;
-
-interface ControlBoxProps {
-    hidden: boolean;
-}
 export const ControlBox = styled.div`
-    display: ${(props: ControlBoxProps) => (props.hidden ? "none" : "flex")};
+    display: flex;
     width: 90%;
     margin: 20px auto;
     justify-content: center;

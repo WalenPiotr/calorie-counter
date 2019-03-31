@@ -3,7 +3,7 @@ import * as React from "react";
 import { Product } from "..";
 import Row from "./Row";
 import { Status } from "@status";
-
+import { TableBox } from "./styled";
 interface TableProps {
     products: Product[];
     setStatus: (status: Status, message: string) => void;
@@ -30,9 +30,9 @@ class Table extends React.PureComponent<TableProps, TableState> {
             );
         });
         if (this.props.nothingFound) {
-            return <div>Nothing Found</div>;
+            return <TableBox>Nothing Found</TableBox>;
         }
-        return <div>{components}</div>;
+        return <TableBox>{components}</TableBox>;
     }
 }
 

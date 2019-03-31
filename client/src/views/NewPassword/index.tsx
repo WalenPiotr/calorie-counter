@@ -3,7 +3,7 @@ import { withRouter, RouteComponentProps } from "react-router-dom";
 import * as requests from "@requests";
 import styled from "styled-components";
 import Input from "@components/Input";
-import Widget from "@elements/Widget";
+import Widget from "@components/Widget";
 import BlockButton from "@elements/BlockButton";
 import { validatePassword } from "@inputValidation";
 import { Status } from "@status";
@@ -21,7 +21,7 @@ class VerifyAccount extends React.Component<
 > {
     state = {
         password: "",
-        passwordError: null
+        passwordError: null,
     };
     handlePasswordChange = (event: React.FormEvent<HTMLInputElement>) => {
         const password = event.currentTarget.value;
@@ -37,17 +37,17 @@ class VerifyAccount extends React.Component<
             const res = await requests.changePassword({ token, password });
             if (res.error) {
                 this.setState({
-                    passwordError: ""
+                    passwordError: "",
                 });
                 this.props.setStatus(Status.Error, res.error);
                 return;
             }
             this.props.setStatus(
                 Status.Success,
-                "You successfully changed your password"
+                "You successfully changed your password",
             );
             this.setState({
-                passwordError: null
+                passwordError: null,
             });
             return;
         }

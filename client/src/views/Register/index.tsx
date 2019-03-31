@@ -23,14 +23,14 @@ class Register extends React.PureComponent<
         email: "",
         emailError: null,
         password: "",
-        passwordError: null
+        passwordError: null,
     };
     onEmailChange = (e: React.FormEvent<HTMLInputElement>) => {
         const email = e.currentTarget.value;
         this.setState((prevState: RegisterState) => ({
             ...prevState,
             email,
-            emailError: null
+            emailError: null,
         }));
     };
     onPasswordChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -38,7 +38,7 @@ class Register extends React.PureComponent<
         this.setState((prevState: RegisterState) => ({
             ...prevState,
             password,
-            passwordError: null
+            passwordError: null,
         }));
     };
     register = async () => {
@@ -53,12 +53,12 @@ class Register extends React.PureComponent<
         if (!emailError && !passwordError) {
             const res = await this.props.register(
                 this.state.email,
-                this.state.password
+                this.state.password,
             );
             if (res.error) {
                 this.setState({
                     emailError: "",
-                    passwordError: ""
+                    passwordError: "",
                 });
             }
         }
@@ -75,15 +75,15 @@ class Register extends React.PureComponent<
                 passwordError={this.state.passwordError}
                 buttonParams={{
                     text: "Register!",
-                    onClick: this.register
+                    onClick: this.register,
                 }}
                 linkParams={[
                     {
                         text: "Already registered?",
                         onClick: () => {
                             this.props.history.push("/login");
-                        }
-                    }
+                        },
+                    },
                 ]}
             />
         );

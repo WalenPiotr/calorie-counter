@@ -267,12 +267,14 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Ratings  []models.Rating  `json:"ratings"`
 	}
 	type RequestObject struct {
-		Name string `json:"name"`
+		Name       string            `json:"name"`
+		Pagination models.Pagination `json:"pagination"`
 	}
 	type ResponseObject struct {
-		Error    string    `json:"error,omitempty"`
-		UserID   int       `json:"userID,omitempty"`
-		Products []Product `json:"products,omitempty"`
+		Error      string            `json:"error,omitempty"`
+		UserID     int               `json:"userID,omitempty"`
+		Products   []Product         `json:"products,omitempty"`
+		Pagination models.Pagination `json:"pagination"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error, message string) {
 		err = errors.Wrap(err, "While getting product")
@@ -284,12 +286,13 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, products []Product, userID int) {
+	sendData := func(w http.ResponseWriter, status int, products []Product, userID int, pagination models.Pagination) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Products: products,
-			UserID:   userID,
+			Products:   products,
+			UserID:     userID,
+			Pagination: pagination,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -307,7 +310,7 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
-		products, err := models.GetProductsByName(db, in.Name)
+		products, pagination, err := models.GetProductsByName(db, in.Name, in.Pagination)
 		if err != nil {
 			err = errors.Wrap(err, "While fetching products")
 			sendError(w, http.StatusBadRequest, err, InternalError)
@@ -334,7 +337,7 @@ func SearchProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 			}
 			bundledProducts = append(bundledProducts, bundledProduct)
 		}
-		sendData(w, http.StatusOK, bundledProducts, userID)
+		sendData(w, http.StatusOK, bundledProducts, userID, *pagination)
 		return
 	})
 }
@@ -354,12 +357,14 @@ func GetUsersAddedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 		ID          int              `json:"id"`
 	}
 	type RequestObject struct {
-		ID int `json:"id,omitempty"`
+		ID         int               `json:"id,omitempty"`
+		Pagination models.Pagination `json:"pagination"`
 	}
 	type ResponseObject struct {
-		Error    string    `json:"error,omitempty"`
-		User     User      `json:"user,omitempty"`
-		Products []Product `json:"products,omitempty"`
+		Error      string            `json:"error,omitempty"`
+		User       User              `json:"user,omitempty"`
+		Products   []Product         `json:"products,omitempty"`
+		Pagination models.Pagination `json:"pagination"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error, message string) {
 		err = errors.Wrap(err, "While Authenticate")
@@ -371,12 +376,13 @@ func GetUsersAddedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, products []Product, user User) {
+	sendData := func(w http.ResponseWriter, status int, products []Product, user User, pagination models.Pagination) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Products: products,
-			User:     user,
+			Products:   products,
+			User:       user,
+			Pagination: pagination,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -388,7 +394,7 @@ func GetUsersAddedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
-		products, err := models.GetProductsByCreatorID(db, in.ID)
+		products, pagination, err := models.GetProductsByCreatorID(db, in.ID, in.Pagination)
 		if err != nil {
 			err = errors.Wrap(err, "While fetching products")
 			sendError(w, http.StatusBadRequest, err, InternalError)
@@ -421,7 +427,8 @@ func GetUsersAddedProducts(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err, InternalError)
 			return
 		}
-		sendData(w, http.StatusOK, bundledProducts, User{Email: acc.Email, ID: acc.ID, AccessLevel: acc.AccessLevel})
+		user := User{Email: acc.Email, ID: acc.ID, AccessLevel: acc.AccessLevel}
+		sendData(w, http.StatusOK, bundledProducts, user, *pagination)
 		return
 	})
 }

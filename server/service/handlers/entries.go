@@ -85,11 +85,13 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 		Product Product `json:"product,omitempty"`
 	}
 	type RequestObject struct {
-		Date time.Time `json:"date,omitempty"`
+		Date       time.Time          `json:"date,omitempty"`
+		Pagination *models.Pagination `json:"pagination,omitempty"`
 	}
 	type ResponseObject struct {
-		Error   string   `json:"error,omitempty"`
-		Entries *[]Entry `json:"entries,omitempty"`
+		Error      string             `json:"error,omitempty"`
+		Entries    *[]Entry           `json:"entries,omitempty"`
+		Pagination *models.Pagination `json:"pagination,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error, message string) {
 		err = errors.Wrap(err, "While creating entry")
@@ -101,11 +103,12 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, entries *[]Entry) {
+	sendData := func(w http.ResponseWriter, status int, entries *[]Entry, pagination *models.Pagination) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Entries: entries,
+			Entries:    entries,
+			Pagination: pagination,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -125,7 +128,7 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 			return
 
 		}
-		entries, err := models.GetUsersEntries(db, userID, in.Date)
+		entries, pagination, err := models.GetUsersEntries(db, userID, in.Date, in.Pagination)
 		if err != nil {
 			err = errors.Wrap(err, "While getting db users entries")
 			sendError(w, http.StatusBadRequest, err, InternalError)
@@ -156,7 +159,7 @@ func GetUsersEntries(db *sql.DB, logger *logrus.Logger) http.Handler {
 			}
 			popEntries = append(popEntries, popEntry)
 		}
-		sendData(w, http.StatusOK, &popEntries)
+		sendData(w, http.StatusOK, &popEntries, pagination)
 		return
 	})
 }

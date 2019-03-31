@@ -1,7 +1,6 @@
-import * as React from "react";
 import styled, { css } from "styled-components";
 
-const BaseInput = styled.input`
+export const BaseInput = styled.input`
     box-sizing: border-box;
     text-indent: 10px;
     font-size: 16px;
@@ -15,8 +14,7 @@ interface InputLabelProps {
     red?: boolean;
     align?: string;
 }
-
-const InputLabel = styled.div`
+export const InputLabel = styled.div`
     font-weight: 500;
     font-size: 12px;
     text-transform: uppercase;
@@ -41,11 +39,10 @@ const InputLabel = styled.div`
         return;
     }}
 `;
-
 interface InputBoxProps {
     red?: boolean;
 }
-const InputBox = styled.div`
+export const InputBox = styled.div`
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -63,40 +60,7 @@ const InputBox = styled.div`
     margin-bottom: 20px;
     box-sizing: border-box;
 `;
-
-const MessageBox = styled.div`
+export const MessageBox = styled.div`
     display: flex;
     justify-content: space-between;
 `;
-
-interface InputProps {
-    label: string;
-    type?: string;
-    value: string;
-    onChange: (e: React.FormEvent<HTMLInputElement>) => void;
-    error?: string | null;
-}
-
-class Input extends React.PureComponent<InputProps> {
-    render() {
-        const { label, type, value, onChange, error } = this.props;
-        return (
-            <InputBox red={error !== null}>
-                <MessageBox>
-                    <InputLabel>{label}</InputLabel>
-                    <InputLabel red align={"right"}>
-                        {error}
-                    </InputLabel>
-                </MessageBox>
-                <BaseInput
-                    placeholder=""
-                    type={type}
-                    onChange={onChange}
-                    value={value}
-                />
-            </InputBox>
-        );
-    }
-}
-
-export default Input;

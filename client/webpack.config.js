@@ -9,7 +9,7 @@ module.exports = {
     output: {
         filename: "[name].bundle.js",
         path: path.resolve(__dirname, "dist"),
-        publicPath: "/"
+        publicPath: "/",
     },
     devtool: "source-map",
     resolve: {
@@ -23,11 +23,12 @@ module.exports = {
             "@storage": path.resolve(__dirname, "src/storage.ts"),
             "@status": path.resolve(__dirname, "src/status.ts"),
             "@requests": path.resolve(__dirname, "src/requests.ts"),
+            "@theme": path.resolve(__dirname, "src/theme.ts"),
             "@inputValidation": path.resolve(
                 __dirname,
-                "src/inputValidation.ts"
-            )
-        }
+                "src/inputValidation.ts",
+            ),
+        },
     },
     module: {
         rules: [
@@ -36,28 +37,28 @@ module.exports = {
                 loader: "awesome-typescript-loader",
                 options: {
                     getCustomTransformers: () => ({
-                        before: [styledComponentsTransformer]
-                    })
-                }
+                        before: [styledComponentsTransformer],
+                    }),
+                },
             },
             {
                 test: /\.css$/,
                 use: [
                     {
-                        loader: "style-loader"
+                        loader: "style-loader",
                     },
                     {
-                        loader: "css-loader"
-                    }
-                ]
+                        loader: "css-loader",
+                    },
+                ],
             },
             {
                 test: /\.html$/,
                 use: [
                     {
-                        loader: "html-loader"
-                    }
-                ]
+                        loader: "html-loader",
+                    },
+                ],
             },
             {
                 test: /\.(ico)$/,
@@ -65,18 +66,18 @@ module.exports = {
                     {
                         loader: "file-loader",
                         options: {
-                            name: "[name].[ext]"
-                        }
-                    }
-                ]
-            }
-        ]
+                            name: "[name].[ext]",
+                        },
+                    },
+                ],
+            },
+        ],
     },
     plugins: [
         new HtmlWebPackPlugin({
             template: "./public/index.html",
-            filename: "./index.html"
-        })
+            filename: "./index.html",
+        }),
     ],
     devServer: {
         proxy: {
@@ -85,11 +86,11 @@ module.exports = {
                 target: "http://localhost:8080/", // send to webpack dev server
                 rewrite: function(req) {
                     req.url = "index.html"; // Send to react app
-                }
-            }
+                },
+            },
         },
         historyApiFallback: {
-            disableDotRule: true
-        }
-    }
+            disableDotRule: true,
+        },
+    },
 };

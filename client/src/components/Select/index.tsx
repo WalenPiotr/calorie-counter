@@ -15,19 +15,19 @@ interface SelectState {
 
 class Select extends React.PureComponent<SelectProps, SelectState> {
     state = {
-        collapsed: true
+        collapsed: true,
     };
     onClick = () => {
         this.setState((prev: SelectState) => ({
             ...prev,
-            collapsed: !prev.collapsed
+            collapsed: !prev.collapsed,
         }));
     };
     onSelect = (value: string) => (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         this.setState((prev: SelectState) => ({
             ...prev,
-            collapsed: true
+            collapsed: true,
         }));
         this.props.onSelectChange(value);
     };

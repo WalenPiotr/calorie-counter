@@ -7,7 +7,7 @@ import { Status } from "@status";
 import * as requests from "@requests";
 import {
     validateEmailWhenLogin,
-    validatePasswordWhenLogin
+    validatePasswordWhenLogin,
 } from "@inputValidation";
 export interface LoginProps extends RouteComponentProps {
     logIn: (email: string, password: string) => Promise<{ error?: string }>;
@@ -24,14 +24,14 @@ class Login extends React.PureComponent<LoginProps, LoginState> {
         email: "",
         emailError: null,
         password: "",
-        passwordError: null
+        passwordError: null,
     };
     onEmailChange = (e: React.FormEvent<HTMLInputElement>) => {
         const email = e.currentTarget.value;
         this.setState((prevState: LoginState) => ({
             ...prevState,
             email,
-            emailError: null
+            emailError: null,
         }));
     };
     onPasswordChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -39,7 +39,7 @@ class Login extends React.PureComponent<LoginProps, LoginState> {
         this.setState((prevState: LoginState) => ({
             ...prevState,
             password,
-            passwordError: null
+            passwordError: null,
         }));
     };
     login = async () => {
@@ -54,12 +54,12 @@ class Login extends React.PureComponent<LoginProps, LoginState> {
         if (!emailError && !passwordError) {
             const res = await this.props.logIn(
                 this.state.email,
-                this.state.password
+                this.state.password,
             );
             if (res.error) {
                 this.setState({
                     emailError: "",
-                    passwordError: ""
+                    passwordError: "",
                 });
             }
         }
@@ -78,13 +78,13 @@ class Login extends React.PureComponent<LoginProps, LoginState> {
                 linkParams={[
                     {
                         text: "Not registered?",
-                        onClick: () => this.props.history.push("register")
+                        onClick: () => this.props.history.push("register"),
                     },
                     {
                         text: "Forgot password?",
                         onClick: () =>
-                            this.props.history.push("/remind-password")
-                    }
+                            this.props.history.push("/remind-password"),
+                    },
                 ]}
             />
         );

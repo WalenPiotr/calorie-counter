@@ -2,7 +2,7 @@ import * as React from "react";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 import * as requests from "@requests";
 import styled from "styled-components";
-import Widget from "@elements/Widget";
+import Widget from "@components/Widget";
 import Spinner from "@elements/Spinner";
 
 interface VerifyAccountProps extends RouteComponentProps<{ token: string }> {}

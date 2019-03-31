@@ -1,17 +1,16 @@
 import * as React from "react";
 import styled from "styled-components";
-
 import SearchBar from "./SearchBar";
 import AddNewControls from "./AddNewControls";
 import Table from "./Table";
-
-import * as storage from "@storage";
-import Widget from "@elements/Widget";
+import Widget from "@components/Widget";
 import Label from "@elements/Label";
 import * as requests from "@requests";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 import Spinner from "@elements/Spinner";
 import { Status } from "@status";
+import PaginationControls from "@components/PaginationControls";
+
 export interface Portion {
     id: number;
     productID: number;
@@ -38,6 +37,7 @@ interface ProductsState {
     isLoading: boolean;
     nothingFound: boolean;
     userID: number;
+    pagination: requests.Pagination;
 }
 
 const Box = styled.div`
@@ -57,32 +57,45 @@ class Products extends React.PureComponent<ProductsProps, ProductsState> {
         products: [],
         isLoading: false,
         nothingFound: false,
-        userID: -1
+        userID: -1,
+        pagination: {
+            itemsPerPage: 8,
+            page: 0,
+            maxPage: 0,
+        },
     };
-    onSearchClick = async () => {
+    search = async () => {
         this.setState((prevState: ProductsState) => ({
             ...prevState,
-            isLoading: true
+            isLoading: true,
         }));
         const res = await requests.searchProducts({
-            name: this.state.searchInput
+            name: this.state.searchInput,
+            pagination: this.state.pagination,
         });
         const products = res.products;
         const userID = res.userID;
-        if (products && userID) {
+        const pagination = res.pagination;
+        if (products && userID && pagination) {
             this.setState((prevState: ProductsState) => ({
                 ...prevState,
                 products: products,
                 isLoading: false,
                 nothingFound: false,
-                userID
+                userID,
+                pagination,
             }));
         } else {
             this.setState((prevState: ProductsState) => ({
                 ...prevState,
                 products: [],
                 isLoading: false,
-                nothingFound: true
+                nothingFound: true,
+                pagination: {
+                    ...prevState.pagination,
+                    page: 0,
+                    maxPage: 0,
+                },
             }));
         }
         if (res.error) {
@@ -90,21 +103,50 @@ class Products extends React.PureComponent<ProductsProps, ProductsState> {
             this.setState((prevState: ProductsState) => ({
                 ...prevState,
                 isLoading: false,
-                nothingFound: true
+                nothingFound: true,
+                pagination: {
+                    ...prevState.pagination,
+                    page: 0,
+                    maxPage: 0,
+                },
             }));
             return;
         }
         return;
     };
+    onSearchClick = () => {
+        this.search();
+    };
     onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
         const newValue = e.currentTarget.value;
         this.setState((prevState: ProductsState) => ({
             ...prevState,
-            searchInput: newValue
+            searchInput: newValue,
         }));
     };
     onAddNew = () => {
         this.props.history.push("/products/new");
+    };
+    onJumpPage = (jump: number) => async () => {
+        await this.setState((prevState: ProductsState) => {
+            if (prevState.pagination.maxPage) {
+                const newPage = prevState.pagination.page + jump;
+                console.log(newPage);
+                if (newPage < 0 || newPage > prevState.pagination.maxPage) {
+                    return prevState;
+                } else {
+                    return {
+                        ...prevState,
+                        pagination: {
+                            ...prevState.pagination,
+                            page: newPage,
+                        },
+                    };
+                }
+            }
+            return prevState;
+        });
+        this.search();
     };
     render() {
         return (
@@ -128,6 +170,10 @@ class Products extends React.PureComponent<ProductsProps, ProductsState> {
                             userID={this.state.userID}
                         />
                     )}
+                    <PaginationControls
+                        pagination={this.state.pagination}
+                        onJumpPage={this.onJumpPage}
+                    />
                     <AddNewControls onClick={this.onAddNew} />
                 </Box>
             </Widget>

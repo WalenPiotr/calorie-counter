@@ -1,11 +1,12 @@
 import * as React from "react";
-import Widget from "@elements/Widget";
+import Widget from "@components/Widget";
 import Calendar from "@components/Calendar";
 import * as requests from "@requests";
 import Spinner from "@elements/Spinner";
 import { Status } from "@status";
 import Row from "./Row";
 import * as Styled from "./styled";
+import PaginationControls from "@components/PaginationControls";
 
 export interface Entry {
     id: number;
@@ -34,6 +35,7 @@ interface EntriesState {
     loggedDates: Date[];
     date: Date;
     isLoading: boolean;
+    pagination: requests.Pagination;
 }
 interface EntriesProps {
     setStatus: (status: Status, message: string) => void;
@@ -44,7 +46,12 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
         entries: [],
         date: new Date(),
         loggedDates: [],
-        isLoading: false
+        isLoading: false,
+        pagination: {
+            itemsPerPage: 5,
+            page: 1,
+            maxPage: 1,
+        },
     };
     componentDidMount = () => {
         this.fetchData();
@@ -53,7 +60,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
         await this.setState((prevState: EntriesState) => ({
             ...prevState,
             isLoading: true,
-            date
+            date,
         }));
         this.props.setStatus(Status.None, "");
         this.fetchData();
@@ -61,10 +68,13 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
     fetchData = async () => {
         await this.setState((prevState: EntriesState) => ({
             ...prevState,
-            isLoading: true
+            isLoading: true,
         }));
         const date = this.state.date.toISOString();
-        const resView = await requests.entriesView({ date });
+        const resView = await requests.entriesView({
+            date,
+            pagination: this.state.pagination,
+        });
         if (resView.error) {
             this.props.setStatus(Status.Error, resView.error);
             this.setState({ isLoading: false });
@@ -80,7 +90,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
             this.setState({
                 loggedDates: resDates.dates.map((val: string) => new Date(val)),
                 entries: resView.entries,
-                isLoading: false
+                isLoading: false,
             });
             return;
         }
@@ -91,7 +101,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
         try {
             await this.setState((prevState: EntriesState) => ({
                 ...prevState,
-                isLoading: true
+                isLoading: true,
             }));
             const res = await requests.updateEntry({ id, entry });
             if (res.error) {
@@ -111,7 +121,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
         try {
             await this.setState((prevState: EntriesState) => ({
                 ...prevState,
-                isLoading: true
+                isLoading: true,
             }));
             const res = await requests.deleteEntry({ id });
             if (res.error) {
@@ -129,6 +139,27 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
 
     onCalendarClick = () => {
         this.props.setStatus(Status.None, "");
+    };
+    onJumpPage = (jump: number) => async () => {
+        await this.setState((prevState: EntriesState) => {
+            if (prevState.pagination.maxPage) {
+                const newPage = prevState.pagination.page + jump;
+                console.log(newPage);
+                if (newPage < 0 || newPage > prevState.pagination.maxPage) {
+                    return prevState;
+                } else {
+                    return {
+                        ...prevState,
+                        pagination: {
+                            ...prevState.pagination,
+                            page: newPage,
+                        },
+                    };
+                }
+            }
+            return prevState;
+        });
+        this.fetchData();
     };
     render() {
         const rows =
@@ -153,7 +184,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
 
         const sum = this.state.entries.reduce((acc: number, entry: Entry) => {
             const portion = entry.product.portions.find(
-                (portion: Portion) => portion.id == entry.portionID
+                (portion: Portion) => portion.id == entry.portionID,
             );
             if (portion) {
                 return acc + entry.quantity * portion.energy;
@@ -161,6 +192,21 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
             return 0;
         }, 0);
 
+        const toRender = !this.state.isLoading ? (
+            <Styled.TableBox>
+                <div>{rows}</div>
+                <Styled.SummaryBox>
+                    <Styled.SummaryLabel>Total energy: </Styled.SummaryLabel>
+                    <Styled.SummaryValue>
+                        {sum.toFixed()} kcal
+                    </Styled.SummaryValue>
+                </Styled.SummaryBox>
+            </Styled.TableBox>
+        ) : (
+            <Styled.SpinnerBox>
+                <Spinner />
+            </Styled.SpinnerBox>
+        );
         return (
             <Widget>
                 <Styled.Label>Entries</Styled.Label>
@@ -172,23 +218,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
                         onCollapseClick={this.onCalendarClick}
                     />
                 </Styled.CalendarBox>
-                {!this.state.isLoading ? (
-                    <Styled.TableBox>
-                        <div>{rows}</div>
-                        <Styled.SummaryBox>
-                            <Styled.SummaryLabel>
-                                Total energy:{" "}
-                            </Styled.SummaryLabel>
-                            <Styled.SummaryValue>
-                                {sum.toFixed()} kcal
-                            </Styled.SummaryValue>
-                        </Styled.SummaryBox>
-                    </Styled.TableBox>
-                ) : (
-                    <Styled.SpinnerBox>
-                        <Spinner />
-                    </Styled.SpinnerBox>
-                )}
+                {toRender}
             </Widget>
         );
     }

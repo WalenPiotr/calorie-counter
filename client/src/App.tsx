@@ -19,7 +19,7 @@ import RemindPassword from "@views/RemindPassword";
 import Main from "@views/Main/Main";
 
 const GlobalStyle = createGlobalStyle`
-    body {
+    body,html {
         padding: 0;
         margin: 0;
         font-family: 'Roboto', sans-serif;
@@ -52,7 +52,7 @@ class App extends React.PureComponent<AppProps, AppState> {
     state = {
         isLoggedIn: false,
         status: Status.None,
-        message: ""
+        message: "",
     };
     componentDidMount = async () => {
         const token = storage.retrieveToken();
@@ -66,7 +66,7 @@ class App extends React.PureComponent<AppProps, AppState> {
                 this.setState((prevState: AppState) => {
                     return {
                         ...prevState,
-                        isLoggedIn: true
+                        isLoggedIn: true,
                     };
                 });
                 this.props.history.push("/products");
@@ -77,7 +77,7 @@ class App extends React.PureComponent<AppProps, AppState> {
     };
     logIn = async (
         email: string,
-        password: string
+        password: string,
     ): Promise<{ error?: string }> => {
         const res = await requests.login({ email, password });
         if (res.error) {
@@ -89,7 +89,7 @@ class App extends React.PureComponent<AppProps, AppState> {
             this.setState((prevState: AppState) => {
                 return {
                     ...prevState,
-                    isLoggedIn: true
+                    isLoggedIn: true,
                 };
             });
             this.props.history.push("/products");
@@ -103,13 +103,13 @@ class App extends React.PureComponent<AppProps, AppState> {
         this.setState((prevState: AppState) => {
             return {
                 ...prevState,
-                isLoggedIn: false
+                isLoggedIn: false,
             };
         });
     };
     register = async (
         email: string,
-        password: string
+        password: string,
     ): Promise<{ error?: string }> => {
         storage.invalidateToken();
         const res = await requests.register({ email, password });
@@ -119,7 +119,7 @@ class App extends React.PureComponent<AppProps, AppState> {
         }
         this.setStatus(
             Status.Success,
-            "Please check your email and verify your account"
+            "Please check your email and verify your account",
         );
         this.props.history.push("/");
         return {};

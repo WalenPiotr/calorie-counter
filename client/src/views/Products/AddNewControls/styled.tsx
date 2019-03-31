@@ -4,7 +4,6 @@ import { Plus } from "styled-icons/boxicons-regular/Plus";
 export const AddNewBox = styled.div`
     display: flex;
     padding-top: 10px;
-    border-top: 1px solid grey;
 `;
 export const TextLabel = styled.div`
     flex: 80% 1 1;

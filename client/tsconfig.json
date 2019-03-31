@@ -13,9 +13,10 @@
             "@views/*": ["src/views/*"],
             "@elements/*": ["src/elements/*"],
             "@storage": ["src/storage.ts"],
-            "@media": ["src/media.ts"],
+            "@media": ["src/theme.ts"],
             "@requests": ["src/requests.ts"],
             "@status": ["src/status.ts"],
+            "@theme": ["src/theme.ts"],
             "@inputValidation": ["src/inputValidation.ts"]
         },
         "downlevelIteration": true,

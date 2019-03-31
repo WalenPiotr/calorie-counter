@@ -1,5 +1,5 @@
 import * as React from "react";
-import Widget from "@elements/Widget";
+import Widget from "@components/Widget";
 export interface MainProps {}
 
 export default class Main extends React.Component<MainProps, any> {

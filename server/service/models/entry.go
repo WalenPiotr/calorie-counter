@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"math"
 	"time"
 
 	"github.com/pkg/errors"
@@ -77,7 +78,7 @@ func CreateEntry(db *sql.DB, entry *Entry) (*Entry, error) {
 
 func GetEntry(db *sql.DB, id int) (*Entry, error) {
 	rows, err := db.Query(`
-		SELECT * FROM entries WHERE id = $1
+		SELECT * FROM entries WHERE id = $1;
 	`, id)
 	if err != nil {
 		return nil, err
@@ -101,12 +102,12 @@ func GetEntry(db *sql.DB, id int) (*Entry, error) {
 	return entries[0], err
 }
 
-func GetUsersEntries(db *sql.DB, userID int, date time.Time) (*[]Entry, error) {
+func GetUsersEntries(db *sql.DB, userID int, date time.Time, pagination *Pagination) (*[]Entry, *Pagination, error) {
 	rows, err := db.Query(`
-		SELECT * FROM entries WHERE user_id=$1 AND date=$2
+		SELECT * FROM entries WHERE user_id=$1 AND date=$2;
 	`, userID, date)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
 	entries := []Entry{}
@@ -114,16 +115,28 @@ func GetUsersEntries(db *sql.DB, userID int, date time.Time) (*[]Entry, error) {
 		entry := &Entry{}
 		err := entry.scanRow(rows)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		entries = append(entries, *entry)
 	}
-	return &entries, err
+	var count int
+	row := db.QueryRow("SELECT COUNT(*) FROM entries;")
+	err = row.Scan(&count)
+	if err != nil {
+		return nil, nil, err
+	}
+	maxPage := int(math.Ceil(float64(count)/float64(pagination.ItemsPerPage)) - 1)
+	newPagination := Pagination{
+		ItemsPerPage: pagination.ItemsPerPage,
+		Page:         pagination.Page,
+		MaxPage:      maxPage,
+	}
+	return &entries, &newPagination, nil
 }
 
 func GetUsersEntryDates(db *sql.DB, userID int) (*[]time.Time, error) {
 	rows, err := db.Query(`
-		SELECT date FROM entries WHERE user_id=$1
+		SELECT date FROM entries WHERE user_id=$1 GROUP BY date;  
 	`, userID)
 	if err != nil {
 		return nil, err
@@ -144,7 +157,7 @@ func GetUsersEntryDates(db *sql.DB, userID int) (*[]time.Time, error) {
 
 func DeleteEntry(db *sql.DB, id int) error {
 	rows, err := db.Query(`
-		DELETE FROM entries WHERE id=$1 
+		DELETE FROM entries WHERE id=$1;
 	`, id)
 	if err != nil {
 		return errors.Wrap(err, "While deleting entry")
