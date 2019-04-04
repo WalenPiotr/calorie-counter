@@ -13,10 +13,12 @@ import * as requests from "@requests";
 import { Status } from "@status";
 import { Like } from "styled-icons/boxicons-solid/Like";
 import { Dislike } from "styled-icons/boxicons-solid/Dislike";
+import { Meal } from "@requests";
 
 interface RowProps {
     product: Product;
     userID: number;
+    mealID: number;
     setStatus: (status: Status, message: string) => void;
 }
 interface RowState {
@@ -99,8 +101,11 @@ class Row extends React.PureComponent<RowProps, RowState> {
             portionID: portionID,
             quantity: parsedQuantity,
             date: this.state.date.toISOString(),
+            mealID: this.props.mealID,
         };
-        const res = await requests.createEntry({ entry });
+        const res = await requests.createEntry({
+            entry,
+        });
         this.setState({ collapsed: true });
         if (res.entry) {
             this.props.setStatus(Status.Success, "Entry added");

@@ -4,8 +4,9 @@ import { withRouter, RouteComponentProps } from "react-router-dom";
 import { routes } from "@routes";
 import ProductsTable from "@components/ProductsTable";
 import UserData from "@components/UserData";
-
+import PaginationControls from "@components/PaginationControls";
 import * as Elements from "@elements/index";
+
 interface Response {
     user?: {
         id: number;
@@ -39,8 +40,13 @@ class UserProducts extends React.PureComponent<
         user: {
             id: -1,
             email: "",
-            accessLevel: -2
-        }
+            accessLevel: -2,
+        },
+        pagination: {
+            itemsPerPage: 10,
+            page: 0,
+            maxPage: 1,
+        },
     };
     componentDidMount = async () => {
         const { id } = this.props.match.params;
@@ -52,6 +58,7 @@ class UserProducts extends React.PureComponent<
     goToProduct = (id: number) => () => {
         this.props.history.push(routes.product(id.toString()));
     };
+    jumpToPage = async (page: number) => {};
     render() {
         return (
             <Elements.Widget>
@@ -60,6 +67,10 @@ class UserProducts extends React.PureComponent<
                 <ProductsTable
                     products={this.state.products}
                     goToProduct={this.goToProduct}
+                />
+                <PaginationControls
+                    pagination={this.state.pagination}
+                    jumpToPage={this.jumpToPage}
                 />
             </Elements.Widget>
         );

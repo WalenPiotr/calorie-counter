@@ -9,7 +9,7 @@ import {
     RouteComponentProps,
     Route,
     Switch,
-    Link
+    Link,
 } from "react-router-dom";
 import Login from "@containers/Login";
 import Products from "@containers/Products";
@@ -39,7 +39,7 @@ class App extends React.PureComponent<AppProps, AppState> {
     state = {
         isLoggedIn: storage.retrieveToken() !== "",
         message: "",
-        status: Status.None
+        status: Status.None,
     };
     setStatus = (status: Status, message: string) => {
         this.setState({ status, message });
@@ -64,17 +64,22 @@ class App extends React.PureComponent<AppProps, AppState> {
         this.props.history.push("/login");
     };
     searchProducts = async (
-        name: string
-    ): Promise<requests.Product[] | undefined> => {
-        const { products, error } = await requests.searchProducts({
-            name
+        name: string,
+        pg: requests.Pagination,
+    ): Promise<
+        | { products: requests.Product[]; pagination: requests.Pagination }
+        | undefined
+    > => {
+        const { products, pagination, error } = await requests.searchProducts({
+            name,
+            pagination: pg,
         });
         if (error !== undefined) {
             this.setStatus(Status.Error, error);
             return;
         }
-        if (products !== undefined) {
-            return products;
+        if (products !== undefined && pagination !== undefined) {
+            return { products, pagination };
         }
         this.setStatus(Status.Error, "Unexpected error");
         return;
@@ -117,7 +122,7 @@ class App extends React.PureComponent<AppProps, AppState> {
             name: string;
             description: string;
             portions: { energy: number; unit: string }[];
-        }
+        },
     ): Promise<void> => {
         const { error } = await requests.productUpdate({ id, product });
         if (error !== undefined) {
@@ -127,22 +132,21 @@ class App extends React.PureComponent<AppProps, AppState> {
         return;
     };
     searchUser = async (
-        email: string
+        email: string,
+        pg: requests.Pagination,
     ): Promise<
-        { email: string; id: number; accessLevel: number }[] | undefined
+        { users: requests.User[]; pagination: requests.Pagination } | undefined
     > => {
-        const { users, error } = await requests.searchUsers({
-            email
+        const { users, pagination, error } = await requests.searchUsers({
+            email,
+            pagination: pg,
         });
-        console.log(users);
-        console.log(error);
-
-        if (error !== undefined) {
+        if (error) {
             this.setStatus(Status.Error, error);
             return;
         }
-        if (users !== undefined) {
-            return users;
+        if (users && pagination) {
+            return { users, pagination };
         }
         this.setStatus(Status.Error, "Unexpected error");
         return;
@@ -167,7 +171,7 @@ class App extends React.PureComponent<AppProps, AppState> {
     };
     getUserProducts = async (id: number) => {
         const res = await requests.getUserProducts({
-            id
+            id,
         });
         if (res.error) {
             this.setStatus(Status.Error, res.error);
@@ -190,18 +194,18 @@ class App extends React.PureComponent<AppProps, AppState> {
                   </div>,
                   <div>
                       <Link to={routes.products()}>products</Link>
-                  </div>
+                  </div>,
               ]
             : [
                   <div>
                       <Link to={routes.login()}>login</Link>
-                  </div>
+                  </div>,
               ];
         const standardRoutes = [
             <Route
                 path={routes.login()}
                 render={props => <Login {...props} login={this.login} />}
-            />
+            />,
         ];
         const protectedRoutes = [
             <Route
@@ -252,7 +256,7 @@ class App extends React.PureComponent<AppProps, AppState> {
                 render={props => (
                     <UserProducts {...props} get={this.getUserProducts} />
                 )}
-            />
+            />,
         ];
         return (
             <div>

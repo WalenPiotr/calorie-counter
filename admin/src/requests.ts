@@ -12,9 +12,18 @@ const endpoints = {
     userSearch: base + "api/user/search",
     userBan: base + "api/user/ban",
     userUnban: base + "api/user/unban",
-    getUserProducts: base + "api/user/products"
+    getUserProducts: base + "api/user/products",
 };
-
+export interface User {
+    email: string;
+    id: number;
+    accessLevel: number;
+}
+export interface Pagination {
+    itemsPerPage: number;
+    page: number;
+    maxPage?: number;
+}
 export interface LoginRequest {
     email: string;
     password: string;
@@ -23,16 +32,15 @@ export interface LoginResponse {
     error?: string;
     token?: string;
 }
-
 export const login = async (req: LoginRequest): Promise<LoginResponse> => {
     const request = {
         body: JSON.stringify(req),
         headers: {
             Accept: "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.login, request);
@@ -66,14 +74,16 @@ export interface Product {
 
 interface SearchProductRequest {
     name: string;
+    pagination: Pagination;
 }
 interface SearchProductResponse {
     error?: string;
     products?: Product[];
+    pagination?: Pagination;
 }
 
 export const searchProducts = async (
-    req: SearchProductRequest
+    req: SearchProductRequest,
 ): Promise<SearchProductResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -81,10 +91,10 @@ export const searchProducts = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.productSearch, request);
@@ -110,7 +120,7 @@ interface GetProductResponse {
 }
 
 export const getProduct = async (
-    req: GetProductRequest
+    req: GetProductRequest,
 ): Promise<GetProductResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -118,10 +128,10 @@ export const getProduct = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.productView, request);
@@ -146,7 +156,7 @@ interface DeleteProductResponse {
 }
 
 export const deleteProduct = async (
-    req: DeleteProductRequest
+    req: DeleteProductRequest,
 ): Promise<DeleteProductResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -154,10 +164,10 @@ export const deleteProduct = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.productDelete, request);
@@ -189,7 +199,7 @@ interface ProductNewResponse {
 }
 
 export const productNew = async (
-    req: ProductNewRequest
+    req: ProductNewRequest,
 ): Promise<ProductNewResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -197,10 +207,10 @@ export const productNew = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.productNew, request);
@@ -233,7 +243,7 @@ interface ProductUpdateResponse {
 }
 
 export const productUpdate = async (
-    req: ProductUpdateRequest
+    req: ProductUpdateRequest,
 ): Promise<ProductUpdateResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -241,10 +251,10 @@ export const productUpdate = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.productUpdate, request);
@@ -263,6 +273,7 @@ export const productUpdate = async (
 
 interface SearchUserRequest {
     email: string;
+    pagination: Pagination;
 }
 interface SearchUserResponse {
     users?: {
@@ -271,9 +282,10 @@ interface SearchUserResponse {
         accessLevel: number;
     }[];
     error?: string;
+    pagination?: Pagination;
 }
 export const searchUsers = async (
-    req: SearchUserRequest
+    req: SearchUserRequest,
 ): Promise<SearchUserResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -281,10 +293,10 @@ export const searchUsers = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.userSearch, request);
@@ -308,7 +320,7 @@ interface BanUserResponse {
     error?: string;
 }
 export const banUser = async (
-    req: BanUserRequest
+    req: BanUserRequest,
 ): Promise<BanUserResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -316,10 +328,10 @@ export const banUser = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.userBan, request);
@@ -344,7 +356,7 @@ interface UnbanUserResponse {
     error?: string;
 }
 export const unbanUser = async (
-    req: UnbanUserRequest
+    req: UnbanUserRequest,
 ): Promise<UnbanUserResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -352,10 +364,10 @@ export const unbanUser = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     try {
         const response = await fetch(endpoints.userUnban, request);
@@ -378,15 +390,15 @@ interface GetUserProductsRequest {
 interface GetUserProductsResponse {
     user?: {
         id: number;
-        email:string;
+        email: string;
         accessLevel: number;
-    }
+    };
     products?: Product[];
     error?: string;
 }
 
 export const getUserProducts = async (
-    req: GetUserProductsRequest
+    req: GetUserProductsRequest,
 ): Promise<GetUserProductsResponse> => {
     const token = storage.retrieveToken();
     const request = {
@@ -394,10 +406,10 @@ export const getUserProducts = async (
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
         },
         method: "POST",
-        type: "cors"
+        type: "cors",
     };
     console.log(req);
     try {

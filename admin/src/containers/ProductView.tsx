@@ -19,9 +19,9 @@ class Product extends React.PureComponent<ProductsProps, ProductsState> {
             name: "Invalid Name",
             id: -1,
             creator: -1,
-            portions: []
+            portions: [],
         },
-        isLoading: true
+        isLoading: true,
     };
     componentDidMount = async () => {
         const { id } = this.props.match.params;
@@ -31,12 +31,12 @@ class Product extends React.PureComponent<ProductsProps, ProductsState> {
         }
     };
     onDeleteClick = async () => {
-        this.props.delete(this.state.product.id);
+        await this.props.delete(this.state.product.id);
         this.props.history.push(routes.products());
     };
     onUpdateClick = async () => {
         this.props.history.push(
-            routes.productUpdate(this.state.product.id.toString())
+            routes.productUpdate(this.state.product.id.toString()),
         );
     };
     render() {

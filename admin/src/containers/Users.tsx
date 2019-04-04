@@ -2,32 +2,38 @@ import * as React from "react";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 import { routes } from "@routes";
 import UsersTable from "@components/UsersTable";
-interface User {
-    email: string;
-    id: number;
-    accessLevel: number;
-}
+import PaginationControls from "@components/PaginationControls";
+import { Pagination, User } from "@requests";
 
 interface UsersProps extends RouteComponentProps {
-    search: (name: string) => Promise<User[] | undefined>;
+    search: (
+        name: string,
+        pagination: Pagination,
+    ) => Promise<{ users: User[]; pagination: Pagination } | undefined>;
     ban: (id: number) => Promise<void>;
     unban: (id: number) => Promise<void>;
 }
 interface UsersState {
     users: User[];
+    pagination: Pagination;
 }
 
 class Users extends React.PureComponent<UsersProps, UsersState> {
     state = {
-        users: []
+        users: [],
+        pagination: {
+            page: 0,
+            maxPage: 0,
+            itemsPerPage: 10,
+        },
     };
     componentDidMount = () => {
         this.fetchData();
     };
     fetchData = async () => {
-        const users = await this.props.search("");
-        if (users !== undefined) {
-            this.setState({ users });
+        const res = await this.props.search("", this.state.pagination);
+        if (res && res.users && res.pagination) {
+            this.setState({ ...res });
         }
     };
     goToUserProducts = (userId: number) => () => {
@@ -41,14 +47,29 @@ class Users extends React.PureComponent<UsersProps, UsersState> {
         await this.props.unban(id);
         this.fetchData();
     };
+    jumpToPage = async (page: number) => {
+        const res = await this.props.search("", {
+            ...this.state.pagination,
+            page,
+        });
+        if (res && res.users && res.pagination) {
+            this.setState({ ...res });
+        }
+    };
     render() {
         return (
-            <UsersTable
-                users={this.state.users}
-                goToUserProducts={this.goToUserProducts}
-                ban={this.ban}
-                unban={this.unban}
-            />
+            <>
+                <UsersTable
+                    users={this.state.users}
+                    goToUserProducts={this.goToUserProducts}
+                    ban={this.ban}
+                    unban={this.unban}
+                />
+                <PaginationControls
+                    pagination={this.state.pagination}
+                    jumpToPage={this.jumpToPage}
+                />
+            </>
         );
     }
 }

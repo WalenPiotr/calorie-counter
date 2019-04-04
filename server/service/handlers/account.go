@@ -731,16 +731,19 @@ func SearchUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
 	const InvalidData = "Invalid request body"
 	const InternalError = "Internal Error"
 	type User struct {
-		Email       string           `json:"email,omitempty"`
-		ID          int              `json:"id,omitempty"`
-		AccessLevel auth.AccessLevel `json:"accessLevel,omitempty"`
+		Email       string            `json:"email,omitempty"`
+		ID          int               `json:"id,omitempty"`
+		AccessLevel auth.AccessLevel  `json:"accessLevel,omitempty"`
+		Pagination  models.Pagination `json:"pagination,omitempty"`
 	}
 	type RequestObject struct {
-		Email string `json:"email,omitempty"`
+		Email      string            `json:"email,omitempty"`
+		Pagination models.Pagination `json:"pagination,omitempty"`
 	}
 	type ResponseObject struct {
-		Error string `json:"error,omitempty"`
-		Users []User `json:"users,omitempty"`
+		Error      string            `json:"error,omitempty"`
+		Users      []User            `json:"users,omitempty"`
+		Pagination models.Pagination `json:"pagination,omitempty"`
 	}
 	sendError := func(w http.ResponseWriter, status int, err error, message string) {
 		err = errors.Wrap(err, "While Authenticate")
@@ -752,11 +755,12 @@ func SearchUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
 		}
 		json.NewEncoder(w).Encode(out)
 	}
-	sendData := func(w http.ResponseWriter, status int, users []User) {
+	sendData := func(w http.ResponseWriter, status int, users []User, pagination models.Pagination) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(status)
 		out := ResponseObject{
-			Users: users,
+			Users:      users,
+			Pagination: pagination,
 		}
 		json.NewEncoder(w).Encode(out)
 	}
@@ -768,7 +772,7 @@ func SearchUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
 			sendError(w, http.StatusBadRequest, err, InvalidData)
 			return
 		}
-		accounts, err := models.SearchAccounts(db, in.Email)
+		accounts, pagination, err := models.SearchAccounts(db, in.Email, in.Pagination)
 		if err != nil {
 			err = errors.Wrap(err, "While fetching users")
 			sendError(w, http.StatusBadRequest, err, InternalError)
@@ -779,7 +783,7 @@ func SearchUsers(db *sql.DB, logger *logrus.Logger) http.Handler {
 			accData := User{ID: acc.ID, Email: acc.Email, AccessLevel: acc.AccessLevel}
 			users = append(users, accData)
 		}
-		sendData(w, http.StatusOK, users)
+		sendData(w, http.StatusOK, users, *pagination)
 		return
 	})
 }

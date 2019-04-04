@@ -14,7 +14,7 @@ interface ProductFormProps {
     removePortionClick: (index: number) => () => void;
     onPortionInputChange: (
         index: number,
-        field: string
+        field: string,
     ) => (event: React.FormEvent<HTMLInputElement>) => void;
     newPortionClick: () => void;
     proceedClick: () => void;
@@ -26,7 +26,6 @@ interface ProductFormProps {
 class ProductForm extends React.PureComponent<ProductFormProps> {
     render() {
         const { product } = this.props;
-        console.log(this.state);
         const portionsInputs = product.portions.map(
             (portion: { energy: string; unit: string }, index: number) => (
                 <Elements.FormBox key={index}>
@@ -44,7 +43,7 @@ class ProductForm extends React.PureComponent<ProductFormProps> {
                         value={portion.unit}
                         onChange={this.props.onPortionInputChange(
                             index,
-                            "unit"
+                            "unit",
                         )}
                     />
                     <Elements.Input
@@ -52,11 +51,11 @@ class ProductForm extends React.PureComponent<ProductFormProps> {
                         value={portion.energy}
                         onChange={this.props.onPortionInputChange(
                             index,
-                            "energy"
+                            "energy",
                         )}
                     />
                 </Elements.FormBox>
-            )
+            ),
         );
         return (
             <Elements.Widget>

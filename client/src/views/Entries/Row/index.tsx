@@ -196,6 +196,7 @@ class Row extends React.Component<RowProps, RowState> {
     }
 }
 export default Row;
+
 const findPortion = (portions: Portion[], portionID: number) => {
     portions.filter((portion: Portion) => {
         return portion.id == portionID;

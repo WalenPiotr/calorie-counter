@@ -26,6 +26,7 @@ class Table extends React.PureComponent<TableProps, TableState> {
                     key={product.id}
                     setStatus={this.props.setStatus}
                     userID={this.props.userID}
+                    mealID={0}
                 />
             );
         });

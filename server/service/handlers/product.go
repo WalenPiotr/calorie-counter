@@ -18,6 +18,8 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 	const InvalidData = "Invalid request body"
 	const InternalError = "Internal error"
 	const AlreadyExists = "Product with same name already exists"
+	const TooManyPortions = "Entered too many portions"
+	const TooFewPortions = "Entered too few portions"
 
 	type Product struct {
 		*models.Product
@@ -64,6 +66,17 @@ func CreateProduct(db *sql.DB, logger *logrus.Logger) http.Handler {
 		if in.Product.Portions == nil {
 			err = errors.Wrap(err, "No portions provided")
 			sendError(w, http.StatusBadRequest, err, InvalidData)
+			return
+		}
+		portions := *in.Product.Portions
+		if len(portions) > 5 {
+			err = errors.New(TooManyPortions)
+			sendError(w, http.StatusBadRequest, err, TooManyPortions)
+			return
+		}
+		if len(portions) == 0 {
+			err = errors.New(TooFewPortions)
+			sendError(w, http.StatusBadRequest, err, TooFewPortions)
 			return
 		}
 		userID, ok := r.Context().Value(middleware.UserID).(int)

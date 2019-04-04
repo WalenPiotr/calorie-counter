@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"strings"
 
 	"database/sql"
@@ -191,24 +192,36 @@ func SetAccessLevel(db *sql.DB, id int, accessLevel auth.AccessLevel) error {
 	return err
 }
 
-func SearchAccounts(db *sql.DB, email string) (*[]Account, error) {
+func SearchAccounts(db *sql.DB, email string, pagination Pagination) (*[]Account, *Pagination, error) {
 	rows, err := db.Query(`
-		SELECT * FROM accounts WHERE email LIKE $1;
-	`, "%"+strings.ToLower(email)+"%")
+		SELECT * FROM accounts WHERE email LIKE $1 ORDER BY email, id ASC LIMIT $2 OFFSET $3;;
+	`, "%"+strings.ToLower(email)+"%", pagination.ItemsPerPage, pagination.ItemsPerPage*pagination.Page)
 	defer rows.Close()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	accs := []Account{}
 	for rows.Next() {
 		acc := Account{}
 		err := rows.Scan(&acc.ID, &acc.Email, &acc.Password, &acc.AccessLevel, &acc.Verified, &acc.ChangePassword)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		accs = append(accs, acc)
 	}
-	return &accs, nil
+	var count int
+	row := db.QueryRow("SELECT COUNT(*) FROM accounts")
+	err = row.Scan(&count)
+	if err != nil {
+		return nil, nil, err
+	}
+	maxPage := int(math.Ceil(float64(count)/float64(pagination.ItemsPerPage)) - 1)
+	newPagination := Pagination{
+		ItemsPerPage: pagination.ItemsPerPage,
+		Page:         pagination.Page,
+		MaxPage:      maxPage,
+	}
+	return &accs, &newPagination, nil
 }
 
 func ChangePasswordRequest(db *sql.DB, email string) error {

@@ -6,7 +6,6 @@ import Spinner from "@elements/Spinner";
 import { Status } from "@status";
 import Row from "./Row";
 import * as Styled from "./styled";
-import PaginationControls from "@components/PaginationControls";
 
 export interface Entry {
     id: number;
@@ -35,23 +34,26 @@ interface EntriesState {
     loggedDates: Date[];
     date: Date;
     isLoading: boolean;
-    pagination: requests.Pagination;
+    meal: requests.Meal;
+    meals: requests.Meal[];
 }
 interface EntriesProps {
     setStatus: (status: Status, message: string) => void;
 }
 
 class Entries extends React.Component<EntriesProps, EntriesState> {
-    state = {
+    state: EntriesState = {
         entries: [],
         date: new Date(),
+        meal: {
+            id: -1,
+            name: "",
+            userID: -1,
+            date: 
+        },
+        meals: [],
         loggedDates: [],
         isLoading: false,
-        pagination: {
-            itemsPerPage: 5,
-            page: 1,
-            maxPage: 1,
-        },
     };
     componentDidMount = () => {
         this.fetchData();
@@ -71,9 +73,23 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
             isLoading: true,
         }));
         const date = this.state.date.toISOString();
-        const resView = await requests.entriesView({
+        const resMeals = await requests.viewMealsInDate({
             date,
-            pagination: this.state.pagination,
+        });
+        if (resMeals.error) {
+            this.props.setStatus(Status.Error, resMeals.error);
+            this.setState({ isLoading: false });
+            return;
+        }
+        if (resMeals.meals) {
+            this.setState({
+                meals: resMeals.meals,
+                meal: resMeals.meals[0],
+            });
+        }
+
+        const resView = await requests.entriesView({
+            mealID: this.state.meal.id,
         });
         if (resView.error) {
             this.props.setStatus(Status.Error, resView.error);
@@ -86,7 +102,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
             this.setState({ isLoading: false });
             return;
         }
-        if (resDates.dates !== undefined && resView.entries !== undefined) {
+        if (resDates.dates && resView.entries) {
             this.setState({
                 loggedDates: resDates.dates.map((val: string) => new Date(val)),
                 entries: resView.entries,
@@ -140,27 +156,7 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
     onCalendarClick = () => {
         this.props.setStatus(Status.None, "");
     };
-    onJumpPage = (jump: number) => async () => {
-        await this.setState((prevState: EntriesState) => {
-            if (prevState.pagination.maxPage) {
-                const newPage = prevState.pagination.page + jump;
-                console.log(newPage);
-                if (newPage < 0 || newPage > prevState.pagination.maxPage) {
-                    return prevState;
-                } else {
-                    return {
-                        ...prevState,
-                        pagination: {
-                            ...prevState.pagination,
-                            page: newPage,
-                        },
-                    };
-                }
-            }
-            return prevState;
-        });
-        this.fetchData();
-    };
+
     render() {
         const rows =
             this.state.entries.length == 0 ? (
@@ -195,12 +191,8 @@ class Entries extends React.Component<EntriesProps, EntriesState> {
         const toRender = !this.state.isLoading ? (
             <Styled.TableBox>
                 <div>{rows}</div>
-                <Styled.SummaryBox>
-                    <Styled.SummaryLabel>Total energy: </Styled.SummaryLabel>
-                    <Styled.SummaryValue>
-                        {sum.toFixed()} kcal
-                    </Styled.SummaryValue>
-                </Styled.SummaryBox>
+                <div>Current meal: {this.state.meal}</div>
+                <div>Meals: {this.state.meals}</div>
             </Styled.TableBox>
         ) : (
             <Styled.SpinnerBox>

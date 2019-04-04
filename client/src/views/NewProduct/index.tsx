@@ -165,21 +165,28 @@ class NewProduct extends React.PureComponent<NewProductProps, NewProductState> {
         });
     };
     addAnotherUnit = () => {
-        this.setState((prevState: NewProductState) => {
-            this.props.setStatus(Status.None, "");
-            const oldPortions = prevState.product.portions;
-            const newPortions = [
-                ...oldPortions,
-                { energy: "", energyError: null, unit: "", unitError: null },
-            ];
-            return {
-                ...prevState,
-                product: {
-                    ...prevState.product,
-                    portions: newPortions,
-                },
-            };
-        });
+        if (this.state.product.portions.length <= 5) {
+            this.setState((prevState: NewProductState) => {
+                this.props.setStatus(Status.None, "");
+                const oldPortions = prevState.product.portions;
+                const newPortions = [
+                    ...oldPortions,
+                    {
+                        energy: "",
+                        energyError: null,
+                        unit: "",
+                        unitError: null,
+                    },
+                ];
+                return {
+                    ...prevState,
+                    product: {
+                        ...prevState.product,
+                        portions: newPortions,
+                    },
+                };
+            });
+        }
     };
     deleteCurrentPortion = (index: number) => () => {
         this.setState((prevState: NewProductState) => {

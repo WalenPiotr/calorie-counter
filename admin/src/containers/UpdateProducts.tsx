@@ -2,6 +2,7 @@ import * as React from "react";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 import ProductForm from "@components/ProductForm";
 import * as requests from "@requests";
+import { routes } from "@routes";
 
 interface UpdateProductProps extends RouteComponentProps<{ id: string }> {
     update: (
@@ -10,7 +11,7 @@ interface UpdateProductProps extends RouteComponentProps<{ id: string }> {
             name: string;
             description: string;
             portions: { energy: number; unit: string }[];
-        }
+        },
     ) => Promise<void>;
     get: (id: number) => Promise<requests.Product | undefined>;
 }
@@ -36,11 +37,11 @@ class UpdateProduct extends React.PureComponent<
             portions: [
                 {
                     energy: "",
-                    unit: ""
-                }
-            ]
+                    unit: "",
+                },
+            ],
         },
-        isLoading: true
+        isLoading: true,
     };
     componentDidMount = async () => {
         const { id } = this.props.match.params;
@@ -52,9 +53,9 @@ class UpdateProduct extends React.PureComponent<
                     description: "",
                     portions: product.portions.map(({ energy, unit }) => ({
                         energy: energy.toString(),
-                        unit
-                    }))
-                }
+                        unit,
+                    })),
+                },
             });
         }
     };
@@ -66,8 +67,8 @@ class UpdateProduct extends React.PureComponent<
             ...prevState,
             product: {
                 ...prevState.product,
-                portions: newPortions
-            }
+                portions: newPortions,
+            },
         }));
     };
     newPortion = () => {
@@ -77,8 +78,8 @@ class UpdateProduct extends React.PureComponent<
             ...prevState,
             product: {
                 ...prevState.product,
-                portions: newPortions
-            }
+                portions: newPortions,
+            },
         }));
     };
     updateClick = () => {
@@ -92,17 +93,18 @@ class UpdateProduct extends React.PureComponent<
                     } else {
                         return {
                             energy: energy,
-                            unit: portion.unit
+                            unit: portion.unit,
                         };
                     }
-                }
+                },
             );
             const newProduct = {
                 ...product,
-                portions: parsedPortions
+                portions: parsedPortions,
             };
             const { id } = this.props.match.params;
             this.props.update(parseInt(id), newProduct);
+            this.props.history.push(routes.products());
         } catch (e) {
             console.log(e);
         }
@@ -114,8 +116,8 @@ class UpdateProduct extends React.PureComponent<
                 ...prevState,
                 product: {
                     ...prevState.product,
-                    name: value
-                }
+                    name: value,
+                },
             };
         });
     };
@@ -126,13 +128,13 @@ class UpdateProduct extends React.PureComponent<
                 ...prevState,
                 product: {
                     ...prevState.product,
-                    description: value
-                }
+                    description: value,
+                },
             };
         });
     };
     onPortionInputChange = (index: number, field: string) => (
-        e: React.FormEvent<HTMLInputElement>
+        e: React.FormEvent<HTMLInputElement>,
     ) => {
         const value = e.currentTarget.value;
         this.setState((prevState: UpdateProductState) => {
@@ -142,8 +144,8 @@ class UpdateProduct extends React.PureComponent<
                 ...prevState,
                 product: {
                     ...prevState.product,
-                    portions: newPortions
-                }
+                    portions: newPortions,
+                },
             };
         });
     };
